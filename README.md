@@ -2,163 +2,77 @@
 
 # Agent Learning Journey
 
-**从一次模型调用，到一个能检索、引用和停止的研究助手。**
+**跟着 Hello-Agents 学原理，用小实验理解 Agent，再把能力逐步放进同一个项目。**
 
-[快速开始](#快速开始) · [运行示例](#运行示例) · [架构说明](docs/architecture.md) · [教材与路线](docs/roadmap.md) · [评估](docs/evaluation.md)
+[知识导航](#知识导航) · [实践项目](docs/practice/research-agent.md) · [学习路线](docs/roadmap.md) · [复现指南](docs/getting-started.md)
 
 ![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
-![Status](https://img.shields.io/badge/状态-实验原型-0F766E)
+![Status](https://img.shields.io/badge/状态-持续学习中-0F766E)
 [![Tests](https://github.com/ldr0528/agent-learning-journey/actions/workflows/tests.yml/badge.svg)](https://github.com/ldr0528/agent-learning-journey/actions/workflows/tests.yml)
 
 </div>
 
-以 [Datawhale Hello-Agents](https://github.com/datawhalechina/hello-agents) 为主要学习材料的 Python 实践项目。先看清模型、工具和程序各自做什么，再逐步加入状态管理、规划与框架。
+这是一个以 [Datawhale Hello-Agents](https://github.com/datawhalechina/hello-agents) 为主线的 **Agent 学习与实践仓库**。记录每个知识点解决什么问题、代码怎样实现、实验说明了什么，以及哪些问题还没有解决。
 
-当前主项目是一个命令行研究助手：它从三条带出处的本地教学摘要中检索资料，把结果传回模型，生成带编号的简答。代码保留完整执行轨迹，方便阅读和调试；这是可运行的教学原型，尚不具备通用网页研究能力。
+内容按知识主题组织。每篇笔记连接教材、解释、实验与代码；Research Agent 是承载这些知识的持续实践项目。目前已跑通模型调用、工具回传、有限循环和本地资料问答，后续继续学习状态与上下文、规划、反思及 LangGraph。
 
-![研究助手的工具循环与来源校验](docs/assets/agent-loop-zh.svg)
+![学习脉络：从模型调用到带依据的回答，再进入状态、规划与框架](docs/assets/learning-path-zh.svg)
 
-*本项目根据实际代码原创绘制的中文流程图。模型提出行动，程序执行工具并管理停止条件。*
+## 知识导航
 
-## 已实现
+按下表顺序阅读，也可以从自己有疑问的概念进入。**“已有实践”表示有代码与运行证据，是否理解还需要能解释实验结果。**
 
-- **模型接入**：统一读取环境配置，区分千问与 OpenAI 的密钥及请求选项。
-- **有限工具循环**：Action → 执行 → Observation → 再决策；支持 Finish、请求上限和错误反馈。
-- **本地资料检索**：按关键词标签匹配摘要，保留资料编号、性质、教材小节与链接。
-- **来源检查**：拒绝未检索到的引用编号，提示修正最终答案内的引用；来源链接由程序输出。
-- **可检查的行为**：拒绝重复执行相同检索；无资料时允许说明不足；预算用尽时明确报告未完成。
-- **分层示例与离线测试**：从单次调用到完整循环，核心逻辑可以在没有 API Key 时测试。
+| 知识主题 | 要弄明白的问题 | 对应教材 | 当前进展 |
+| --- | --- | --- | --- |
+| [模型调用与消息](docs/learning/model-calls.md) | 模型收到了什么？提示词为什么会影响回答？ | 第四章 §4.1 | 已有基础实践 |
+| [工具调用与结果回传](docs/learning/tool-feedback.md) | Action、工具函数、Observation 分别由谁产生？ | 第一章 §1.2、第四章 §4.2 | 已有基础实践 |
+| [Agent Loop 与停止条件](docs/learning/agent-loop.md) | 为什么查两座城市可能需要三次模型请求？何时结束？ | 第四章 §4.2 | 已有简化实现与边界实验 |
+| [检索、引用与资料不足](docs/learning/retrieval-and-citations.md) | 搜到资料、附上编号，就代表回答有依据吗？ | 第四章工具循环的项目扩展 | 已有最小实验；系统 RAG 待学 |
 
-千问 `qwen-plus` 已真实验证。OpenAI 兼容配置保留，但尚未取得成功运行证据；模型可用性与参数支持以所用服务为准。
+教材概念、教学简化和项目扩展在笔记中分别说明。当前使用文字 Action 协议与三条本地摘要，尚未使用原生 Function Calling 或向量检索。
 
-## 快速开始
+## 从实验中得到的理解
 
-要求 Python 3.10 或更高版本。以下命令从仓库根目录执行。
+| 实验现象 | 可以得到的结论 |
+| --- | --- |
+| 模型输出 `Action: get_weather(...)` | 它提出了行动请求；实际调用函数需要程序执行。 |
+| 工具结果既打印到终端，又被追加到 `messages` | 让下一次模型请求看到结果的是消息回传。 |
+| 北京、上海各查一次，再输出比较结论 | 一条已运行的轨迹是 **3 次模型请求、2 次工具执行**；Finish 也来自一次模型请求。 |
+| 把同一任务的上限改为 2，查完两地仍报告未完成 | 拿到数据与形成被程序接受的最终答复是两个步骤；上限控制预算。 |
+| 当前摘要无法回答 checkpoint 的作用 | 应说明资料不足；这不能证明 Hello-Agents 教材没有相关内容。 |
+| 回答带有本次返回的资料编号 | 编号可追溯只是第一步，还要核对资料是否支持结论。 |
 
-```bash
-git clone https://github.com/ldr0528/agent-learning-journey.git
-cd agent-learning-journey
-python -m venv .venv
-```
+这些结论来自本项目的具体实现和实验。模型输出可能变化，少量样例与离线测试都不代表通用可靠率。
 
-激活环境并安装：
+## 用同一个项目串起知识
 
-```powershell
-# Windows PowerShell
-$env:PYTHONUTF8 = "1"
-.\.venv\Scripts\Activate.ps1
-python -m pip install -e .
-Copy-Item .env.example .env
-```
+**Research Agent：依据本地 Hello-Agents 教学摘要回答问题，并列出引用来源。**
 
-```bash
-# macOS / Linux
-source .venv/bin/activate
-python -m pip install -e .
-cp .env.example .env
-```
+它把已学机制连成一条可观察的流程：模型选择检索词 → Python 检索 → 资料回传 → 模型作答 → 程序检查引用与停止条件。资料不足时可以说明不足，预算耗尽时报告未完成。
 
-已有 `.env` 时不要覆盖。打开本地 `.env`，填写千问配置：
+| 想看什么 | 阅读入口 |
+| --- | --- |
+| 每增加一种能力，解决了什么问题 | [Research Agent 的能力演进](docs/practice/research-agent.md) |
+| 模型、工具和程序怎样配合 | [架构与中文流程图](docs/architecture.md) |
+| 怎样判断“跑出来了”是否符合预期 | [固定问题与评估标准](docs/evaluation.md) |
+| 自己运行、修改并观察 | [复现指南](docs/getting-started.md) · [分层实验](examples/README.md) |
 
-```dotenv
-LLM_PROVIDER="qwen"
-DASHSCOPE_API_KEY="YOUR-API-KEY"
-QWEN_MODEL_ID="qwen-plus"
-QWEN_BASE_URL="https://dashscope.aliyuncs.com/compatible-mode/v1"
-```
+## 当前学到哪里
 
-这个地址用于百炼北京地域的普通 API Key。其他地域或产品需要使用相应的官方地址。配置从当前运行目录的 `.env` 读取，系统环境变量优先；请勿提交真实密钥。
+已完成基础实践的是模型接入与教学简化版 ReAct 循环。**Hello-Agents 第四章还没有整体学完**：§4.3 Plan-and-Solve 与 §4.4 Reflection 尚待学习和实现。
 
-```bash
-# 只检查配置，不请求模型
-python -m agent_learning --check
+下一步先从当前 `messages` 和程序计数出发，补状态与上下文的基础概念，再回到规划与反思。之后学习检索与评估，进入第六章 §6.5 LangGraph。第五章低代码平台本轮跳过；完整教材映射、范围与验收问题见 [学习路线](docs/roadmap.md)。
 
-# 运行研究助手，会产生模型 API 用量
-python -m agent_learning --question "Agent Loop 为什么要有最大步数？"
-```
+## 怎样使用这个仓库
 
-也可以使用安装后的等价入口：
+- **只读原理**：从知识导航进入，每篇按“问题 → 机制 → 实验 → 结论与边界”阅读。
+- **跟着动手**：完成 [环境配置](docs/getting-started.md)，先预测实验结果，再运行、解释，最后只改变一个条件作对照。
+- **读实现**：从 [独立示例](examples/README.md) 进入 [循环源码](src/agent_learning/loop.py) 和 [离线测试](tests/test_agent_loop.py)。测试通过不代替对概念的理解。
 
-```bash
-agent-research --question "Action 和 Observation 分别由谁产生？"
-```
+欢迎补充能解释清楚一个知识点的小实验，参见 [贡献说明](CONTRIBUTING.md)。
 
-如需 OpenAI，填写模板中的 `LLM_API_KEY`、`LLM_MODEL_ID`、`LLM_BASE_URL`，运行时加 `--provider openai`。不要混用两家服务的密钥。
+## 材料与许可
 
-## 运行示例
+主要学习材料为 [Hello-Agents](https://github.com/datawhalechina/hello-agents)。教材衍生的学习笔记与本地教学摘要保留出处，采用 **CC BY-NC-SA 4.0**；笔记是教学转述与项目实验整理，非教材原文。
 
-正常流程的节选如下，省略了 Observation 中的完整摘要。实际模型措辞与轮数可能变化。
-
-```text
-[第 1 轮] Action: search_notes(query="Agent Loop 最大步数")
-Observation: [N01] Agent Loop 的基本过程
-             [N03] Finish 与最大步数
-
-[第 2 轮] Action: Finish[最大步数限制执行预算，防止持续运行和资源耗尽。[N03]]
-模型请求 2 次；工具执行 1 次。
-
-引用来源（本地教学摘要，非教材原文）：
-[N03] Hello-Agents 第四章 §4.2.3；未完成状态说明为本项目的教学扩展
-```
-
-各个示例分别展示一种机制，说明见 [examples/README.md](examples/README.md)。
-
-| 命令 | 观察什么 | 调用模型 |
-| --- | --- | --- |
-| `python -m examples.model_call` | system / user 与单次回复 | 是 |
-| `python -m examples.tool_execution` | 解析手动指定的 Action，执行模拟天气函数 | 否 |
-| `python -m examples.tool_roundtrip --city 上海` | 工具结果进入下一次模型请求 | 是，最多两次 |
-| `python -m examples.weather_loop` | 查询两个城市后比较，观察多轮决策 | 是 |
-| `python -m agent_learning.tools.notes --query "最大步数"` | 只看本地检索结果与出处 | 否 |
-
-给研究助手加 `--max-steps 1`，可观察“拿到资料但来不及形成有效最终答案”的情况。程序返回退出码 `1` 是该实验预期的未完成状态。天气示例始终使用模拟数据。
-
-## 项目结构
-
-```text
-src/agent_learning/
-├── config.py              # 服务配置与客户端创建
-├── llm.py                 # 单次模型请求
-├── loop.py                # 通用循环、预算与停止条件
-├── cli.py                 # 研究助手命令行入口
-├── agents/
-│   ├── research.py        # 检索问答与引用检查
-│   └── weather.py         # 模拟天气任务
-├── tools/
-│   ├── notes.py           # 本地标签检索
-│   └── weather.py         # 模拟天气函数
-└── data/notes.json        # 带出处的教学摘要
-examples/                  # 可独立运行的能力示例
-tests/                     # 离线控制逻辑测试
-docs/                      # 架构、教材映射、评估、中文图
-```
-
-## 测试与评估
-
-```bash
-python -m unittest discover -s tests -v
-```
-
-离线测试不请求模型、不需要密钥，覆盖上下文回传、步数限制、格式纠错、引用范围、重复查询和配置隔离。GitHub Actions 在 Linux、Windows 上执行检查。
-
-另有 [六个固定任务与验收标准](docs/evaluation.md)，分别检查答案依据、引用、流程和调用次数。真实模型结果与离线测试是两类证据；少量成功样例不构成普遍可靠率结论。
-
-## 当前边界
-
-- 使用提示词和正则解析的文字协议，尚未使用 API 原生 Function Calling。
-- 资料只有三条教学摘要；关键词命中不代表语义相关，没有命中也不代表教材没有写。
-- 引用检查验证编号是否来自本次检索，不能自动证明每个结论得到支持。
-- `finished` 表示流程接受了最终答复，可能是“资料不足”；`step_limit` 表示没有取得有效最终答复。
-- 尚未实现网页搜索、向量检索、持久化记忆、LangGraph、Plan-and-Solve 或 Reflection。
-
-## 后续方向
-
-按能力推进：模型与工具基础 → 状态与上下文 → 规划与反思 → 检索与评估 → LangGraph → MCP。教材映射与范围取舍见 [路线说明](docs/roadmap.md)。完成基础循环不等于已经学完 Hello-Agents 第四章。
-
-欢迎提出可复现的问题或小范围改进，参见 [贡献说明](CONTRIBUTING.md)。
-
-## 参考与许可
-
-- 核心学习材料：[Hello-Agents](https://github.com/datawhalechina/hello-agents)。教学摘要逐条保留出处，采用其 **CC BY-NC-SA 4.0** 许可。
-- 仓库组织参考：[smolagents](https://github.com/huggingface/smolagents) 的源码、示例与测试分层，以及 [LangGraph](https://github.com/langchain-ai/langgraph) 的功能、快速开始和文档导航方式。本项目没有复制其图片或实现。
-- 本项目原创代码与中文流程图沿用仓库的 [MIT License](LICENSE)。教材衍生资料单独标注，不因放入本仓库而改为 MIT；详见 [NOTICE.md](NOTICE.md)。
+原创代码、工程说明与原创中文图采用 [MIT License](LICENSE)。详细来源和许可范围见 [NOTICE.md](NOTICE.md)。

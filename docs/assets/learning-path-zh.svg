@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1360" height="640" viewBox="0 0 1360 640" role="img" aria-labelledby="title desc">
+  <title id="title">Agent 学习脉络</title>
+  <desc id="desc">已有基础实践包括模型调用、工具与回传、Agent Loop、检索与引用。接下来学习状态与上下文、规划与反思、检索与评估，以及 LangGraph。由 Hello-Agents 教材辅助，每个知识主题连接问题、实验、结论和代码。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+      <path d="M0 0 L6 3.5 L0 7" fill="none" stroke="#5e7c80" stroke-width="1.5"/>
+    </marker>
+  </defs>
+  <rect width="1360" height="640" rx="24" fill="#f5f7f5"/>
+  <path d="M24 0H1336Q1360 0 1360 24V128H0V24Q0 0 24 0Z" fill="#142e37"/>
+  <g font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif">
+    <text x="48" y="61" font-size="36" font-weight="700" fill="#ffffff">把 Agent 知识连成一条实践路径</text>
+    <text x="48" y="101" font-size="21" fill="#c4d9d9">Hello-Agents 辅助阅读 · 每个主题都有问题、实验、结论与代码</text>
+    <circle cx="58" cy="160" r="6" fill="#0f766e"/>
+    <text x="76" y="167" font-size="20" font-weight="700" fill="#0f766e">已有基础实践</text>
+    <text x="270" y="167" font-size="19" fill="#596c70">用运行结果理解机制，再用边界实验检查理解</text>
+
+    <g fill="#ffffff" stroke="#d5e1de" stroke-width="1.5">
+      <rect x="48" y="190" width="298" height="232" rx="16"/>
+      <rect x="370" y="190" width="298" height="232" rx="16"/>
+      <rect x="692" y="190" width="298" height="232" rx="16"/>
+      <rect x="1014" y="190" width="298" height="232" rx="16"/>
+    </g>
+    <g font-size="18" font-weight="700" fill="#0f766e">
+      <text x="70" y="229">输入</text>
+      <text x="392" y="229">行动与反馈</text>
+      <text x="714" y="229">多轮决策</text>
+      <text x="1036" y="229">回答依据</text>
+    </g>
+    <g font-size="28" font-weight="700" fill="#183c43">
+      <text x="70" y="270">模型调用</text>
+      <text x="392" y="270">工具与回传</text>
+      <text x="714" y="270">Agent Loop</text>
+      <text x="1036" y="270">检索与引用</text>
+    </g>
+    <g font-size="21" fill="#425c62">
+      <text x="70" y="312">模型收到了什么？</text>
+      <text x="70" y="343">提示怎样影响回答？</text>
+      <text x="392" y="312">谁真正执行函数？</text>
+      <text x="392" y="343">结果怎样交回模型？</text>
+      <text x="714" y="312">怎样继续、何时停止？</text>
+      <text x="714" y="343">请求与工具分别计数</text>
+      <text x="1036" y="312">资料是否支持结论？</text>
+      <text x="1036" y="343">没有依据时说明不足</text>
+    </g>
+    <g fill="#eaf4ef">
+      <rect x="70" y="367" width="254" height="34" rx="7"/>
+      <rect x="392" y="367" width="254" height="34" rx="7"/>
+      <rect x="714" y="367" width="254" height="34" rx="7"/>
+      <rect x="1036" y="367" width="254" height="34" rx="7"/>
+    </g>
+    <g font-size="17" fill="#276357" text-anchor="middle">
+      <text x="197" y="390">system / user</text>
+      <text x="519" y="390">Action / Observation</text>
+      <text x="841" y="390">Finish / max_steps</text>
+      <text x="1163" y="390">search_notes / 来源编号</text>
+    </g>
+    <g stroke="#5e7c80" stroke-width="2" marker-end="url(#arrow)">
+      <path d="M350 304H364"/>
+      <path d="M672 304H686"/>
+      <path d="M994 304H1008"/>
+    </g>
+    <text x="48" y="459" font-size="20" fill="#425c62">持续实践：把这些机制组合进 Research Agent，使用本地教学摘要完成带来源的简答。</text>
+
+    <rect x="48" y="489" width="1264" height="106" rx="16" fill="#e6eeef"/>
+    <text x="72" y="533" font-size="23" font-weight="700" fill="#193e48">接下来</text>
+    <g font-size="23" font-weight="700" fill="#193e48">
+      <text x="230" y="533">状态与上下文</text>
+      <text x="500" y="533">规划与反思</text>
+      <text x="770" y="533">检索与评估</text>
+      <text x="1040" y="533">LangGraph</text>
+    </g>
+    <g font-size="24" fill="#5e7c80">
+      <text x="448" y="533">→</text>
+      <text x="718" y="533">→</text>
+      <text x="988" y="533">→</text>
+    </g>
+    <text x="230" y="570" font-size="18" fill="#536e73">先看清模型可见的信息，再补第四章其余范式，最后用框架表达已有流程。</text>
+    <text x="48" y="626" font-size="17" fill="#667b7e">按知识主题记录进展 · 基础循环不代表第四章全部完成 · 本项目原创图</text>
+  </g>
+</svg>

@@ -1,5 +1,9 @@
 # 架构与执行过程
 
+[返回首页](../README.md) · [先读 Agent Loop](learning/agent-loop.md) · [能力演进](practice/research-agent.md)
+
+本页作为实现参考；各知识点的解释与实验从首页导航进入。
+
 ![工具循环](assets/agent-loop-zh.svg)
 
 ## 组件职责
