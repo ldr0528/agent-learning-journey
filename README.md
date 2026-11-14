@@ -1,78 +1,79 @@
 <div align="center">
 
-# Agent Learning Journey
+# Agent 学习手册
+### Agent Learning Journey
 
-**跟着 Hello-Agents 学原理，用小实验理解 Agent，再把能力逐步放进同一个项目。**
+**从模型调用到智能体系统：原理、代码、运行结果与图解。**
 
-[知识导航](#知识导航) · [实践项目](docs/practice/research-agent.md) · [学习路线](docs/roadmap.md) · [复现指南](docs/getting-started.md)
-
-![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
-![Status](https://img.shields.io/badge/状态-持续学习中-0F766E)
-[![Tests](https://github.com/ldr0528/agent-learning-journey/actions/workflows/tests.yml/badge.svg)](https://github.com/ldr0528/agent-learning-journey/actions/workflows/tests.yml)
+[开始阅读](docs/learning/model-calls.md) · [章节目录](#章节目录) · [编排与学习计划](docs/roadmap.md) · [配套代码说明](docs/getting-started.md)
 
 </div>
 
-这是一个以 [Datawhale Hello-Agents](https://github.com/datawhalechina/hello-agents) 为主线的 **Agent 学习与实践仓库**。记录每个知识点解决什么问题、代码怎样实现、实验说明了什么，以及哪些问题还没有解决。
+这是一套按我们自己的学习计划持续整理的 **Agent 学习资料库**，以 [Datawhale Hello-Agents](https://github.com/datawhalechina/hello-agents) 为主要参考。围绕已经写过的代码与已经发生的实验，把知识讲清楚，再逐步扩展到上下文、规划、检索和框架。
 
-内容按知识主题组织。每篇笔记连接教材、解释、实验与代码；Research Agent 是承载这些知识的持续实践项目。目前已跑通模型调用、工具回传、有限循环和本地资料问答，后续继续学习状态与上下文、规划、反思及 LangGraph。
+正文直接给出原理图、关键代码、已有运行结果及逐步解释。**不需要先配置环境或运行项目，就可以顺着章节学习。** 完整源码和运行命令作为配套，供希望进一步动手的读者使用。
 
-![学习脉络：从模型调用到带依据的回答，再进入状态、规划与框架](docs/assets/learning-path-zh.svg)
+![本手册的基础知识与后续学习路线](docs/assets/learning-path-zh.svg)
 
-## 知识导航
+## 章节目录
 
-按下表顺序阅读，也可以从自己有疑问的概念进入。**“已有实践”表示有代码与运行证据，是否理解还需要能解释实验结果。**
+以下是本手册自己的编排；章号不对应 Hello-Agents 的章号。参考教材的位置在每章中单独标注。
 
-| 知识主题 | 要弄明白的问题 | 对应教材 | 当前进展 |
-| --- | --- | --- | --- |
-| [模型调用与消息](docs/learning/model-calls.md) | 模型收到了什么？提示词为什么会影响回答？ | 第四章 §4.1 | 已有基础实践 |
-| [工具调用与结果回传](docs/learning/tool-feedback.md) | Action、工具函数、Observation 分别由谁产生？ | 第一章 §1.2、第四章 §4.2 | 已有基础实践 |
-| [Agent Loop 与停止条件](docs/learning/agent-loop.md) | 为什么查两座城市可能需要三次模型请求？何时结束？ | 第四章 §4.2 | 已有简化实现与边界实验 |
-| [检索、引用与资料不足](docs/learning/retrieval-and-citations.md) | 搜到资料、附上编号，就代表回答有依据吗？ | 第四章工具循环的项目扩展 | 已有最小实验；系统 RAG 待学 |
+### 第一部分 · 模型、工具与智能体循环
 
-教材概念、教学简化和项目扩展在笔记中分别说明。当前使用文字 Action 协议与三条本地摘要，尚未使用原生 Function Calling 或向量检索。
+这部分已有正文，按顺序阅读即可串起一条完整的信息流。
 
-## 从实验中得到的理解
+| 章节 | 正文讲解的内容 | 直接展示的案例 |
+| --- | --- | --- |
+| [第 1 章 · 模型调用与消息](docs/learning/model-calls.md) | 消息角色、请求与回复、提示对输出的影响 | Python 字典解释代码与已有英文回答 |
+| [第 2 章 · 工具调用与结果回传](docs/learning/tool-feedback.md) | Action、函数执行、Observation、第二次请求 | 天气工具代码、消息变化图与广州无数据回答 |
+| [第 3 章 · Agent Loop 与停止条件](docs/learning/agent-loop.md) | 多轮决策、Finish、请求预算和程序状态 | 北京与上海的三轮轨迹，以及两轮上限结果 |
+| [第 4 章 · 检索、引用与资料不足](docs/learning/retrieval-and-citations.md) | 本地检索、资料回传、引用校验及证据边界 | 最大步数问题的两轮回答与 checkpoint 资料不足案例 |
 
-| 实验现象 | 可以得到的结论 |
-| --- | --- |
-| 模型输出 `Action: get_weather(...)` | 它提出了行动请求；实际调用函数需要程序执行。 |
-| 工具结果既打印到终端，又被追加到 `messages` | 让下一次模型请求看到结果的是消息回传。 |
-| 北京、上海各查一次，再输出比较结论 | 一条已运行的轨迹是 **3 次模型请求、2 次工具执行**；Finish 也来自一次模型请求。 |
-| 把同一任务的上限改为 2，查完两地仍报告未完成 | 拿到数据与形成被程序接受的最终答复是两个步骤；上限控制预算。 |
-| 当前摘要无法回答 checkpoint 的作用 | 应说明资料不足；这不能证明 Hello-Agents 教材没有相关内容。 |
-| 回答带有本次返回的资料编号 | 编号可追溯只是第一步，还要核对资料是否支持结论。 |
+### 第二部分 · 上下文、规划与反思
 
-这些结论来自本项目的具体实现和实验。模型输出可能变化，少量样例与离线测试都不代表通用可靠率。
+以下为计划章节，随学习补充正文。
 
-## 用同一个项目串起知识
+| 计划章节 | 核心问题 | 主要参考 |
+| --- | --- | --- |
+| 第 5 章 · 状态与上下文 | 每次请求应该让模型看到哪些信息？ | Hello-Agents 第九章选读 |
+| 第 6 章 · Plan-and-Solve | 先生成计划，再执行，与逐轮决策有何差异？ | Hello-Agents 第四章 §4.3 |
+| 第 7 章 · Reflection | 如何根据评审修订结果，又怎样限制修订次数？ | Hello-Agents 第四章 §4.4 |
 
-**Research Agent：依据本地 Hello-Agents 教学摘要回答问题，并列出引用来源。**
+### 第三部分 · 检索与评估
 
-它把已学机制连成一条可观察的流程：模型选择检索词 → Python 检索 → 资料回传 → 模型作答 → 程序检查引用与停止条件。资料不足时可以说明不足，预算耗尽时报告未完成。
+| 计划章节 | 核心问题 | 主要参考 |
+| --- | --- | --- |
+| 第 8 章 · RAG 与检索改进 | 资料增多后，怎样找到真正有用的内容？ | Hello-Agents 第八章 |
+| 第 9 章 · Agent 评估 | 怎样分别判断检索、回答和执行流程的质量？ | Hello-Agents 第十二章 |
 
-| 想看什么 | 阅读入口 |
-| --- | --- |
-| 每增加一种能力，解决了什么问题 | [Research Agent 的能力演进](docs/practice/research-agent.md) |
-| 模型、工具和程序怎样配合 | [架构与中文流程图](docs/architecture.md) |
-| 怎样判断“跑出来了”是否符合预期 | [固定问题与评估标准](docs/evaluation.md) |
-| 自己运行、修改并观察 | [复现指南](docs/getting-started.md) · [分层实验](examples/README.md) |
+### 第四部分 · 框架与协议
 
-## 当前学到哪里
+| 计划章节 | 核心问题 | 主要参考 |
+| --- | --- | --- |
+| 第 10 章 · LangGraph 与调用链 | 如何用节点、边和状态表达已有流程？ | Hello-Agents 第六章 §6.5、第七章选读 |
+| 第 11 章 · MCP 入门 | 工具接入协议在系统中解决了哪一层的问题？ | Hello-Agents 第十章选读 |
 
-已完成基础实践的是模型接入与教学简化版 ReAct 循环。**Hello-Agents 第四章还没有整体学完**：§4.3 Plan-and-Solve 与 §4.4 Reflection 尚待学习和实现。
+当前基础实践覆盖模型接入与教学简化版 ReAct。规划、反思与 LangGraph 尚待学习；本手册第 4 章的本地检索案例也不代表已经完成系统 RAG 学习。完整范围与教材映射见 [学习计划](docs/roadmap.md)。
 
-下一步先从当前 `messages` 和程序计数出发，补状态与上下文的基础概念，再回到规划与反思。之后学习检索与评估，进入第六章 §6.5 LangGraph。第五章低代码平台本轮跳过；完整教材映射、范围与验收问题见 [学习路线](docs/roadmap.md)。
+## 正文怎样组织
 
-## 怎样使用这个仓库
+每章从具体问题出发，依次呈现 **原理解释 → 中文图解 → 关键代码 → 运行结果 → 逐步分析 → 结论与边界**。问题后直接给出解释，不把核心知识留给读者运行后自行猜测。
 
-- **只读原理**：从知识导航进入，每篇按“问题 → 机制 → 实验 → 结论与边界”阅读。
-- **跟着动手**：完成 [环境配置](docs/getting-started.md)，先预测实验结果，再运行、解释，最后只改变一个条件作对照。
-- **读实现**：从 [独立示例](examples/README.md) 进入 [循环源码](src/agent_learning/loop.py) 和 [离线测试](tests/test_agent_loop.py)。测试通过不代替对概念的理解。
+代码片段注明来自哪段实现，以及是否为了讲解省略了外围代码。真实运行节选、确定性工具输出和机制示意分别标注；不会把新写的示意内容当作实际模型结果。文中天气始终是模拟数据。
 
-欢迎补充能解释清楚一个知识点的小实验，参见 [贡献说明](CONTRIBUTING.md)。
+## 贯穿案例与配套资料
 
-## 材料与许可
+模拟天气用来解释工具与循环，Research Agent 用来串联资料检索、结果回传和引用。随着学习推进，同一个案例会逐步补充状态管理、规划、评估与框架实现。
 
-主要学习材料为 [Hello-Agents](https://github.com/datawhalechina/hello-agents)。教材衍生的学习笔记与本地教学摘要保留出处，采用 **CC BY-NC-SA 4.0**；笔记是教学转述与项目实验整理，非教材原文。
+- [贯穿案例：Research Agent 的能力演进](docs/practice/research-agent.md)
+- [附录：实现架构与组件职责](docs/architecture.md)
+- [附录：固定问题与评估标准](docs/evaluation.md)
+- [配套代码：环境与运行说明](docs/getting-started.md) · [独立示例](examples/README.md)
+- [参与编写](CONTRIBUTING.md)
 
-原创代码、工程说明与原创中文图采用 [MIT License](LICENSE)。详细来源和许可范围见 [NOTICE.md](NOTICE.md)。
+## 参考与许可
+
+主要参考 [Hello-Agents](https://github.com/datawhalechina/hello-agents)。本手册按自己的学习顺序和案例重新组织，相关章节保留教材出处，并标明教学简化与项目扩展。
+
+学习正文与教材衍生摘要采用 **CC BY-NC-SA 4.0**；原创代码、工程说明和原创中文图采用 [MIT License](LICENSE)。图示根据我们的代码与案例重新设计，不复制教材图片。详细范围见 [NOTICE.md](NOTICE.md)。

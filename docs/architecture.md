@@ -2,7 +2,7 @@
 
 [返回首页](../README.md) · [先读 Agent Loop](learning/agent-loop.md) · [能力演进](practice/research-agent.md)
 
-本页作为实现参考；各知识点的解释与实验从首页导航进入。
+本页是配套实现附录。正文中的原理、代码与已有结果从 [手册目录](../README.md#章节目录) 阅读。
 
 ![工具循环](assets/agent-loop-zh.svg)
 

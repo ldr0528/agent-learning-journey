@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1360" height="590" viewBox="0 0 1360 590" role="img" aria-labelledby="title desc">
+<title id="title">一次模型调用：输入与输出</title>
+<desc id="desc">Python 构造 system 与 user 消息，结合服务配置请求模型，再提取回复文本并打印。</desc>
+<defs>
+<marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+<path d="M0 0L7 4L0 8" fill="none" stroke="#5e7c80" stroke-width="1.5"/>
+</marker>
+</defs>
+<rect width="1360" height="590" rx="24" fill="#f5f7f5"/>
+<path d="M24 0H1336Q1360 0 1360 24V128H0V24Q0 0 24 0Z" fill="#142e37"/>
+<g font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif">
+<text x="48" y="62" font-size="35" fill="#ffffff" font-weight="700">一次模型调用：输入与输出</text>
+<text x="48" y="101" font-size="21" fill="#c4d9d9" font-weight="400">消息由程序组织，回答从服务响应中提取。</text>
+<rect x="48" y="174" width="480" height="260" rx="16" fill="#fff" stroke="#d5e1de" stroke-width="1.5"/>
+<text x="72" y="216" font-size="27" fill="#183c43" font-weight="700">Python 组织输入</text>
+<rect x="72" y="240" width="432" height="70" rx="9" fill="#edf3fb" stroke="none" stroke-width="1.5"/>
+<text x="90" y="268" font-size="21" fill="#244b6b" font-weight="700">system · 回答要求</text>
+<text x="90" y="296" font-size="22" fill="#425c62" font-weight="400">简洁中文，给一个短例子</text>
+<rect x="72" y="324" width="432" height="70" rx="9" fill="#edf3fb" stroke="none" stroke-width="1.5"/>
+<text x="90" y="351" font-size="21" fill="#244b6b" font-weight="700">user · 具体问题</text>
+<text x="90" y="380" font-size="22" fill="#425c62" font-weight="400">Python 字典是什么？</text>
+<text x="552" y="280" font-size="20" fill="#425c62" font-weight="400">messages</text>
+<path d="M545 312H654" fill="none" stroke="#5e7c80" stroke-width="2.5"  marker-end="url(#arrow)"/>
+<rect x="676" y="222" width="284" height="170" rx="16" fill="#e6eeef" stroke="#d5e1de" stroke-width="1.5"/>
+<text x="704" y="268" font-size="28" fill="#193e48" font-weight="700">模型服务</text>
+<text x="704" y="310" font-size="23" fill="#425c62" font-weight="400">接收本次请求</text>
+<text x="704" y="350" font-size="23" fill="#425c62" font-weight="400">生成一条回复</text>
+<path d="M973 312H1021" fill="none" stroke="#5e7c80" stroke-width="2.5"  marker-end="url(#arrow)"/>
+<rect x="1040" y="174" width="272" height="260" rx="16" fill="#fff" stroke="#d5e1de" stroke-width="1.5"/>
+<text x="1064" y="216" font-size="27" fill="#183c43" font-weight="700">提取回复</text>
+<text x="1064" y="269" font-size="21" fill="#244b6b" font-weight="400">message.content</text>
+<text x="1064" y="314" font-size="22" fill="#425c62" font-weight="400">模型返回的文本</text>
+<text x="1064" y="377" font-size="22" fill="#425c62" font-weight="400">再由程序打印</text>
+<rect x="48" y="470" width="1264" height="88" rx="16" fill="#eaf4ef" stroke="none" stroke-width="1.5"/>
+<text x="72" y="507" font-size="23" fill="#276357" font-weight="700">程序侧配置</text>
+<text x="270" y="507" font-size="23" fill="#276357" font-weight="400">服务地址 · 模型名称 · API Key · 生成参数</text>
+<text x="72" y="540" font-size="20" fill="#425c62" font-weight="400">配置用于建立请求；终端文字、本地文件和变量不会自动成为消息。</text>
+<path d="M818 466V402" fill="none" stroke="#5e7c80" stroke-width="2.5" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+</g>
+</svg>

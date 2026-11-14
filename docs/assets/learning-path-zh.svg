@@ -9,11 +9,11 @@
   <rect width="1360" height="640" rx="24" fill="#f5f7f5"/>
   <path d="M24 0H1336Q1360 0 1360 24V128H0V24Q0 0 24 0Z" fill="#142e37"/>
   <g font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif">
-    <text x="48" y="61" font-size="36" font-weight="700" fill="#ffffff">把 Agent 知识连成一条实践路径</text>
-    <text x="48" y="101" font-size="21" fill="#c4d9d9">Hello-Agents 辅助阅读 · 每个主题都有问题、实验、结论与代码</text>
+    <text x="48" y="61" font-size="36" font-weight="700" fill="#ffffff">Agent 学习手册：从模型调用到系统构建</text>
+    <text x="48" y="101" font-size="21" fill="#c4d9d9">沿自己的学习计划，用图解、代码与已有结果讲清机制</text>
     <circle cx="58" cy="160" r="6" fill="#0f766e"/>
-    <text x="76" y="167" font-size="20" font-weight="700" fill="#0f766e">已有基础实践</text>
-    <text x="270" y="167" font-size="19" fill="#596c70">用运行结果理解机制，再用边界实验检查理解</text>
+    <text x="76" y="167" font-size="20" font-weight="700" fill="#0f766e">已整理的基础章节</text>
+    <text x="270" y="167" font-size="19" fill="#596c70">每章直接展示原理、代码、结果与分析</text>
 
     <g fill="#ffffff" stroke="#d5e1de" stroke-width="1.5">
       <rect x="48" y="190" width="298" height="232" rx="16"/>
@@ -60,7 +60,7 @@
       <path d="M672 304H686"/>
       <path d="M994 304H1008"/>
     </g>
-    <text x="48" y="459" font-size="20" fill="#425c62">持续实践：把这些机制组合进 Research Agent，使用本地教学摘要完成带来源的简答。</text>
+    <text x="48" y="459" font-size="20" fill="#425c62">贯穿案例：把这些机制组合进 Research Agent，使用本地教学摘要完成带来源的简答。</text>
 
     <rect x="48" y="489" width="1264" height="106" rx="16" fill="#e6eeef"/>
     <text x="72" y="533" font-size="23" font-weight="700" fill="#193e48">接下来</text>
@@ -76,6 +76,6 @@
       <text x="988" y="533">→</text>
     </g>
     <text x="230" y="570" font-size="18" fill="#536e73">先看清模型可见的信息，再补第四章其余范式，最后用框架表达已有流程。</text>
-    <text x="48" y="626" font-size="17" fill="#667b7e">按知识主题记录进展 · 基础循环不代表第四章全部完成 · 本项目原创图</text>
+    <text x="48" y="626" font-size="17" fill="#667b7e">按章节阅读 · 基础循环不代表 Hello-Agents 第四章全部完成 · 本项目原创图</text>
   </g>
 </svg>
