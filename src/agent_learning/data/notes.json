@@ -1,0 +1,35 @@
+{
+  "description": "依据 Hello-Agents 编写的简短教学摘要，不是教材原文或完整知识库。仅供本地检索练习；关键词标签由助教添加。",
+  "source_checked_on": "2026-11-12",
+  "license": "CC-BY-NC-SA-4.0",
+  "attribution": "根据 Datawhale Hello-Agents 整理的教学摘要；改动与许可见根目录 NOTICE.md。",
+  "notes": [
+    {
+      "id": "N01",
+      "title": "Agent Loop 的基本过程",
+      "keywords": ["agent loop", "智能体循环", "react", "运行机制"],
+      "content": "模型根据问题与已有观察选择行动，程序执行工具并取得结果，再将结果提供给下一轮决策。重复这个过程，直到给出最终答案或触发程序的停止条件。",
+      "source_section": "Hello-Agents 第一章 §1.2.2 智能体的运行机制",
+      "source_url": "https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter1/第一章%20初识智能体.md",
+      "content_type": "教学摘要，非教材原文"
+    },
+    {
+      "id": "N02",
+      "title": "Action 与 Observation 的分工",
+      "keywords": ["action", "observation", "工具调用", "工具结果", "结果回传", "观察"],
+      "content": "Action 表达模型希望执行的操作。程序解析请求并调用对应工具，把实际结果组织为 Observation，供下一次模型决策使用。打印工具结果不等于把结果发送给模型。",
+      "source_section": "Hello-Agents 第一章 §1.2.3 智能体的感知与行动",
+      "source_url": "https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter1/第一章%20初识智能体.md",
+      "content_type": "教学摘要，非教材原文"
+    },
+    {
+      "id": "N03",
+      "title": "Finish 与最大步数",
+      "keywords": ["finish", "max_steps", "最大步数", "轮数上限", "次数上限", "无限循环", "结束", "停止"],
+      "content": "程序识别到 Finish 后提取最终答案并结束。最大步数限制了循环的执行预算，防止持续运行和资源耗尽。达到上限本身不能证明任务完成；在我们的练习中，没有 Finish 就报告未完成。",
+      "source_section": "Hello-Agents 第四章 §4.2.3 ReAct 智能体的编码实现；未完成状态说明为本项目的教学扩展",
+      "source_url": "https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter4/第四章%20智能体经典范式构建.md",
+      "content_type": "教学摘要与已标注的扩展，非教材原文"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-learning-journey"
+version = "0.1.0"
+description = "A small, inspectable research agent built from model calls and a bounded tool loop."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["openai==2.54.0", "python-dotenv==1.2.4"]
+
+[project.scripts]
+agent-research = "agent_learning.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools]
+license-files = ["LICENSE", "NOTICE.md", "LICENSES/*.txt"]
+
+[tool.setuptools.package-data]
+agent_learning = ["data/*.json"]

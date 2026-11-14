@@ -1,0 +1,24 @@
+.env
+.env.*
+!.env.example
+.venv/
+.uv-cache/
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.DS_Store
+
+# 本机学习材料与兼容入口，不属于公开源码。
+/day01/
+/day02/
+/day03/
+/research_agent/
+/hello agent 学习计划.html
+/hello-agent-plan-v2.html
+/docs/learning-log.md
+/docs/teaching-guide.md
+/outputs/
