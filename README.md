@@ -45,6 +45,7 @@ python -m venv .venv
 
 ```powershell
 # Windows PowerShell
+$env:PYTHONUTF8 = "1"
 .\.venv\Scripts\Activate.ps1
 python -m pip install -e .
 Copy-Item .env.example .env
