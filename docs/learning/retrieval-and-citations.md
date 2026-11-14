@@ -1,6 +1,6 @@
 # 第 4 章 · 检索、引用与资料不足
 
-[章节目录](../../README.md#章节目录) · [上一章：Agent Loop](agent-loop.md) · [后续编排](../roadmap.md)
+[章节目录](../../README.md#章节目录) · [上一章：Agent Loop](agent-loop.md) · [下一章：状态与上下文](state-and-context.md)
 
 本章在 [Hello-Agents 第四章 §4.2](https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter4/第四章%20智能体经典范式构建.md) 的工具循环思路上扩展我们自己的资料问答案例。本地标签检索、引用编号和资料不足处理均属于本项目设计；本章不是第八章 RAG 的完整讲解。
 

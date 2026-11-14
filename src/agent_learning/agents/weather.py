@@ -21,6 +21,7 @@ SYSTEM_PROMPT = """
 """
 
 
-def run_weather(client, model, question, options, max_steps=5):
+def run_weather(client, model, question, options, max_steps=5, *, budget_context=False):
     return run_agent(client, model, question, options, max_steps,
-                     system_prompt=SYSTEM_PROMPT, tool_executor=execute_action)
+                     system_prompt=SYSTEM_PROMPT, tool_executor=execute_action,
+                     budget_context=budget_context)

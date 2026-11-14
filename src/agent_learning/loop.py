@@ -9,7 +9,7 @@ from .llm import ask_model
 
 
 def run_agent(client, model, question, options, max_steps=5, *,
-              system_prompt, tool_executor, finish_validator=None):
+              system_prompt, tool_executor, finish_validator=None, budget_context=False):
     """max_steps 是模型请求上限，工具执行和引用纠错都在同一预算内。"""
     if max_steps < 1:
         raise ValueError("max_steps 必须至少为 1。")
@@ -19,7 +19,17 @@ def run_agent(client, model, question, options, max_steps=5, *,
     ]
     tool_calls = 0
     for step in range(1, max_steps + 1):
-        action = ask_model(client, model, messages, options)
+        request_messages = messages
+        if budget_context:
+            # 包含即将发出的本次请求；预算提示只用于这一轮，不积累到历史。
+            remaining_calls = max_steps - step + 1
+            budget_hint = (
+                f"运行预算：本轮是第 {step}/{max_steps} 次模型请求，"
+                f"包含本次，还可以请求模型 {remaining_calls} 次。"
+            )
+            request_messages = messages + [{"role": "user", "content": budget_hint}]
+            print(f"\n[请求上下文] {budget_hint}")
+        action = ask_model(client, model, request_messages, options)
         print(f"\n[第 {step} 轮] {action}")
         messages.append({"role": "assistant", "content": action})
 

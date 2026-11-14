@@ -15,6 +15,7 @@ Research Agent 是手册的贯穿案例，用来把各章机制连接起来。�
 | 回传工具结果 | Python 已取得数据，下一次模型请求如何得到它？ | [tool_roundtrip.py](../../examples/tool_roundtrip.py) | [Observation 与消息](../learning/tool-feedback.md) |
 | 有限循环 | 任务需要多次工具操作，怎样继续决策并控制停止？ | [weather_loop.py](../../examples/weather_loop.py) | [Agent Loop](../learning/agent-loop.md) |
 | 检索与来源检查 | 回答依据在哪里？缺少依据时怎样结束？ | [research.py](../../src/agent_learning/agents/research.py) | [检索与引用](../learning/retrieval-and-citations.md) |
+| 动态请求上下文（天气实验） | 程序知道剩余预算，怎样把它交给模型？ | [loop.py](../../src/agent_learning/loop.py) | [状态与上下文](../learning/state-and-context.md) |
 
 基础来源是 [Hello-Agents 第四章 §4.1–4.2](https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter4/第四章%20智能体经典范式构建.md)。模拟天气、本地摘要、引用检查和任务状态是本仓库用于理解原理的简化与扩展。
 
@@ -45,11 +46,11 @@ Research Agent 是手册的贯穿案例，用来把各章机制连接起来。�
 
 ## 当前能力边界与下一步
 
-当前已有消息历史、工具执行计数、查询去重和来源记录，但这些程序状态没有全部进入模型输入。下一个实验会聚焦“哪些状态需要提供给模型”，再逐步比较规划与反思，最后用 LangGraph 表达已经理解的流程。
+当前已有消息历史、工具执行计数、查询去重和来源记录，但这些程序状态没有全部进入模型输入。天气示例已用预算提示展示如何将选定状态加入本轮请求，并完成三次真实对照。接下来继续区分历史与临时信息，再逐步比较规划与反思，最后用 LangGraph 表达已经理解的流程。
 
 | 待学习机制 | 希望回答的问题 | 当前状态 |
 | --- | --- | --- |
-| 状态与上下文 | 模型每轮应该看到哪些信息？ | 下一步实验，尚未实现动态预算提示 |
+| 状态与上下文 | 模型每轮应该看到哪些信息？ | 天气示例已完成基础预算实验；研究助手入口仍使用默认模式 |
 | Plan-and-Solve | 先列计划再执行，与逐轮决策有什么差别？ | 尚未学习与实现 |
 | Reflection | 怎样用评审结果修订回答，并限制修订次数？ | 尚未学习与实现 |
 | 检索改进与评估 | 资料更多时，怎样判断检索与回答质量？ | 仅有最小关键词检索和固定任务 |

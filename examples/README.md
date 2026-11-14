@@ -25,3 +25,24 @@
 天气只有北京与上海的模拟数据；不将结果解释为实时天气。上限实验中的 `step_limit` 与退出码 1 可以是符合预期的结果。更完整的验收见 [评估文档](../docs/evaluation.md)。
 
 示例依次复用 `agent_learning` 中的配置、请求、工具与循环。学习时先定位一段关键代码，再做小幅修改，最后用观察结果解释机制。
+
+## 状态与上下文：预算提示对照
+
+这个实验对应 Hello-Agents 第九章 §9.1、§9.2.1。保持问题、模型和请求上限一致，仅切换是否把本轮剩余预算加入模型消息：
+
+```bash
+python -m examples.weather_loop --max-steps 2
+python -m examples.weather_loop --max-steps 2 --budget-context
+```
+
+开启后，每轮会显示实际附加到请求中的预算提示；提示只加入本轮的消息副本，不累积到历史。程序的请求上限仍为 2。此处统计的是模型请求次数，不是 token 预算。
+
+两次已有真实运行都在两次查询后耗尽预算。保持提示开启，再只把上限改为 3：
+
+```bash
+python -m examples.weather_loop --max-steps 3 --budget-context
+```
+
+该次运行在第三轮输出有效 Finish。完整结果与原因解释见 [第 5 章](../docs/learning/state-and-context.md)；不能据此归因于提示效果，因为这次同时增加了可用请求次数。
+
+离线检查使用固定模型回复，验证提示更新、历史保留和上限约束。真实模型结果另行核对数据是否齐全、是否有有效 Finish，以及结论是否有依据。

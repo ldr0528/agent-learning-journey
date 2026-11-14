@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="818" viewBox="0 0 1280 818" role="img" aria-labelledby="title desc">
+<title id="title">历史信息与本轮状态，怎样组成模型输入？</title>
+<desc id="desc">messages 保留用户问题与两座城市的 Action 和 Observation；程序在第三轮重算剩余请求次数为一。新的 request_messages 合并历史与本轮提示后发送给模型，生成比较答案。</desc>
+<defs>
+<marker id="arrow-gray" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto" markerUnits="userSpaceOnUse">
+<path d="M0 0L6 3.5L0 7" fill="none" stroke="#798596" stroke-width="1.3"/>
+</marker>
+<marker id="arrow-blue" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto" markerUnits="userSpaceOnUse">
+<path d="M0 0L6 3.5L0 7" fill="none" stroke="#3867D6" stroke-width="1.3"/>
+</marker>
+<marker id="arrow-green" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto" markerUnits="userSpaceOnUse">
+<path d="M0 0L6 3.5L0 7" fill="none" stroke="#27816C" stroke-width="1.3"/>
+</marker>
+<marker id="arrow-orange" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto" markerUnits="userSpaceOnUse">
+<path d="M0 0L6 3.5L0 7" fill="none" stroke="#B36535" stroke-width="1.3"/>
+</marker>
+</defs>
+<rect width="1280" height="818" fill="white"/>
+<g font-family="Segoe UI, Microsoft YaHei, sans-serif">
+<text x="48" y="34" font-size="12" fill="#6B7585" font-weight="600" text-anchor="start" >AGENT LEARNING JOURNEY   /   FIG 5–1</text>
+<text x="48" y="79" font-size="30" fill="#20293A" font-weight="600" text-anchor="start" >历史信息与本轮状态，怎样组成模型输入？</text>
+<text x="48" y="112" font-size="18" fill="#6B7585" font-weight="400" text-anchor="start" >根据第三轮天气比较的代码与运行轨迹重建消息结构；天气为模拟数据。</text>
+<path d="M48 138H1232" fill="none" stroke="#D9DFE8" stroke-width="1.5" />
+<text x="64" y="190" font-size="17" fill="#6B7585" font-weight="600" text-anchor="start" >保留到后续轮次</text>
+<rect x="64" y="212" width="452" height="234" rx="7" fill="#FFFFFF" stroke="#D9DFE8" stroke-width="1.5" />
+<text x="86" y="246" font-size="21" fill="#3867D6" font-weight="600" text-anchor="start" font-family="Consolas, Microsoft YaHei, monospace">messages</text>
+<path d="M86 263H494" fill="none" stroke="#D9DFE8" stroke-width="1.5" />
+<text x="86" y="298" font-size="21" fill="#20293A" font-weight="400" text-anchor="start" >system + 用户问题</text>
+<text x="86" y="337" font-size="20" fill="#20293A" font-weight="400" text-anchor="start" >北京 Action → Observation：12℃</text>
+<text x="86" y="376" font-size="20" fill="#20293A" font-weight="400" text-anchor="start" >上海 Action → Observation：22℃</text>
+<text x="86" y="416" font-size="18" fill="#6B7585" font-weight="400" text-anchor="start" >比较时仍然需要这些历史结果</text>
+<text x="64" y="483" font-size="17" fill="#6B7585" font-weight="600" text-anchor="start" >每轮重新计算</text>
+<rect x="64" y="504" width="452" height="130" rx="7" fill="#F3FAF7" stroke="#BBDACF" stroke-width="1.5" />
+<text x="86" y="540" font-size="22" fill="#27816C" font-weight="600" text-anchor="start" >运行状态 · 即将发出第 3 次请求</text>
+<text x="86" y="577" font-size="19" fill="#6B7585" font-weight="400" text-anchor="start" font-family="Consolas, Microsoft YaHei, monospace">step = 3 · max_steps = 3</text>
+<text x="86" y="611" font-size="18" fill="#27816C" font-weight="400" text-anchor="start" font-family="Consolas, Microsoft YaHei, monospace">remaining_calls = 3 - 3 + 1 = 1</text>
+<path d="M516 329H736" fill="none" stroke="#3867D6" stroke-width="1.7"  marker-end="url(#arrow-blue)"/>
+<text x="626" y="309" font-size="18" fill="#3867D6" font-weight="400" text-anchor="middle" >历史消息</text>
+<path d="M516 566H736" fill="none" stroke="#27816C" stroke-width="1.7"  marker-end="url(#arrow-green)"/>
+<text x="626" y="546" font-size="18" fill="#27816C" font-weight="400" text-anchor="middle" >本轮预算提示</text>
+<rect x="744" y="212" width="472" height="422" rx="7" fill="#FFFFFF" stroke="#D9DFE8" stroke-width="1.5" />
+<text x="766" y="246" font-size="22" fill="#3867D6" font-weight="600" text-anchor="start" font-family="Consolas, Microsoft YaHei, monospace">request_messages</text>
+<text x="766" y="277" font-size="18" fill="#6B7585" font-weight="400" text-anchor="start" >实际传给 ask_model 的消息</text>
+<rect x="766" y="296" width="428" height="154" rx="5" fill="#F5F8FF" stroke="none" stroke-width="1.5" />
+<text x="786" y="330" font-size="21" fill="#20293A" font-weight="400" text-anchor="start" >system + 用户问题</text>
+<text x="786" y="373" font-size="19" fill="#20293A" font-weight="400" text-anchor="start" >Action + Observation（北京 12℃）</text>
+<text x="786" y="416" font-size="19" fill="#20293A" font-weight="400" text-anchor="start" >Action + Observation（上海 22℃）</text>
+<rect x="766" y="478" width="428" height="132" rx="5" fill="#F3FAF7" stroke="none" stroke-width="1.5" />
+<text x="786" y="514" font-size="22" fill="#27816C" font-weight="400" text-anchor="start" >运行预算：第 3/3 次请求</text>
+<text x="786" y="550" font-size="22" fill="#27816C" font-weight="400" text-anchor="start" >包含本次，还可请求 1 次</text>
+<text x="786" y="589" font-size="17" fill="#6B7585" font-weight="400" text-anchor="start" >只附加当前这一轮的提示</text>
+<path d="M980 634V682" fill="none" stroke="#3867D6" stroke-width="1.7"  marker-end="url(#arrow-blue)"/>
+<text x="980" y="719" font-size="23" fill="#27816C" font-weight="600" text-anchor="middle" >模型：Finish[上海更暖和…]</text>
+<path d="M64 757H1216" fill="none" stroke="#D9DFE8" stroke-width="1.5" />
+<text x="64" y="789" font-size="19" fill="#6B7585" font-weight="400" text-anchor="start" >历史提供依据，临时提示提供当前状态；只有随请求发出，才进入模型上下文。</text>
+</g>
+</svg>
