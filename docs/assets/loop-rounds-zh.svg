@@ -1,56 +1,68 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1360" height="700" viewBox="0 0 1360 700" role="img" aria-labelledby="title desc">
-<title id="title">一次任务，三轮决策</title>
-<desc id="desc">第一轮查北京，第二轮查上海，第三轮输出 Finish；请求上限为二时，在第三次请求前停止，报告未完成。</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="728" viewBox="0 0 1280 728" role="img" aria-labelledby="title desc">
+<title id="title">循环怎样继续，又在哪里停止？</title>
+<desc id="desc">程序在每次模型请求前检查预算。模型可以要求执行天气工具，其结果写回消息后再检查预算；有效 Finish 正常结束，预算耗尽报告未完成。下方为三轮天气轨迹。</desc>
 <defs>
-<marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
-<path d="M0 0L7 4L0 8" fill="none" stroke="#5e7c80" stroke-width="1.5"/>
+<marker id="arrow-gray" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto" markerUnits="userSpaceOnUse">
+<path d="M0 0L6 3.5L0 7" fill="none" stroke="#798596" stroke-width="1.3"/>
+</marker>
+<marker id="arrow-blue" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto" markerUnits="userSpaceOnUse">
+<path d="M0 0L6 3.5L0 7" fill="none" stroke="#3867D6" stroke-width="1.3"/>
+</marker>
+<marker id="arrow-green" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto" markerUnits="userSpaceOnUse">
+<path d="M0 0L6 3.5L0 7" fill="none" stroke="#27816C" stroke-width="1.3"/>
+</marker>
+<marker id="arrow-orange" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto" markerUnits="userSpaceOnUse">
+<path d="M0 0L6 3.5L0 7" fill="none" stroke="#B36535" stroke-width="1.3"/>
 </marker>
 </defs>
-<rect width="1360" height="700" rx="24" fill="#f5f7f5"/>
-<path d="M24 0H1336Q1360 0 1360 24V128H0V24Q0 0 24 0Z" fill="#142e37"/>
-<g font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif">
-<text x="48" y="62" font-size="35" fill="#ffffff" font-weight="700">一次任务，三轮决策</text>
-<text x="48" y="101" font-size="21" fill="#c4d9d9" font-weight="400">依据已经运行过的北京、上海天气比较轨迹绘制。</text>
-<rect x="48" y="184" width="384" height="348" rx="16" fill="#fff" stroke="#d5e1de" stroke-width="1.5"/>
-<text x="72" y="223" font-size="27" fill="#183c43" font-weight="700">第 1 轮</text>
-<rect x="68" y="245" width="344" height="112" rx="10" fill="#edf3fb" stroke="none" stroke-width="1.5"/>
-<text x="84" y="275" font-size="20" fill="#244b6b" font-weight="700">模型请求</text>
-<text x="84" y="308" font-size="21" fill="#425c62" font-weight="400">尚无工具结果</text>
-<text x="84" y="339" font-size="17" fill="#244b6b" font-weight="400">Action: get_weather(city=&quot;北京&quot;)</text>
-<path d="M240 361V380" fill="none" stroke="#5e7c80" stroke-width="2.5"  marker-end="url(#arrow)"/>
-<rect x="68" y="392" width="344" height="116" rx="10" fill="#eaf4ef" stroke="none" stroke-width="1.5"/>
-<text x="84" y="423" font-size="20" fill="#276357" font-weight="700">执行工具 ①</text>
-<text x="84" y="458" font-size="25" fill="#276357" font-weight="700">下雨，12℃</text>
-<text x="84" y="490" font-size="19" fill="#425c62" font-weight="400">追加北京的 Observation</text>
-<rect x="488" y="184" width="384" height="348" rx="16" fill="#fff" stroke="#d5e1de" stroke-width="1.5"/>
-<text x="512" y="223" font-size="27" fill="#183c43" font-weight="700">第 2 轮</text>
-<rect x="508" y="245" width="344" height="112" rx="10" fill="#edf3fb" stroke="none" stroke-width="1.5"/>
-<text x="524" y="275" font-size="20" fill="#244b6b" font-weight="700">模型请求</text>
-<text x="524" y="308" font-size="21" fill="#425c62" font-weight="400">已有北京结果</text>
-<text x="524" y="339" font-size="17" fill="#244b6b" font-weight="400">Action: get_weather(city=&quot;上海&quot;)</text>
-<path d="M680 361V380" fill="none" stroke="#5e7c80" stroke-width="2.5"  marker-end="url(#arrow)"/>
-<rect x="508" y="392" width="344" height="116" rx="10" fill="#eaf4ef" stroke="none" stroke-width="1.5"/>
-<text x="524" y="423" font-size="20" fill="#276357" font-weight="700">执行工具 ②</text>
-<text x="524" y="458" font-size="25" fill="#276357" font-weight="700">晴天，22℃</text>
-<text x="524" y="490" font-size="19" fill="#425c62" font-weight="400">追加上海的 Observation</text>
-<rect x="928" y="184" width="384" height="348" rx="16" fill="#fff" stroke="#d5e1de" stroke-width="1.5"/>
-<text x="952" y="223" font-size="27" fill="#183c43" font-weight="700">第 3 轮</text>
-<rect x="948" y="245" width="344" height="112" rx="10" fill="#edf3fb" stroke="none" stroke-width="1.5"/>
-<text x="964" y="275" font-size="20" fill="#244b6b" font-weight="700">模型请求</text>
-<text x="964" y="308" font-size="21" fill="#425c62" font-weight="400">已有北京与上海结果</text>
-<text x="964" y="339" font-size="17" fill="#244b6b" font-weight="400">Action: Finish[上海更暖和…]</text>
-<path d="M1120 361V380" fill="none" stroke="#5e7c80" stroke-width="2.5"  marker-end="url(#arrow)"/>
-<rect x="948" y="392" width="344" height="116" rx="10" fill="#eaf4ef" stroke="none" stroke-width="1.5"/>
-<text x="964" y="423" font-size="20" fill="#276357" font-weight="700">接受最终答复</text>
-<text x="964" y="458" font-size="25" fill="#276357" font-weight="700">结束，不调用工具</text>
-<text x="964" y="490" font-size="19" fill="#425c62" font-weight="400">保留答案与计数</text>
-<path d="M442 320H476" fill="none" stroke="#5e7c80" stroke-width="2.5"  marker-end="url(#arrow)"/>
-<path d="M882 320H916" fill="none" stroke="#5e7c80" stroke-width="2.5"  marker-end="url(#arrow)"/>
-<path d="M900 166V548" fill="none" stroke="#ba7546" stroke-width="2" stroke-dasharray="7 6"/>
-<rect x="48" y="566" width="824" height="66" rx="16" fill="#fff1e5" stroke="none" stroke-width="1.5"/>
-<text x="72" y="607" font-size="23" fill="#81522d" font-weight="700">上限为 2：到此停止，数据齐了，但还没有最终答复。</text>
-<rect x="928" y="566" width="384" height="66" rx="16" fill="#eaf4ef" stroke="none" stroke-width="1.5"/>
-<text x="952" y="607" font-size="21" fill="#276357" font-weight="700">模型请求 3 次 · 工具执行 2 次</text>
-<text x="48" y="673" font-size="21" fill="#425c62" font-weight="400">消息会累积：第三次请求包含两座城市的结果。图中天气为教学模拟数据。</text>
+<rect width="1280" height="728" fill="white"/>
+<g font-family="Segoe UI, Microsoft YaHei, sans-serif">
+<text x="48" y="34" font-size="12" fill="#6B7585" font-weight="600" text-anchor="start" >AGENT LEARNING JOURNEY   /   FIG 3–1</text>
+<text x="48" y="79" font-size="30" fill="#20293A" font-weight="600" text-anchor="start" >循环怎样继续，又在哪里停止？</text>
+<text x="48" y="112" font-size="18" fill="#6B7585" font-weight="400" text-anchor="start" >先检查预算，再请求模型；一次工具执行不等于一次完整任务。</text>
+<path d="M48 138H1232" fill="none" stroke="#D9DFE8" stroke-width="1.5" />
+<path d="M1066 282V216Q1066 204 1054 204H206Q194 204 194 216V274" fill="none" stroke="#27816C" stroke-width="1.7"  marker-end="url(#arrow-green)"/>
+<text x="630" y="187" font-size="20" fill="#27816C" font-weight="400" text-anchor="middle" >工具结果作为 Observation 写回 messages</text>
+<rect x="64" y="282" width="260" height="98" rx="7" fill="#FFFFFF" stroke="#D9DFE8" stroke-width="1.5" />
+<text x="194" y="322" font-size="24" fill="#20293A" font-weight="600" text-anchor="middle" >检查请求预算</text>
+<text x="194" y="355" font-size="19" fill="#6B7585" font-weight="400" text-anchor="middle" font-family="Consolas, Microsoft YaHei, monospace">step ≤ max_steps</text>
+<path d="M324 331H436" fill="none" stroke="#3867D6" stroke-width="1.7"  marker-end="url(#arrow-blue)"/>
+<text x="382" y="311" font-size="18" fill="#6B7585" font-weight="400" text-anchor="middle" >有预算</text>
+<rect x="444" y="282" width="300" height="98" rx="7" fill="#F5F8FF" stroke="#B5C9F4" stroke-width="1.5" />
+<text x="594" y="322" font-size="26" fill="#3867D6" font-weight="600" text-anchor="middle" >请求模型</text>
+<text x="594" y="355" font-size="19" fill="#6B7585" font-weight="400" text-anchor="middle" >基于已有消息选择下一步</text>
+<path d="M744 331H908" fill="none" stroke="#27816C" stroke-width="1.7"  marker-end="url(#arrow-green)"/>
+<text x="826" y="311" font-size="18" fill="#6B7585" font-weight="400" text-anchor="middle" >工具 Action</text>
+<rect x="916" y="282" width="300" height="98" rx="7" fill="#F3FAF7" stroke="#BBDACF" stroke-width="1.5" />
+<text x="1066" y="322" font-size="25" fill="#27816C" font-weight="600" text-anchor="middle" >执行天气工具</text>
+<text x="1066" y="355" font-size="19" fill="#6B7585" font-weight="400" text-anchor="middle" >返回当前城市的模拟天气</text>
+<path d="M194 380V444" fill="none" stroke="#B36535" stroke-width="1.7"  marker-end="url(#arrow-orange)"/>
+<text x="216" y="418" font-size="18" fill="#B36535" font-weight="400" text-anchor="start" >预算耗尽</text>
+<rect x="64" y="452" width="260" height="78" rx="7" fill="#FFF8F1" stroke="#E6CBB6" stroke-width="1.5" />
+<text x="194" y="484" font-size="22" fill="#B36535" font-weight="600" text-anchor="middle" font-family="Consolas, Microsoft YaHei, monospace">step_limit</text>
+<text x="194" y="514" font-size="18" fill="#6B7585" font-weight="400" text-anchor="middle" >未取得有效最终答复</text>
+<path d="M594 380V444" fill="none" stroke="#27816C" stroke-width="1.7"  marker-end="url(#arrow-green)"/>
+<text x="616" y="418" font-size="18" fill="#27816C" font-weight="400" text-anchor="start" >有效 Finish</text>
+<rect x="444" y="452" width="300" height="78" rx="7" fill="#F3FAF7" stroke="#BBDACF" stroke-width="1.5" />
+<text x="594" y="484" font-size="22" fill="#27816C" font-weight="600" text-anchor="middle" font-family="Consolas, Microsoft YaHei, monospace">finished</text>
+<text x="594" y="514" font-size="18" fill="#6B7585" font-weight="400" text-anchor="middle" >接受答复，结束循环</text>
+<text x="916" y="476" font-size="20" fill="#20293A" font-weight="600" text-anchor="start" >两种结束含义不同</text>
+<text x="916" y="507" font-size="19" fill="#6B7585" font-weight="400" text-anchor="start" >流程结束 ≠ 内容一定正确</text>
+<path d="M64 570H1216" fill="none" stroke="#D9DFE8" stroke-width="1.5" />
+<text x="64" y="601" font-size="17" fill="#6B7585" font-weight="600" text-anchor="start" >已发生的天气轨迹</text>
+<text x="1216" y="601" font-size="18" fill="#6B7585" font-weight="400" text-anchor="end" >3 次模型请求 / 2 次工具执行</text>
+<circle cx="88" cy="644" r="12" fill="white" stroke="#3867D6" stroke-width="1.5"/>
+<text x="88" y="649" font-size="14" fill="#3867D6" font-weight="600" text-anchor="middle" >1</text>
+<text x="112" y="651" font-size="22" fill="#20293A" font-weight="400" text-anchor="start" >北京 · 12℃</text>
+<path d="M294 644H431" fill="none" stroke="#798596" stroke-width="1.7"  marker-end="url(#arrow-gray)"/>
+<circle cx="470" cy="644" r="12" fill="white" stroke="#3867D6" stroke-width="1.5"/>
+<text x="470" y="649" font-size="14" fill="#3867D6" font-weight="600" text-anchor="middle" >2</text>
+<text x="494" y="651" font-size="22" fill="#20293A" font-weight="400" text-anchor="start" >上海 · 22℃</text>
+<path d="M678 644H855" fill="none" stroke="#798596" stroke-width="1.7"  marker-end="url(#arrow-gray)"/>
+<circle cx="896" cy="644" r="12" fill="white" stroke="#3867D6" stroke-width="1.5"/>
+<text x="896" y="649" font-size="14" fill="#3867D6" font-weight="600" text-anchor="middle" >3</text>
+<text x="920" y="651" font-size="22" fill="#27816C" font-weight="400" text-anchor="start" >Finish · 上海更暖和</text>
+<path d="M802 623V669" fill="none" stroke="#B36535" stroke-width="1.5" stroke-dasharray="5 7"/>
+<text x="802" y="697" font-size="18" fill="#B36535" font-weight="400" text-anchor="middle" >上限为 2 时，到此停止</text>
 </g>
 </svg>

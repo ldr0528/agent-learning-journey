@@ -20,3 +20,9 @@
 ## 仓库呈现参考
 
 参考 [smolagents](https://github.com/huggingface/smolagents) 的源码、示例与测试分层，及 [LangGraph](https://github.com/langchain-ai/langgraph) 的功能说明与文档导航。不复制这两个项目的代码、图像或标识，不表示与其存在隶属或背书关系。
+
+## 图示的视觉参考
+
+图示布局参考 [D2 的时序图文档](https://d2lang.com/tour/sequence-diagrams/) 中的参与者、生命线与消息组织，以及 [LangGraph 的工作流文档](https://docs.langchain.com/oss/python/langgraph/workflows-agents) 中用节点和连线解释关系的方式。采用本项目独立设计的白底、细线、少量配色样式，结构、中文标注和案例均按本项目代码重新绘制，未复制参考图片或标识。
+
+图示的统一配色、字体层级和维护约定见 [图示规范](docs/assets/README.md)。

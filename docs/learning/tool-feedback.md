@@ -81,7 +81,7 @@ def execute_action(action):
 
 ![两次模型请求之间，Python 执行工具并把 Action 和 Observation 加入消息](../assets/tool-feedback-zh.svg)
 
-图 2-1 根据本项目代码原创绘制。右侧消息列表显示第二次请求比第一次多了什么；打印终端与更新消息列表是两个动作。
+图 2-1 根据本项目代码原创绘制。时间从上往下推进，三列分别表示程序、模型和天气工具；箭头表示它们之间的请求与返回，第 5 步明确标出消息更新的位置。
 
 以下是主流程的讲解节选。`SYSTEM_PROMPT` 使用本章前述的工具规则，`client`、`model`、`options` 沿用上一章的配置：
 
