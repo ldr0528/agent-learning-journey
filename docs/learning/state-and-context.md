@@ -2,7 +2,7 @@
 
 [章节目录](../../README.md#章节目录) · [上一章：检索、引用与资料不足](retrieval-and-citations.md) · [后续编排](../roadmap.md)
 
-本章基础内容参考 [Hello-Agents 第九章 §9.1、§9.2.1](https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter9/第九章%20上下文工程.md)。教材讨论每次请求前如何组织模型可见的信息；下面的请求预算提示、天气对照与分析是我们自己的教学扩展。当前已完成这部分基础实验，上下文筛选、压缩和记忆管理尚未系统展开。
+本章参考 [Hello-Agents 第九章 §9.1、§9.2.1、§9.2.3](https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter9/第九章%20上下文工程.md)。教材讨论每次请求前如何组织模型可见的信息，以及较早信息的压缩整合。下面的请求预算提示、天气对照、规则摘要与分析是我们自己的教学扩展。预算实验已有真实模型结果；摘要接入已有离线检查，真实模型对照尚待完成。
 
 ## 5.1 程序保存的信息，不会自动成为模型输入
 
@@ -31,25 +31,25 @@ remaining_calls = max_steps - step + 1
 计算出一个整数仍然只改变程序状态。要把它交给模型，需要先组织成文字，再加入真正发送的消息。下面是 [loop.py](../../src/agent_learning/loop.py) 中的实际请求构造部分；它位于每轮循环内部：
 
 ```python
-request_messages = messages
+request_messages = context_builder(messages) if context_builder else messages
 if budget_context:
     remaining_calls = max_steps - step + 1
     budget_hint = (
         f"运行预算：本轮是第 {step}/{max_steps} 次模型请求，"
         f"包含本次，还可以请求模型 {remaining_calls} 次。"
     )
-    request_messages = messages + [{"role": "user", "content": budget_hint}]
+    request_messages = request_messages + [{"role": "user", "content": budget_hint}]
     print(f"\n[请求上下文] {budget_hint}")
 action = ask_model(client, model, request_messages, options)
 ```
 
-开关关闭时发送原有消息；打开时，发送“原有消息 + 本轮预算”。最后一行必须传 `request_messages`：如果仍传原来的 `messages`，前面构造的提示就没有进入请求。
+默认没有 `context_builder`，使用原有完整历史；后文的摘要模式会传入一个负责整理消息的函数。预算开关打开时，在选好的消息后追加本轮预算。最后一行必须传 `request_messages`：如果仍传原来的 `messages`，前面构造的提示就没有进入请求。
 
 此处的“预算”是模型请求次数，不是 token 上限，也不是工具执行次数。提示用于帮助模型决策，真正阻止超出次数的是程序中的循环上限。
 
 ![消息历史与本轮预算分别组织，再共同进入第三次模型请求](../assets/state-context-zh.svg)
 
-图 5-1 根据本项目请求构造代码与三轮天气轨迹原创绘制。持久保留的是本次任务的历史消息，预算提示则每轮重新生成。
+图 5-1 展示默认完整历史模式，根据本项目请求构造代码与三轮天气轨迹原创绘制。本次任务持续保留历史消息，预算提示则每轮重新生成；这里没有跨任务持久化存储。
 
 ## 5.3 已有结果：相同上限，切换预算提示
 
@@ -147,17 +147,107 @@ Observation: 晴天，22℃
 | 原始问题、Action、Observation | 追加到任务历史 `messages` | 后续决策仍然需要它们 |
 | 当前轮数与剩余请求次数 | 每轮计算，只加入 `request_messages` | 下一轮应使用更新后的数值 |
 
-`messages + [...]` 创建一个新列表，没有向原历史列表追加预算。每轮请求只附加当前那一条提示，因此不会因为反复追加而堆积“还剩 3 次、还剩 2 次、还剩 1 次”的旧预算消息。
+`request_messages + [...]` 创建一个新列表，没有向原历史列表追加预算。每轮请求只附加当前那一条提示，因此不会因为反复追加而堆积“还剩 3 次、还剩 2 次、还剩 1 次”的旧预算消息。
 
 这只是当前小型天气任务的选择，不意味着所有任务都应该保留全部历史。哪些信息需要保留、更新、筛选或压缩，是后续上下文工程要继续处理的问题。
 
-## 5.7 当前已经验证与尚未验证的内容
+## 5.7 预算实验的结论与边界
 
 我们已经实现并检查了动态构造请求：历史保留，本轮预算刷新，程序上限仍然生效。真实运行说明第三次请求收到两地资料后能够完成这次比较。
 
-尚未证明预算提示提高了成功率，也尚未实现上下文压缩、长期记忆或框架状态持久化。天气示例提供可选开关，研究助手的命令行入口仍使用默认模式；完成这部分基础实验不代表完成 Hello-Agents 第九章。
+尚未证明预算提示提高了成功率。下面继续用规则摘要探索消息整理，尚未实现模型自动压缩、token 预算管理、长期记忆或框架状态持久化。天气示例提供可选开关，研究助手的命令行入口仍使用默认模式；完成这些基础实验不代表完成 Hello-Agents 第九章。
 
 **配套代码**：[循环中的上下文构造](../../src/agent_learning/loop.py)、[天气示例入口](../../examples/weather_loop.py)、[离线请求快照检查](../../tests/test_agent_loop.py)。需要复现时查看 [配套命令](../../examples/README.md#状态与上下文预算提示对照)。
+
+## 5.8 截断历史会丢掉什么，摘要怎样补回来
+
+北京与上海的两次查询形成四条历史消息。如果只保留最后两条，就只剩上海的 Action 和 Observation。原问题虽然提到了北京，却没有北京的查询结果，不能据此进行有依据的比较。
+
+可以把较早的北京记录整理成一条摘要。学习者完成的函数已经收进 [context.py](../../src/agent_learning/context.py)：
+
+```python
+def summarize_records(records):
+    """将每条记录的城市、结果、来源写成一行。"""
+    lines = []
+    for record in records:
+        lines.append(
+            f'{record["city"]}：{record["result"]}（来源：{record["source"]}）'
+        )
+    return "\n".join(lines)
+```
+
+循环里的城市和调用来源从已识别的天气 Action 取得，`result` 从与它配对的程序 Observation 取得。摘要使用已有结果，不再调用天气工具，也不调用模型生成新事实。整理后的内容为：
+
+```text
+较早工具结果摘要（模拟数据）：
+北京：下雨，12℃（来源：get_weather(city="北京")）
+```
+
+“北京已经查过”只说明执行过操作，仍缺少温度。这里保留城市、完整结果、来源和模拟数据性质；如果结果是“暂无天气数据”，也要原样保留。
+
+助教执行 [离线预览](../../examples/context_preview.py) 得到以下结果。它调用本地模拟天气工具并构造消息，没有请求大模型；以下不是 Qwen 实测回答：
+
+| 方案 | 请求消息数（不含预算提示） | 北京的城市、结果、来源是否保留 |
+| --- | --- | --- |
+| 完整历史 | 6 | 是 |
+| 系统规则、问题 + 最近两条历史 | 4 | 否 |
+| 系统规则、问题 + 较早摘要 + 最近两条历史 | 5 | 是 |
+
+第三种方案的实际预览输出：
+
+```text
+C. 较早证据摘要 + 最近两条历史：5 条消息
+1. [system] 根据工具结果比较模拟天气，不编造数据。
+2. [user] 分别查询北京和上海的模拟天气，再比较哪里更暖和。
+3. [user] 较早工具结果摘要（模拟数据）：
+北京：下雨，12℃（来源：get_weather(city="北京")）
+4. [assistant] Action: get_weather(city="上海")
+5. [user] Observation: 晴天，22℃
+北京的城市、结果与来源均在请求中：True
+```
+
+预览中的检查是固定例子的文本检查，不是通用语义评估。这个短例减少了消息条数，但没有测量 token，不能据此宣称降低了成本。原始工具结果没有删减，摘要仍会随记录增多而增长。
+
+## 5.9 将摘要接回每一轮请求
+
+天气示例的 `--context-mode summary` 会把 `build_weather_context` 传给循环。循环在每次模型调用前，用它从完整 `messages` 生成本轮输入：
+
+```python
+request_messages = context_builder(messages) if context_builder else messages
+```
+
+这里传入的是一个函数，`context_builder(messages)` 表示调用这个函数整理消息。默认完整历史模式不传整理函数。摘要模式内部的最终组装如下，外围的解析与格式检查见完整源码：
+
+```python
+summary = summarize_records(records)
+summary_message = {"role": "user", "content": "较早工具结果摘要（模拟数据）：\n" + summary}
+recent_history = history[-2:]
+request_messages = base_messages + [summary_message] + recent_history
+```
+
+预算提示接在整理好的 `request_messages` 后面，再把结果交给 `ask_model`。如果这一处误用 `messages + [budget_message]`，就会重新取回完整历史，覆盖刚构造的摘要。
+
+在先查北京、再查上海的轨迹中，输入随轮次变化如下：
+
+| 请求 | 摘要模式选用的历史 | 另外保留的内容 |
+| --- | --- | --- |
+| 第 1 次 | 无历史 | 系统规则、问题、本轮预算（若开启） |
+| 第 2 次 | 北京 Action 和 Observation | 系统规则、问题、本轮预算（若开启） |
+| 第 3 次 | 北京摘要 + 上海 Action 和 Observation | 系统规则、问题、本轮预算（若开启） |
+
+因此正常情况下第三次请求前才出现 `[历史摘要]`。模型的选择可能不同，这张表只描述上述指定行动顺序。
+
+完整 `messages` 始终保存原始记录。摘要每轮从这些记录重新构造，不放回历史；旧预算也不进入摘要。接收模型回复后，程序照常追加 Action、执行工具、追加 Observation，再进入下一轮。
+
+当前整理器只支持本项目天气文字协议。它按完整的 Action/Observation 对整理较早消息，最近一对原样保留；若较早消息含解析错误或不能识别的格式，就保留完整历史，避免丢掉纠错信息。研究助手的检索与引用没有套用这套天气规则。
+
+## 5.10 已验证的接入行为与下一步对照
+
+离线测试使用预设模型回复和真实的本地模拟工具，检查摘要是否进入实际传给请求函数的列表。检查已覆盖：多轮后保留两地资料、预算只附加本轮值、广州无数据原样保留、格式错误历史保留，以及构造请求不修改原始历史。这些检查不评价真实模型的回答质量。
+
+下一步保持模型、问题、请求上限与预算开关一致，仅切换 `--context-mode full` 和 `--context-mode summary`。对照命令见 [摘要接入实验](../../examples/README.md#状态与上下文摘要接回循环)。观察模型是否仍能查询两地、依据资料比较，并输出有效 Finish；若出现重复查询、格式问题或达到上限，按实际结果分析。
+
+摘要模式的真实 API 对照尚待学习者运行。完成这一步后，学习主线回到 Hello-Agents 第四章 §4.3 Plan-and-Solve；完整的上下文窗口管理与自动压缩仍是后续主题。
 
 ---
 

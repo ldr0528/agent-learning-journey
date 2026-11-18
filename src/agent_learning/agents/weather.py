@@ -1,5 +1,6 @@
 """使用模拟天气工具的 Agent。"""
 
+from ..context import build_weather_context
 from ..loop import run_agent
 from ..tools.weather import execute_action
 
@@ -21,7 +22,11 @@ SYSTEM_PROMPT = """
 """
 
 
-def run_weather(client, model, question, options, max_steps=5, *, budget_context=False):
+def run_weather(client, model, question, options, max_steps=5, *, budget_context=False,
+                context_mode="full"):
+    if context_mode not in {"full", "summary"}:
+        raise ValueError("context_mode 必须为 full 或 summary。")
     return run_agent(client, model, question, options, max_steps,
                      system_prompt=SYSTEM_PROMPT, tool_executor=execute_action,
-                     budget_context=budget_context)
+                     budget_context=budget_context,
+                     context_builder=build_weather_context if context_mode == "summary" else None)

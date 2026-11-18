@@ -14,6 +14,8 @@ def main():
     parser.add_argument("--max-steps", type=int, default=5)
     parser.add_argument("--budget-context", action="store_true",
                         help="在每次模型请求中提供当前轮数与剩余请求预算")
+    parser.add_argument("--context-mode", choices=["full", "summary"], default="full",
+                        help="full 保留完整历史；summary 整理较早天气结果并保留最近一组消息")
     parser.add_argument("--provider", choices=["qwen", "openai"])
     args = parser.parse_args()
     if args.max_steps < 1 or not args.question.strip():
@@ -22,11 +24,13 @@ def main():
         settings = load_settings(args.provider)
         print(f"服务：{settings.provider} / {settings.model}；模型请求上限：{args.max_steps}。")
         print(f"预算上下文：{'开启' if args.budget_context else '关闭'}。")
+        print(f"历史上下文：{'完整历史' if args.context_mode == 'full' else '较早结果摘要 + 最近消息'}。")
         print(f"问题：{args.question}")
         with settings.create_client() as client:
             result = run_weather(client, settings.model, args.question,
                                  settings.request_options, args.max_steps,
-                                 budget_context=args.budget_context)
+                                 budget_context=args.budget_context,
+                                 context_mode=args.context_mode)
     except APIConnectionError:
         print("连接失败或超时。")
         return 1
