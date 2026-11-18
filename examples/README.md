@@ -9,10 +9,11 @@
 | [结果回传](../docs/learning/tool-feedback.md) | `python -m examples.tool_roundtrip --city 上海` | 哪一步让第二次请求获得了工具结果 |
 | [Agent Loop](../docs/learning/agent-loop.md) | `python -m examples.weather_loop` | 模型请求与工具执行为什么分别计数 |
 | [历史筛选与摘要](../docs/learning/state-and-context.md#58-截断历史会丢掉什么摘要怎样补回来) | `python -m examples.context_preview` | 怎样保留较早的工具证据 |
+| [先生成计划](../docs/learning/planning.md) | `python -m examples.plan_first` | 生成三条计划为什么只请求了一次模型 |
 | [本地检索](../docs/learning/retrieval-and-citations.md) | `python -m agent_learning.tools.notes --query "最大步数"` | 摘要、标签、编号和原文链接各有什么用途 |
 | [带引用的回答](../docs/practice/research-agent.md) | `python -m agent_learning --question "Agent Loop 为什么要有最大步数？"` | 回答是否引用了真正支持结论的资料 |
 
-`python -m examples.model_call --check` 只检查配置。工具执行、本地检索与上下文预览不读取密钥、不联网；其余实验会产生模型 API 用量。
+`python -m examples.model_call --check` 只检查配置。工具执行、本地检索、上下文预览及 `plan_first --demo` 不读取密钥、不联网；其余实验会产生模型 API 用量。
 
 ## 只改变一个条件
 
@@ -67,4 +68,22 @@ python -m examples.weather_loop --max-steps 3 --budget-context --context-mode su
 
 默认使用 `full`。`summary` 在较早历史存在时，用带来源的工具结果摘要替代旧的 Action/Observation 对，保留最近一对原始消息；本轮预算最后追加。较早历史出现不能整理的格式时保留完整历史。原始任务历史不会被摘要覆盖。
 
-上述两条命令会调用模型 API。摘要模式已有离线验证，真实模型结果尚待运行；不要把测试中预设的 Finish 当成模型实测。消息减少不等于 token 减少，也尚未证明摘要提高了正确率。
+上述两条命令会调用模型 API。学习者已提供两次真实运行：均查询北京、上海并在第三轮有效 Finish，摘要模式没有丢失此次比较所需的信息。消息减少不等于 token 减少，也尚未证明摘要提高了正确率。
+
+## 先规划，再执行：规划器
+
+对应 Hello-Agents 第四章 §4.3.1–4.3.2，使用教材三天销量题的数据。先只生成计划，不执行步骤：
+
+```bash
+python -m examples.plan_first
+```
+
+真实模式请求模型一次，打印原始计划和解析后的列表。检查计划覆盖目标且按依赖顺序排列；格式通过不代表内容正确。计划步骤数不是模型请求次数，打印步骤也不代表执行步骤。
+
+无 API 的固定示意：
+
+```bash
+python -m examples.plan_first --demo
+```
+
+此模式使用程序预设的三个步骤，适合查看列表和编号输出；不能作为真实模型结果。已有示意、代码与解释见 [第 6 章](../docs/learning/planning.md)。执行器将在下一节加入。
