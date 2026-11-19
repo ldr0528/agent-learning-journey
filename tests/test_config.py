@@ -6,10 +6,16 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from agent_learning.config import load_settings
+from agent_learning.config import Settings, load_settings
 
 
 class SettingsTests(unittest.TestCase):
+    def test_qwen4_uses_documented_non_thinking_parameter(self):
+        settings = Settings("qwen", "qwen4-max", "https://qwen.invalid/v1", "fake-key")
+        self.assertEqual(settings.request_options, {"max_tokens": 512, "reasoning_effort": "none"})
+        legacy = Settings("qwen", "qwen-plus", "https://qwen.invalid/v1", "fake-key")
+        self.assertEqual(legacy.request_options["extra_body"], {"enable_thinking": False})
+
     def test_provider_selects_its_own_key_and_options(self):
         env = {"LLM_PROVIDER": "qwen", "DASHSCOPE_API_KEY": "fake-qwen-key",
                "QWEN_MODEL_ID": "qwen-test", "QWEN_BASE_URL": "https://qwen.invalid/v1",

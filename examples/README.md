@@ -4,7 +4,7 @@
 
 正文已直接展示代码、结果与分析；这里集中列出可运行入口。所有命令从仓库根目录执行，先激活虚拟环境。默认是否请求模型因教学目的而异，下表明确标注。
 
-新增章节已有 [真实千问实验集](../docs/runs/README.md)，可先看每次输入、响应和结果分析，再复现对应命令。
+各例的输入、响应与参数见 [实验记录](../docs/runs/README.md)。
 
 ## 无需模型 API 的核心示例
 
@@ -21,7 +21,7 @@
 
 固定回复演示会显示适配器调用次数，但真实 API 次数为 0。RAG 默认的 `evidence_only` 是证据摘录，不是模型生成的研究结论。
 
-## 真实模型入口
+## 调用模型
 
 这些命令需要本地配置，会产生服务商 API 用量。可以继续使用千问，配置见 [环境说明](../docs/getting-started.md)。
 
@@ -86,7 +86,7 @@ python -m examples.evaluate --k 3 --output outputs/retrieval-evaluation.json
 
 报告保存问题、模式、检索轨迹、证据或回答及来源。评估保留语料指纹、逐题结果和失败案例；实际开发集并非独立测试集。对外部回答做引用检查使用 `--predictions`，输入结构见 [评估章](../docs/learning/evaluation.md)。
 
-## 真实框架与协议集成
+## LangGraph 与 MCP
 
 先安装 `python -m pip install -e ".[all]"`。以下默认模式不调用模型，但确实执行第三方框架或本地 MCP 会话：
 

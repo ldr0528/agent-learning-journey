@@ -1,12 +1,12 @@
-# 沿一次实际请求阅读源码
+# 沿一次请求追踪控制与数据
 
 [章节目录](../../README.md#章节目录) · [LangGraph](../learning/langgraph.md) · [实现架构](../architecture.md)
 
-本练习选读 [Hello-Agents 第七章](https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter7/第七章%20构建你的Agent框架.md) 的分层思路，用本项目一次真实调用路径建立对应关系。目标是能回答“谁调用谁、数据在哪里改变、错误从哪里返回”，不要求另写一套框架。
+本练习结合 [Hello-Agents 第七章](https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter7/第七章%20构建你的Agent框架.md) 的分层思路，沿一次请求追踪“谁调用谁、数据在哪里改变、错误从哪里返回”。先读懂已有函数怎样协作，再考虑怎样划分自己的模块。
 
 ## 先选一条可观察的路径
 
-以问题“Agent Loop 为什么要有最大步数？”为例。之前学习者提供的实际轨迹是：模型请求本地检索，程序返回 N01、N03，下一次模型请求用 N03 回答。沿这条路径阅读，比从所有类名开始更容易建立因果关系。
+以第 4 章的问题“Agent Loop 为什么要有最大步数？”为例：模型请求本地检索，程序返回 N01、N03，下一次模型请求用 N03 回答。沿这条路径阅读，可以将每个函数与一项具体工作对应起来。
 
 | 顺序 | 本项目入口 | 要观察的数据 |
 | --- | --- | --- |
@@ -33,7 +33,7 @@
                                 下一次 ask_model
 ```
 
-`execute_search` 是传给循环的函数。循环不需要了解文件内容和引用规则；研究助手通过这个函数和 `validate_answer` 提供任务逻辑。这个分工对应教材中模型层、Agent 层、工具层的职责划分，但本项目使用更小的函数接口，没有声称复刻 HelloAgents 的全部框架。
+`execute_search` 是传给循环的函数。循环不需要了解文件内容和引用规则；研究助手通过这个函数和 `validate_answer` 提供任务逻辑。这个分工对应教材中模型层、Agent 层、工具层的职责划分：一层处理请求，一层组织任务，一层提供数据。
 
 ## 三个具体阅读任务
 
@@ -72,7 +72,7 @@ MCP list_tools → 工具定义 → 模型请求的 tools 参数
 
 第一条边界是宿主与模型 API；第二条是 MCP 客户端与服务端。模型返回 `tool_calls[].id`，宿主将同一个值写进 tool 消息的 `tool_call_id`，由此关联请求与反馈；MCP 的请求编号则由 SDK 管理。原生 tool calling 并不意味着模型绕过了宿主直接执行函数。
 
-这条路径已经有 [真实千问运行](../runs/2026-11-19/mcp.md) 和 [完整请求 JSON](../runs/2026-11-19/mcp.json)。阅读 JSON 的 `calls[2].request.messages`：最后一条 tool 消息保存上海 22℃，较早的 tool 消息保存北京 12℃。然后对照第三次响应，检查比较结论是否使用了这些值。模型原话漏掉“模拟”提示，也应该保留为待检查项，不能在整理教材时擅自修饰成完全合格的回答。
+打开 [运行记录](../runs/2026-11-19/mcp.md) 和 [请求 JSON](../runs/2026-11-19/mcp.json)，找到 `calls[2].request.messages`：最后一条 tool 消息保存上海 22℃，较早的 tool 消息保存北京 12℃。对照第三次响应，检查比较结论是否使用了这些值，以及是否保留“模拟数据”的限定。这份答案比较正确，但漏掉了数据性质说明。
 
 阅读时给以下五处各写一句注释：
 
@@ -88,7 +88,7 @@ MCP list_tools → 工具定义 → 模型请求的 tools 参数
 
 再回到 [LangGraph 图实现](../../src/agent_learning/integrations/langgraph_workflow.py)，找到 `answer` 构造消息的位置。图状态中的 notes 与 MCP 客户端内存中的结果一样，必须被明确放进请求，才成为模型可见的依据。checkpoint 保存状态不能替代这一步。
 
-对应的 [三步图真实记录](../runs/2026-11-19/langgraph-checkpoint.md) 还有另一种偏差：understand 返回一句回答而不是关键词，标签检索仍命中 N02。沿代码会发现 query 没有格式质量检查；沿第二次请求则能确认 answer 收到了真正检索出的 N02。这样就能分别定位“查询阶段不理想”和“证据确实回传”，不把整次运行只归成成功或失败。
+再看 [三步图记录](../runs/2026-11-19/langgraph-checkpoint.md)：understand 返回一句回答而不是关键词，标签检索仍命中 N02。沿代码可找到原因——query 没有格式质量检查；沿第二次请求则能看到 N02 已进入 answer 的输入。两项观察分别定位查询改写和证据回传，便于确定下一步该改哪里。
 
 ## 用测试验证阅读结论
 
@@ -99,9 +99,9 @@ python -m unittest discover -s tests -p test_agent_loop.py -v
 python -m unittest discover -s tests -p test_research_agent.py -v
 ```
 
-测试通过固定回复截获每次请求，验证 Observation 是否进入下一轮、引用是否来自当前任务、重复查询是否再次执行工具。读一个测试时先找输入轨迹，再找断言：不要只看到 `OK` 就认为真实模型总能答对。
+测试通过固定回复截获每次请求，检查 Observation 是否进入下一轮、引用是否来自当前任务、重复查询是否再次执行工具。读一个测试时先找输入轨迹，再找断言，说明这个断言能检查哪一种错误。
 
-安装对应可选依赖后，可以继续检查真实图和真实协议，而不调用模型：
+安装对应可选依赖后，继续检查图的状态更新与 MCP 消息流：
 
 ```bash
 python -m unittest discover -s tests -p test_langgraph_integration.py -v

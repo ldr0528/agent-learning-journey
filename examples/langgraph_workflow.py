@@ -1,4 +1,4 @@
-"""真实 LangGraph 离线实验；--live 才调用已配置的模型 API。"""
+"""LangGraph 工作流；--live 调用配置的模型 API。"""
 
 import argparse
 from contextlib import ExitStack
@@ -35,9 +35,9 @@ def main():
                 settings = load_settings(args.provider)
                 client = stack.enter_context(settings.create_client())
                 generate = lambda messages: ask_model(client, settings.model, messages, settings.request_options)
-                print(f"真实模型模式：{settings.provider} / {settings.model}")
+                print(f"模型模式：{settings.provider} / {settings.model}")
             else:
-                print("离线模式：真实 LangGraph 调度、本地工具；回答由确定性摘录或预设回复产生，不调用模型。")
+                print("离线模式：LangGraph 调度、本地工具；回答由确定性摘录或预设回复产生，不调用模型。")
 
             if args.loop:
                 if generate is None:

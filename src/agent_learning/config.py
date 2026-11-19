@@ -18,6 +18,8 @@ class Settings:
     @property
     def request_options(self):
         if self.provider == "qwen":
+            if self.model.startswith("qwen4-"):
+                return {"max_tokens": 512, "reasoning_effort": "none"}
             return {"max_tokens": 512, "extra_body": {"enable_thinking": False}}
         return {"max_completion_tokens": 2048, "reasoning_effort": "low"}
 

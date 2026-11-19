@@ -1,8 +1,8 @@
-# 第 10 章 · LangGraph 与调用链
+# 第 10 章 · LangGraph：用状态与边组织执行
 
 [章节目录](../../README.md#章节目录) · [上一章：评估](evaluation.md) · [下一章：MCP](mcp.md)
 
-本章以 [Hello-Agents 第六章 §6.5.1–6.5.3](https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter6/第六章%20框架开发实践.md) 为主线：先做“理解、搜索、回答”三步图，再把已有天气循环映射为节点与条件边。三步图将教材中的外部搜索改成本地教学摘要；循环迁移和进程内快照是本项目扩展。第七章只沿实际调用链选读，见 [源码阅读练习](../practice/source-reading.md)。
+本章以 [Hello-Agents 第六章 §6.5.1–6.5.3](https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter6/第六章%20框架开发实践.md) 为主线：先做“理解、搜索、回答”三步图，再把天气循环映射为节点与条件边。三步图使用本地教学摘要，便于跟踪查询、证据和答案；随后通过进程内快照观察图状态。第七章的分层思路可结合 [源码阅读练习](../practice/source-reading.md) 选读。
 
 ## 10.1 图组织的是执行过程
 
@@ -18,7 +18,7 @@
 
 ![框架的执行组织与 MCP 的工具通信](../assets/framework-protocol-zh.svg)
 
-本图是按项目实现原创绘制的。上半部分对应本章的状态与节点；协议部分将在下一章展开。
+图的上半部分表示本章的状态与节点；下半部分的工具通信将在下一章展开。
 
 ## 10.2 三步问答：每一步返回更新字段
 
@@ -64,7 +64,7 @@ def search(state):
 
 这里每次显式构造完整的 `trace` 新列表。本例没有设置列表追加 reducer，因此节点返回某字段时，使用的是替换语义。如果只返回 `["search"]`，先前的 `understand` 记录就会丢失。不同项目也可用 reducer 表达合并规则，但不能混用两种思路而导致重复追加。
 
-图的连接来自实际代码：
+将三个节点依次连接：
 
 ```python
 graph = StateGraph(QuestionState)
@@ -80,9 +80,9 @@ app = graph.compile()
 
 节点名是图中的标识，函数才执行工作。`START` 与 `END` 是流程入口和终点，不是模型角色。接口语义补充参考 [LangGraph Graph API 官方文档](https://docs.langchain.com/oss/python/langgraph/graph-api)。
 
-## 10.3 真实模型怎样走完三步图
+## 10.3 从检索词到带引用的回答
 
-2026-11-19，助教在 Python 3.12、LangGraph 1.2.23 环境中使用 `qwen / qwen-plus` 运行了 `--live --checkpoint`。实际调用模型 2 次，服务商报告共 349 tokens。下面直接保留程序输出和模型原话；[完整运行记录](../runs/2026-11-19/langgraph-checkpoint.md) 与 [逐次请求、响应 JSON](../runs/2026-11-19/langgraph-checkpoint.json) 可核对每次输入。
+运行条件：2026-11-19，Python 3.12、LangGraph 1.2.23、qwen-plus，`--live --checkpoint`；2 次模型请求，349 tokens。[运行记录](../runs/2026-11-19/langgraph-checkpoint.md) · [请求与响应](../runs/2026-11-19/langgraph-checkpoint.json)。
 
 ```text
 真实模型模式：qwen / qwen-plus
@@ -98,17 +98,17 @@ app = graph.compile()
 进程内快照：trace=['understand', 'search', 'answer']；待执行节点=()
 ```
 
-这次运行有一个值得保留的偏差：understand 的提示要求“只输出检索词”，模型却先写了一句答案。程序没有验证它是不是合适的查询，只把整句作为 query。本地标签检索仍因 `Action`、`Observation` 命中 N02，于是流程完成了。**能跑通不代表每个节点都按预期工作**；若换成更严格的检索器，这种改写可能影响命中。
+understand 的提示要求“只输出检索词”，模型却写了一句答案。程序没有检查查询质量，直接把整句作为 query。标签检索仍因 `Action`、`Observation` 命中 N02，于是流程继续。这里需要分别检查两个结果：查询是否适合检索，以及检索是否找到相关资料。命中了资料，并不说明查询改写已经合格。
 
-answer 的第二次请求实际包含原问题和 N02 全文，最终把 Observation 具体解释为程序组织的工具结果，而不是只沿用第一次那句泛称 Environment 的回答。这个变化能沿请求记录核对，不能归因于节点名叫“理解”或“回答”。
+answer 的第二次请求包含原问题和 N02 全文，最终把 Observation 解释为程序组织的工具结果。与第一次回复相比，这个回答多了调用工具、整理结果和回传模型的具体过程。阅读时应顺着传入的证据解释答案，而不是根据节点名推断它已经完成了“理解”。
 
-`--live` 下，understand 和有资料的 answer 通过现有 `ask_model` 请求模型；搜索仍由 Python 执行。无资料时直接说明资料不足；有资料时要求回答引用本次返回的编号，未知编号或缺少引用会停止。编号合法仍不等于论据足以支持结论。默认不加 `--live` 时，则直接用原问题检索并摘录摘要，供无需密钥的离线对照。
+模型参与时，understand 和有资料的 answer 通过 `ask_model` 生成内容；搜索由 Python 执行。无资料时，answer 直接说明资料不足；有资料时要求回答引用本次返回的编号，未知编号或缺少引用会停止。编号校验只解决引用范围，结论是否受到资料支持仍需检查。
 
 ### 三个节点为什么通常只有两次模型请求
 
 understand 用模型把问题整理为检索词；search 只是 Python 本地查找；answer 将原问题与查到的摘要交给模型。节点数、工具次数、模型请求数是三种计数，不能从图上数三个方框就说花了三次 API 调用。
 
-在有命中资料的真实模式下，回答节点构造的用户消息是：
+命中资料后，回答节点构造的用户消息是：
 
 ```python
 answer_input = {
@@ -144,7 +144,7 @@ START → model ── 有效 Finish ──→ END
 
 `max_steps` 仍然限制模型决策节点的次数。LangGraph 的 `recursion_limit` 是图执行层面的保护，不能直接当作模型请求预算：一次模型决策后可能还要执行工具节点。
 
-同日使用千问执行 `--live --loop`，模型真实返回了下面三次行动；[完整运行记录](../runs/2026-11-19/langgraph-loop.md) 和 [请求、响应 JSON](../runs/2026-11-19/langgraph-loop.json) 保留了原始消息。服务商报告共 774 tokens。
+运行条件：同日、同一环境，`--live --loop`；3 次模型请求，774 tokens。[运行记录](../runs/2026-11-19/langgraph-loop.md) · [请求与响应](../runs/2026-11-19/langgraph-loop.json)。
 
 ```text
 Action: get_weather(city="北京")
@@ -159,11 +159,11 @@ Action: Finish[上海更暖和（22℃ vs 北京12℃），以上为模拟天气
 回答：上海更暖和（22℃ vs 北京12℃），以上为模拟天气数据。
 ```
 
-这次确实是 3 次模型 API 请求和 2 次本地工具执行。第三次请求的 messages 已含北京、上海两条 Observation，模型才有依据比较。天气数据依旧是模拟值；真实 API 调用不改变工具数据的性质。
+两次查询分别得到北京和上海的模拟天气。第三次请求的 messages 含有这两条 Observation，模型据此比较温度并输出 Finish。因此，这段轨迹中模型请求 3 次，工具执行 2 次。
 
-离线测试另外注入相同形状的三条回复，验证上限改为 2 时返回 `step_limit`，两次工具执行后没有有效答案，第三次模型节点不会发生。这项预算断言来自固定回复测试，不是又做了一次千问采样。
+将上限改为 2 后，程序在两次工具执行后返回 `step_limit`，不再进入第三次模型节点。预算测试用固定回复检查这一停止条件。
 
-此迁移只包含核心天气循环，没有声称将研究助手的引用纠错、预算提示和摘要功能全部迁入图。能用状态和边表达某个流程，并不意味着应该马上迁移所有组件。
+这张图先迁移天气循环。研究助手的引用纠错、预算提示和摘要功能需要各自确定状态字段与执行位置，再接入同一流程。
 
 读条件边时可以做一个三步判断：先看 `model` 有没有识别到有效 Finish；没有则看 `tool` 是否把执行结果追加进 messages；最后看本轮 `requests` 是否已到上限。模型决定提出什么请求，程序决定是否执行、如何反馈以及何时停止。把循环改写成图，并没有转移这些责任。
 
@@ -179,7 +179,7 @@ app.invoke({"question": "Action Observation", "trace": []}, config)
 snapshot = app.get_state(config)
 ```
 
-上面真实模型运行结束后，同一个进程读出的快照为：
+三步图结束后，同一个进程读出的快照为：
 
 ```text
 进程内快照：trace=['understand', 'search', 'answer']；待执行节点=()
@@ -189,11 +189,11 @@ snapshot = app.get_state(config)
 
 可以将 checkpoint 想成“框架保存的一份执行记录”。它和模型消息历史解决的问题不同：前者供程序读取图状态，后者是发给模型的输入。即使快照里存着 notes，如果回答节点没有把 notes 放入请求，模型也不能据此作答。这正是第 5 章“本地有数据”和“本轮发送了数据”的区别。
 
-这里的存储是内存，进程结束后不会保留。本例验证快照读取和线程隔离，没有实现数据库持久化、人工中断恢复或跨进程续跑。更完整的持久化能力应按 [官方 Persistence 文档](https://docs.langchain.com/oss/python/langgraph/persistence) 继续实验。
+`InMemorySaver` 将快照保存在内存，进程结束后即丢失。需要跨进程续跑时，应选择持久化存储，并检查恢复位置和已完成操作是否会重复执行，见 [官方 Persistence 文档](https://docs.langchain.com/oss/python/langgraph/persistence)。本例先练习快照读取与线程隔离。
 
 ## 10.6 运行、比较与自测
 
-安装可选组件后，下面命令默认均不调用模型：
+安装可选组件后，可以运行问答图、查看快照或观察循环的预算边界：
 
 ```bash
 python -m pip install -e ".[graph]"
@@ -203,7 +203,7 @@ python -m examples.langgraph_workflow --loop
 python -m examples.langgraph_workflow --loop --max-steps 2
 ```
 
-最后一条预期退出码为 1，含义是预算耗尽、任务未完成。真实模型模式显式使用 `--live`，会产生 API 用量，例如 `python -m examples.langgraph_workflow --live`。
+默认模式不需要密钥：问答图摘录本地资料，天气图使用预设回复。添加 `--live` 后调用配置的模型并产生 API 用量，例如 `python -m examples.langgraph_workflow --live`。最后一条命令预期退出码为 1，表示预算耗尽、任务未完成。
 
 | 自测任务 | 参考答案或验收点 |
 | --- | --- |
@@ -213,9 +213,9 @@ python -m examples.langgraph_workflow --loop --max-steps 2
 | 两个线程使用同一个 thread_id 会怎样？ | 可能混用同一线程记录，应按任务明确分配标识 |
 | 是否只要写成图就更适合小脚本？ | 还要权衡分支复杂度、状态可观察性和新增依赖；简单流程原生函数可能更易读 |
 
-建议把一次练习收敛为一个改动：先在 `answer` 调用前查看构造出的消息，确认有 N02 和原问题；再仅把查询改成没有命中的词，预测会不会调用 answer 中的模型。参考答案是不会：无资料分支直接写入“资料不足”，图仍经过 answer 节点，但这一节点没有请求 API。验证时同时看节点轨迹和实际 API 记录，不只看最后一行答案。
+建议每次只改一个条件：先在 `answer` 调用前查看消息，确认有 N02 和原问题；再把查询改成没有命中的词，预测 answer 会不会请求模型。参考答案是不会：无资料分支直接写入“资料不足”。图仍经过 answer 节点，但这个节点不发起请求。对照节点轨迹和请求记录，可以看清两种计数的区别。
 
-离线测试覆盖三节点顺序、无资料分支、快照隔离、天气工具结果回传、预算停止和未知引用拒绝。见 [集成测试](../../tests/test_langgraph_integration.py)。本章材料与代码已准备，不代表学习者已完成所有练习。
+[集成测试](../../tests/test_langgraph_integration.py) 覆盖节点顺序、无资料分支、快照隔离、结果回传、预算停止和未知引用拒绝。读每个断言时，试着指出它对应哪一个状态字段或条件边。
 
 ---
 

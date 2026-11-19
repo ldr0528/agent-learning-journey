@@ -110,7 +110,7 @@ def source_manifest():
 
 
 def render_transcript(record):
-    lines = [f'# 真实运行：{record["case"]}', "",
+    lines = [f'# 运行记录：{record["case"]}', "",
              f'- 开始时间（UTC）：{record["started_at_utc"]}',
              f'- 服务：{record["provider"]}；请求模型：{record["requested_models"]}',
              f'- API 尝试：{record["api_attempts"]}；成功返回：{record["api_responses"]}；退出码：{record["exit_code"]}',
@@ -137,7 +137,7 @@ def render_transcript(record):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="调用真实 API 并记录一个课程样本；不会自动重试或发布")
+    parser = argparse.ArgumentParser(description="调用模型并保存请求与响应记录")
     parser.add_argument("case", choices=CASES)
     parser.add_argument("--output-dir", type=Path, default=Path("outputs/live-runs"))
     args = parser.parse_args()

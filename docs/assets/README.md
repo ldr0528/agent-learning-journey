@@ -27,7 +27,7 @@
 
 ## 图示维护
 
-课程路线、项目架构、规划与反思、RAG 与评估、框架与协议，以及根据真实样本绘制的证据检查图、MCP 模型回传时序图，共七张图由 [生成脚本](../../scripts/build_diagrams.py) 维护。在仓库根目录运行：
+课程路线、项目架构、规划与反思、RAG 与评估、框架与协议、证据检查、MCP 模型回传，共七张图由 [生成脚本](../../scripts/build_diagrams.py) 维护。在仓库根目录运行：
 
 ```bash
 python scripts/build_diagrams.py

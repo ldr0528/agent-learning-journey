@@ -6,7 +6,7 @@
 
 **用一套可阅读、可运行、可核验的中文材料，学会构建单体智能体。**
 
-[开始阅读](docs/learning/model-calls.md) · [课程地图](docs/course-map.md) · [真实实验](docs/runs/README.md) · [贯穿项目](docs/practice/research-agent.md) · [环境配置](docs/getting-started.md)
+[开始阅读](docs/learning/model-calls.md) · [课程地图](docs/course-map.md) · [实验记录](docs/runs/README.md) · [贯穿项目](docs/practice/research-agent.md) · [环境配置](docs/getting-started.md)
 
 </div>
 
@@ -31,7 +31,7 @@
 | | [07 Reflection](docs/learning/reflection.md) | 怎样评审和修订，又如何限制迭代？ |
 | 检索与质量 | [08 RAG 与检索改进](docs/learning/rag.md) | 怎样从文档构造可追溯的回答证据？ |
 | | [09 Agent 评估](docs/learning/evaluation.md) | 怎样分别测量检索、引用与回答质量？ |
-| 框架与协议 | [10 LangGraph 与调用链](docs/learning/langgraph.md) | 如何把节点、状态和分支映射到真实运行？ |
+| 框架与协议 | [10 LangGraph 与调用链](docs/learning/langgraph.md) | 节点怎样更新状态、决定下一步？ |
 | | [11 MCP 入门](docs/learning/mcp.md) | 客户端怎样发现并调用另一个进程的工具？ |
 
 ## 如何使用这套材料
@@ -43,27 +43,25 @@
 | 按课程循序学习 | [课程地图与练习](docs/course-map.md) |
 | 看完整研究助手怎样组织 | [贯穿项目与验收](docs/practice/research-agent.md) |
 | 先运行无需密钥的例子 | [配套示例索引](examples/README.md) |
-| 使用千问或 OpenAI 运行真实模型 | [配置说明](docs/getting-started.md) |
+| 配置模型服务 | [配置说明](docs/getting-started.md) |
 | 读已有代码如何协作 | [分层架构](docs/architecture.md) · [调用链阅读](docs/practice/source-reading.md) |
-| 区分真实结果和教学演示 | [结果证据与学习进度](docs/evidence.md) |
-| 对照每次模型实际收到的内容 | [真实 API 实验集](docs/runs/README.md) |
+| 查看实验条件与检查结果 | [实验说明](docs/evidence.md) |
+| 对照每次模型收到的内容 | [请求与响应记录](docs/runs/README.md) |
 | 查术语与容易混淆的概念 | [概念对照](docs/concepts.md) · [参考资料与阅读设计](docs/references.md) |
 
-LangGraph 与 MCP 作为可选安装项，基础章节无需这些库。所有离线演示都会明确说明数据或模型回复是否预设；真实工具、框架和协议运行也会注明边界。
+LangGraph 与 MCP 作为可选安装项，基础章节无需这些库。每个运行入口注明是否请求模型，固定输入练习可在没有 API Key 时使用。
 
-## 从真实输出读懂一个机制
+## 工具结果怎样进入下一轮请求
 
-在 MCP 章节，千问实际提出查询北京、上海的工具请求；Python通过MCP执行工具，把12℃与22℃回传；第三次模型请求得出上海更暖和。模型并没有直接连接工具服务端，中间的应用完成了发现、映射与结果回传。
+在 MCP 章节，模型先请求北京、上海的天气；Python通过MCP调用工具，把12℃与22℃回传；第三次模型请求完成比较。应用负责发现工具、映射参数、执行调用和回传结果。
 
-![千问模型通过Python应用调用MCP工具的实际时序](docs/assets/mcp-model-roundtrip-zh.svg)
+![模型通过Python应用调用MCP工具的时序](docs/assets/mcp-model-roundtrip-zh.svg)
 
-完整 [输入与输出](docs/runs/2026-11-19/mcp.md) 保留模型原话：结尾漏写了提示要求的“模拟数据”。正文会同时解释正确的比较和遗漏的约束。这样的分析也用于规划、Reflection、RAG和LangGraph，让读者看到程序实际完成了什么，以及还需要检查什么。
+沿图阅读时，重点看两次工具结果在哪里进入消息列表，以及为什么需要第三次模型请求。代码与逐步讲解见 [MCP 章节](docs/learning/mcp.md)。
 
-## 材料完成与个人学习进度
+## 课程范围
 
-第 01–05 章保留学习者提供的千问结果；第 06–11 章以新采集的真实API输出为主例，附请求记录、用量与结果判读。固定回复保留用于无需密钥的分支练习和自动测试。教材准备与个人掌握程度分别记录，个人学习继续从规划与执行阶段推进。具体样本与边界见 [结果说明](docs/evidence.md)。
-
-本轮范围聚焦单体 Agent：跳过低代码平台，第六章框架只选 LangGraph；MCP 只做本地工具通信。多 Agent、A2A、ANP、训练与长期记忆不进入本课程验收。教材映射和边界见 [学习计划](docs/roadmap.md)。
+课程聚焦单体 Agent 的核心机制，以小型任务说明输入、状态、工具与控制流程，框架部分选用 LangGraph，协议部分采用本地 MCP 通信。课程不包含低代码平台、多 Agent、训练或长期记忆。教材映射见 [课程编排](docs/roadmap.md)。
 
 ## 项目组织
 

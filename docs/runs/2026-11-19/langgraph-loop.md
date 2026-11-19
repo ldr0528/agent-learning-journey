@@ -1,4 +1,4 @@
-# 真实运行：langgraph-loop
+# 运行记录：langgraph-loop
 
 - 开始时间（UTC）：2026-11-19T10:46:23.795300+00:00
 - 服务：qwen；请求模型：['qwen-plus']

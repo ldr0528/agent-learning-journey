@@ -2,7 +2,7 @@
 
 [章节目录](../../README.md#章节目录) · [上一章：LangGraph](langgraph.md) · [贯穿项目：Research Agent](../practice/research-agent.md)
 
-本章以 [Hello-Agents 第十章 §10.2 MCP 协议实战](https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter10/第十章%20智能体通信协议.md) 为参考，把已有天气工具和本地摘要检索暴露为 MCP 工具。为看清协议边界，我们直接使用官方 Python SDK，不再套一层 HelloAgents 客户端；这是实现方式的调整。本轮不扩展 A2A、ANP 或多 Agent。
+本章参考 [Hello-Agents 第十章 §10.2 MCP 协议实战](https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter10/第十章%20智能体通信协议.md)，把天气工具和本地摘要检索放到服务端，再沿工具发现、调用和结果回传理解 MCP。示例使用官方 Python SDK，可以直接看到客户端与服务端的会话边界。
 
 ## 11.1 为什么普通函数调用还不是 MCP
 
@@ -12,16 +12,16 @@
 
 | 角色 | 本项目对应物 | 职责 |
 | --- | --- | --- |
-| Host / 宿主程序 | `examples.mcp_demo` | 默认验证协议；`--live` 时把工具定义和结果接到模型 |
+| Host / 宿主程序 | `examples.mcp_demo` | 组织任务，将工具定义和结果接到模型 |
 | Client | `ClientSession` | 初始化会话、发现工具、发送调用 |
 | Server | 本地 Python 子进程 | 暴露工具定义，校验参数，调用本地函数 |
 | 工具实现 | `get_weather`、`search_notes` | 返回模拟天气或教学摘要 |
 
-![真实框架与协议适配的职责边界](../assets/framework-protocol-zh.svg)
+![框架与工具协议的职责边界](../assets/framework-protocol-zh.svg)
 
-模型本身不会因为装了 SDK 就自动连接工具。宿主需要把工具说明交给模型，接收模型的选择，再代它发出 MCP 请求。本章先单独验证协议，再把这段通信接到真实模型；两种模式使用同一个服务端。
+宿主把工具说明交给模型，接收模型的选择，再发出 MCP 请求。本章先看客户端怎样调用工具，再接入模型的选择过程；两部分使用同一个服务端。
 
-## 11.2 一次会话的实际顺序
+## 11.2 从初始化到工具调用
 
 演示使用标准输入输出，也就是 stdio。客户端启动服务端子进程，通过两条流交换 MCP 消息。官方 SDK 负责 JSON-RPC 消息、请求编号、初始化通知以及返回值解码。
 
@@ -45,7 +45,7 @@ Python 方法名为 `list_tools` 和 `call_tool`，对应协议中的 `tools/lis
 
 ## 11.3 服务端：保留原来的工具逻辑
 
-[服务端完整代码](../../src/agent_learning/integrations/mcp_server.py) 创建 `FastMCP`，并注册两个工具。天气工具的实际定义如下：
+[服务端完整代码](../../src/agent_learning/integrations/mcp_server.py) 创建 `FastMCP`，并注册两个工具。天气工具定义如下：
 
 ```python
 @server.tool()
@@ -68,7 +68,7 @@ stdio 模式下 stdout 是协议通道，不能在服务端随意向 stdout 打�
 
 另一个工具 `search_notes` 读取既有本地摘要，返回资料编号、内容、出处和原文链接。它没有因为经过 MCP 就变成语义搜索，仍遵守原先的标签检索规则。
 
-## 11.4 客户端：发现定义，再实际调用
+## 11.4 客户端：发现工具并取得结果
 
 [客户端完整代码](../../src/agent_learning/integrations/mcp_client.py) 使用当前 Python 解释器启动模块，这让客户端和服务端处于同一已安装环境。关键会话部分如下，参数构造和退出处理见源码：
 
@@ -86,9 +86,9 @@ async def exchange():
 
 返回值也分层：客户端先检查 `isError`，再读取结构化内容；若 SDK 返回文本块，则解析其中的 JSON。工具调用失败不能被当成正常证据。默认协议演示给整个会话设置了 20 秒超时，并通过异步上下文管理器关闭连接和子进程。
 
-## 11.5 真实模型通过 MCP 完成天气比较
+## 11.5 两次工具结果怎样进入三轮对话
 
-2026-11-19，助教使用 `qwen / qwen-plus` 运行 `python -m examples.mcp_demo --live --provider qwen`。模型实际请求 3 次、MCP 工具请求 2 次，服务商报告共 1329 tokens。以下保留真实输出；[完整运行记录](../runs/2026-11-19/mcp.md) 与 [逐次请求、响应 JSON](../runs/2026-11-19/mcp.json) 可用于追踪证据怎样进入模型。
+运行条件：2026-11-19，qwen-plus、`mcp==1.30.0`，`--live --provider qwen`；3 次模型请求、2 次 MCP 工具请求，1329 tokens。[运行记录](../runs/2026-11-19/mcp.md) · [请求与响应](../runs/2026-11-19/mcp.json)。
 
 ```text
 真实模型 + MCP：qwen / qwen-plus；模型请求上限 4。
@@ -111,13 +111,13 @@ tool 结果：{"city": "上海", "weather": "晴天，22℃", "simulated": true}
 第 3 次：system, user, assistant, tool, assistant, tool
 ```
 
-这能证明结果被发送给模型，而不只是打印到了终端。`search_notes` 虽然出现在发现清单里，这次模型没有调用它：发现可用工具不等于全部执行。
+第二次请求新增北京结果，第三次请求再新增上海结果。`search_notes` 虽然出现在发现清单里，这次模型没有调用它：发现可用工具不等于全部执行。
 
-这份结果也有一个未满足的要求：系统提示让模型注明模拟数据，但最终原话没有重申“模拟”。正文没有替它补上。工具返回明确带有 `simulated: true`，因此本案例只能解读为模拟天气比较；`finished` 说明流程结束，不意味着每条表达要求都通过验收。后续可把“是否注明数据性质”加入质量检查，不能仅凭退出码 0 宣称回答完全合格。
+答案的温度比较正确，但漏掉了系统要求的“模拟数据”说明。工具返回中的 `simulated: true` 限定了这些温度的含义，不能将它们当作实时天气。这里可以检查两个层次：流程是否取得结果并结束，以及答案是否保留数据性质。`finished` 只回答前一个问题；后一个需要输出质量检查。
 
-### 无需模型的协议对照
+### 由程序指定工具的调用路径
 
-默认不加 `--live`，程序显式调用天气和摘要工具，适合先确认本地环境正常。此前在 Python 3.12、官方 `mcp==1.30.0` 环境中实际得到以下输出，模型 API 请求为 0：
+也可以由程序直接指定查询北京和摘要，无需先让模型选择工具。对应输出如下：
 
 ```text
 真实 MCP stdio 会话；工具在子进程执行，本次模型请求 0 次。
@@ -127,13 +127,13 @@ call_tool weather：北京，下雨，12℃，模拟数据。
 call_tool search_notes：N02
 ```
 
-后续输出列出 N02 的摘要内容及原文链接。测试同时检查了工具发现中的 `city` 参数 schema，并验证广州返回“暂无天气数据”、未知检索词返回空列表。缺少数据不会因为经过协议而变成有效答案。
+后续输出列出 N02 的摘要内容及原文链接。试着把城市改成广州，工具会返回“暂无天气数据”；查询未覆盖的内容时，摘要列表为空。这些都是正常的数据边界，需要完整传给调用方。
 
-本次协商得到的版本来自 SDK 的实际握手，不是我们手写一个版本字符串来模拟成功。未来升级 SDK 后，协商版本可能变化，应重新运行集成测试，而不是仅修改教材输出。
+`initialize` 返回双方协商的协议版本。升级 SDK 时，应检查版本协商、工具 schema 和结果格式是否仍符合客户端的处理方式。
 
 ## 11.6 接回模型：宿主补齐两个方向的转换
 
-默认模式中，程序写死了要查北京和 N02。`--live` 使用 [模型桥接实现](../../src/agent_learning/integrations/mcp_agent.py)，把发现结果交给千问或 OpenAI，再执行模型选择的工具。这一层是本项目的工程扩展；MCP 协议本身不替应用调用模型。
+由模型选择工具时，[宿主代码](../../src/agent_learning/integrations/mcp_agent.py) 先把发现结果交给模型，再处理它返回的调用请求。宿主负责衔接模型 API 与 MCP 会话。
 
 ![模型选择、宿主转发、MCP 工具执行与结果回传的时序](../assets/mcp-model-roundtrip-zh.svg)
 
@@ -150,7 +150,7 @@ def model_tool_schema(tools):
 
 例如，模型知道 `weather` 要求字符串 `city`，却不知道北京温度；温度还没有查询。这里发送的是能力说明，不能当成证据。函数调用接口与消息格式参考 [百炼 Function Calling 官方说明](https://www.alibabacloud.com/help/en/model-studio/qwen-function-calling)。
 
-### 从“模型想做什么”到“工具实际返回什么”
+### 将工具请求与返回结果配对
 
 本章用原生 `tool_calls`，不再解析 `Action: get_weather(...)` 字符串。以下是消息结构示意，用来阅读字段，不是某次 API 的原样响应：
 
@@ -198,7 +198,7 @@ tool_message = {
 
 ## 11.7 版本、运行与自测
 
-本项目固定官方 SDK 的 **1.30.0 维护线**，使用 `FastMCP`、`ClientSession` 和 `stdio_client`，便于与教材及 Python 3.10+ 的课程环境对照。这不是宣称 1.x 是最新主线；官方 SDK 已有 2.x，接口变化见 [官方 v1.30.0 说明](https://github.com/modelcontextprotocol/python-sdk/blob/v1.30.0/README.md)。SDK 内的 FastMCP 与独立发行的 `fastmcp` 包也不能仅凭同名混用。
+示例固定使用官方 SDK **1.30.0** 的 `FastMCP`、`ClientSession` 和 `stdio_client`，接口见 [该版本说明](https://github.com/modelcontextprotocol/python-sdk/blob/v1.30.0/README.md)。SDK 内的 FastMCP 与独立发行的 `fastmcp` 包并非同一个安装项，阅读示例时应核对导入路径。
 
 ```bash
 python -m pip install -e ".[mcp]"
@@ -206,9 +206,9 @@ python -m examples.mcp_demo
 python -m examples.mcp_demo --city 广州 --query "没有匹配的词"
 ```
 
-这两条命令不需要 `.env` 或 API Key。客户端自动启动和关闭服务端，不用再手工打开一个后台窗口。`--city`、`--query` 选择的是默认协议演示的固定调用参数。
+默认模式不调用模型、不需要密钥；`--city` 和 `--query` 指定工具参数。客户端自动启动和关闭服务端。
 
-真实模型模式使用现有配置，会产生 API 用量：
+添加 `--live` 后使用配置的模型选择工具并生成答案，会产生 API 用量：
 
 ```bash
 python -m examples.mcp_demo --live --provider qwen
@@ -216,7 +216,7 @@ python -m examples.mcp_demo --live --provider qwen --question "Action 和 Observ
 python -m examples.mcp_demo --live --provider qwen --max-calls 1
 ```
 
-`--live` 的任务来自 `--question`，工具名和参数由模型选择。最后一条用于观察预算边界；若模型先请求工具，通常以 `step_limit` 和退出码 1 结束。真实模式每次 MCP 调用最多等待 20 秒，模型请求沿用客户端的 30 秒超时；没有无限自动重试。
+任务来自 `--question`，工具名和参数由模型选择。最后一条用于观察预算边界：若模型先请求工具，将以 `step_limit` 和退出码 1 结束。每次 MCP 调用最多等待 20 秒，模型请求沿用客户端的 30 秒超时。
 
 | 自测任务 | 参考答案或验收点 |
 | --- | --- |
@@ -231,7 +231,7 @@ python -m examples.mcp_demo --live --provider qwen --max-calls 1
 
 推荐动手扩展：增加一个返回本地摘要数量的只读工具，检查 `list_tools` 的 schema，再由客户端显式调用一次。验收时分别展示发现结果和执行结果，而不是只展示服务端注册成功。
 
-对应测试见 [MCP 集成测试](../../tests/test_mcp_integration.py) 与 [模型桥接测试](../../tests/test_mcp_agent.py)。桥接测试用假模型检查：第二次请求确实带上工具结果、保留调用编号、拒绝未知工具、预算耗尽不额外总结；另有一项让假模型经过真实 stdio 服务端取得结果。测试不调用模型 API，不能替代真实模型样本或代表学习者已完成本章。
+[MCP 集成测试](../../tests/test_mcp_integration.py) 检查工具发现与服务端调用；[模型桥接测试](../../tests/test_mcp_agent.py) 用固定回复检查结果回传、调用编号、未知工具和预算边界。阅读时重点找出断言检查的是协议、输入消息还是最终答案。
 
 ---
 

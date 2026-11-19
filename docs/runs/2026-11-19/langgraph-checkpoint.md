@@ -1,4 +1,4 @@
-# 真实运行：langgraph-checkpoint
+# 运行记录：langgraph-checkpoint
 
 - 开始时间（UTC）：2026-11-19T10:46:23.107469+00:00
 - 服务：qwen；请求模型：['qwen-plus']

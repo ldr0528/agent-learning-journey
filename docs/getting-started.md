@@ -42,7 +42,7 @@ python -m pip install -e ".[mcp]"
 python -m pip install -e ".[all]"
 ```
 
-课程固定使用 LangGraph 1.2.23 与 MCP Python SDK 1.30.0；MCP 选用 1.x 接口，不声称它是最新主版本。集成示例建议使用 Python 3.12，核心示例兼容 Python 3.10+。基础环境没有可选库时，集成测试会明确跳过；安装后再运行对应例子和测试，才能验证实际协议与框架行为。
+课程使用 LangGraph 1.2.23 与 MCP Python SDK 1.30.0。集成示例建议使用 Python 3.12，核心示例兼容 Python 3.10+。未安装可选库时，相关测试会跳过。
 
 ## 配置模型
 
@@ -51,7 +51,7 @@ python -m pip install -e ".[all]"
 ```dotenv
 LLM_PROVIDER="qwen"
 DASHSCOPE_API_KEY="YOUR-API-KEY"
-QWEN_MODEL_ID="qwen-plus"
+QWEN_MODEL_ID="qwen4-max"
 QWEN_BASE_URL="https://dashscope.aliyuncs.com/compatible-mode/v1"
 ```
 
@@ -62,9 +62,9 @@ QWEN_BASE_URL="https://dashscope.aliyuncs.com/compatible-mode/v1"
 python -m agent_learning --check
 ```
 
-本项目已有千问 `qwen-plus` 的真实运行证据。OpenAI 配置入口保留，但尚未取得成功运行证据；如需使用，填写模板中的 `LLM_API_KEY`、`LLM_MODEL_ID`、`LLM_BASE_URL`，运行时加 `--provider openai`。模型与参数是否可用取决于所选服务。
+默认模型为 `qwen4-max`，已验证工具请求、MCP调用与结果回传。该模型于2026-11-16上线，支持北京地域；版本与能力见 [官方说明](https://help.aliyun.com/zh/model-studio/qwen4-max)。示例设置 `reasoning_effort="none"`、`max_tokens=512`，便于观察简短的消息与控制流程。更换模型时请核对其参数支持情况。
 
-第06–11章已有可直接阅读的 [真实 API 实验](runs/README.md)。需要亲手复现时使用章节中的真实命令；以下离线入口便于无需密钥验证程序分支，二者用途分别标明。
+早期实验使用 `qwen-plus`，各条 [运行记录](runs/README.md) 保留当时的模型和参数。若使用OpenAI，填写 `LLM_API_KEY`、`LLM_MODEL_ID`、`LLM_BASE_URL`，运行时加 `--provider openai`。
 
 ## 先运行一个不调用模型的实验
 
@@ -84,7 +84,7 @@ python -m examples.rag_research --output outputs/research-report.md
 python -m examples.evaluate --output outputs/retrieval-evaluation.json
 ```
 
-前两项使用固定模型回复验证控制流程；研究报告默认摘录真实本地检索结果，评估运行真实检索。模式均在输出中标明。安装可选依赖后，还可运行真实框架与本地协议：
+前两项使用固定回复检查控制流程；研究报告默认摘录检索结果，评估按固定题计算指标。安装可选依赖后，可运行框架与协议示例：
 
 ```bash
 python -m examples.langgraph_workflow
@@ -93,7 +93,7 @@ python -m examples.mcp_demo
 
 这些默认模式不请求付费模型，MCP 仅启动本地服务端子进程并在会话结束时关闭。
 
-连接真实模型使用 `python -m examples.langgraph_workflow --live --checkpoint` 或 `python -m examples.mcp_demo --live`。MCP模型示例默认最多4次模型请求；它与纯协议验证共享服务端。
+连接模型使用 `python -m examples.langgraph_workflow --live --checkpoint` 或 `python -m examples.mcp_demo --live`。MCP模型示例默认最多4次模型请求；它与纯协议验证共享服务端。
 
 ## 运行模型与完整循环
 

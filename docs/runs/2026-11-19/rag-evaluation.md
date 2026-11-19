@@ -1,4 +1,4 @@
-# RAG 真实记录评估 · 2026-11-19
+# RAG 回答评估 · 2026-11-19
 
 [第 8 章：RAG](../../learning/rag.md) · [第 9 章：评估](../../learning/evaluation.md) · [机器可读结果](rag-evaluation.json)
 

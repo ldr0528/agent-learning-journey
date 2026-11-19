@@ -104,7 +104,7 @@ def run_rag(question, *, index=None, generate=None, generation_mode="custom", to
 
 
 def render_report(report):
-    mode = {"live": "真实模型模式", "scripted": "固定回复演示，未调用模型",
+    mode = {"live": "模型生成", "scripted": "固定回复演示，未调用模型",
             "custom": "自定义生成接口，API 用量未知", "offline_extract": "离线证据摘录，未调用模型"}[report["mode"]]
     requests = str(report["model_requests"]) + " 次" if report["model_requests"] is not None else "未知"
     lines = ["# 课程研究报告", "", f'问题：{report["question"]}', "",
