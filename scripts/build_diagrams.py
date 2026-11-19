@@ -1,0 +1,173 @@
+"""Generate the handbook's original overview diagrams with the standard library.
+
+Run from any directory: python scripts/build_diagrams.py.
+SVG text remains editable; visual QA should follow regeneration.
+"""
+
+from html import escape
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+INK = "#20293A"
+MUTED = "#6B7585"
+LINE = "#D9DFE8"
+BLUE = "#3867D6"
+GREEN = "#27816C"
+ORANGE = "#B36535"
+
+
+def text(x, y, value, size=20, color=INK, weight=400, anchor="start"):
+    return (f'<text x="{x}" y="{y}" font-size="{size}" fill="{color}" '
+            f'font-weight="{weight}" text-anchor="{anchor}">{escape(value)}</text>')
+
+
+def line(x1, y1, x2, y2, color=LINE, arrow=False, dashed=False):
+    marker = ' marker-end="url(#arrow)"' if arrow else ""
+    dash = ' stroke-dasharray="6 5"' if dashed else ""
+    return f'<path d="M{x1} {y1}L{x2} {y2}" fill="none" stroke="{color}" stroke-width="1.6"{marker}{dash}/>'
+
+
+def path(d, color=BLUE):
+    return f'<path d="{d}" fill="none" stroke="{color}" stroke-width="1.6" marker-end="url(#arrow)"/>'
+
+
+def box(x, y, w, title, detail, color=BLUE, height=90):
+    fill = "#F5F8FF" if color == BLUE else "#F3FAF7" if color == GREEN else "#FFFFFF"
+    return (f'<rect x="{x}" y="{y}" width="{w}" height="{height}" rx="7" '
+            f'fill="{fill}" stroke="{LINE}" stroke-width="1.5"/>'
+            + text(x + 18, y + 34, title, 23, color, 600)
+            + text(x + 18, y + 65, detail, 17, MUTED))
+
+
+def write(name, title, subtitle, body, height=760):
+    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="{height}" '
+           f'viewBox="0 0 1280 {height}" role="img" aria-labelledby="title desc">'
+           f'<title id="title">{escape(title)}</title><desc id="desc">{escape(subtitle)}</desc>'
+           '<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" '
+           'markerUnits="userSpaceOnUse"><path d="M0 0L7 4L0 8" fill="none" stroke="#798596" '
+           'stroke-width="1.4"/></marker></defs>'
+           f'<rect width="1280" height="{height}" fill="white"/>'
+           '<g font-family="Segoe UI, Microsoft YaHei, sans-serif">'
+           + text(48, 35, "AGENT LEARNING JOURNEY  /  ORIGINAL DIAGRAM", 12, MUTED, 600)
+           + text(48, 80, title, 30, INK, 600)
+           + text(48, 113, subtitle, 18, MUTED)
+           + line(48, 140, 1232, 140)
+           + "".join(body) + "</g></svg>\n")
+    (ROOT / "docs/assets" / name).write_text(svg, encoding="utf-8")
+
+
+def course_map():
+    body = []
+    columns = [
+        (64, "01—04", "模型、工具与循环", ["01  模型调用与消息", "02  工具执行与回传", "03  Agent Loop", "04  检索、引用与边界"]),
+        (370, "05—07", "上下文与任务组织", ["05  状态与上下文", "06  Plan-and-Solve", "07  Reflection"]),
+        (676, "08—09", "检索与质量", ["08  RAG 与检索改进", "09  评估与失败分析"]),
+        (982, "10—11", "框架与协议", ["10  LangGraph", "       实际调用链", "11  MCP 工具通信"]),
+    ]
+    for index, (x, number, title, items) in enumerate(columns):
+        body.extend([text(x, 204, number, 17, BLUE, 600), text(x, 244, title, 22, INK, 600)])
+        for row, item in enumerate(items):
+            body.extend([text(x, 306 + row * 47, item, 19), line(x, 320 + row * 47, x + 234, 320 + row * 47)])
+        if index < 3:
+            body.append(line(x + 244, 237, x + 291, 237, BLUE, True))
+    body.extend([
+        line(64, 520, 1216, 520),
+        text(64, 565, "贯穿案例", 18, GREEN, 600),
+        text(210, 565, "模拟天气：看清机制     →     Research Agent：检索、证据、回答与评估", 22),
+        text(64, 619, "先读正文与已有结果，再运行配套示例；课程材料完成与个人学习进度分别记录。", 18, MUTED),
+    ])
+    write("learning-path-zh.svg", "课程路线 · 从一次调用到可核验的研究助手", "11 章正文、两条贯穿案例，按信息流与依赖循序展开。", body, 680)
+
+
+def architecture():
+    body = [
+        text(64, 198, "阅读与运行入口", 18, MUTED, 600),
+        box(64, 220, 335, "手册正文", "docs / learning · 原理与结果"),
+        box(474, 220, 335, "章节示例", "examples · 参数与运行模式"),
+        box(884, 220, 332, "验证与报告", "tests · scripts · evaluation", GREEN),
+        line(640, 310, 640, 362, BLUE, True),
+        text(64, 365, "任务组织", 18, MUTED, 600),
+        box(64, 386, 335, "逐轮决策", "天气 / 基础 Research Agent"),
+        box(474, 386, 335, "计划与修订", "Plan-and-Solve / Reflection"),
+        box(884, 386, 332, "证据问答", "检索 → 证据 → 回答与引用", GREEN),
+        line(232, 476, 232, 536, BLUE, True), line(642, 476, 642, 536, BLUE, True),
+        line(1050, 476, 1050, 536, GREEN, True),
+        box(64, 548, 335, "运行控制", "消息 · 上下文 · 预算 · 停止", GREEN),
+        box(474, 548, 335, "模型接入", "配置 → 一次请求 → 文本回复"),
+        box(884, 548, 332, "工具与资料", "模拟天气 · 本地语料 · 来源", GREEN),
+        line(64, 686, 1216, 686),
+        text(64, 730, "可选集成", 18, GREEN, 600),
+        text(210, 730, "LangGraph 表达流程与状态；MCP 连接客户端与工具服务端。", 21),
+        text(64, 775, "基础功能独立运行；真实模型、固定演示与实际协议分别标注。", 18, MUTED),
+    ]
+    write("architecture-zh.svg", "项目架构 · 课程、任务与底层能力", "示例组织输入；任务控制流程；工具和模型提供能力；检查独立验证结果。", body, 830)
+
+
+def planning_reflection():
+    body = [text(64, 196, "PLAN-AND-SOLVE  /  先制定计划，再依次执行", 18, BLUE, 600)]
+    for x, title, detail, color in [(64, "原始问题", "目标与已知条件", BLUE), (366, "规划器", "一次请求生成步骤列表", BLUE),
+                                   (668, "执行当前步骤", "计划 + 历史结果 + 本步", BLUE), (970, "记录结果", "供后续步骤使用", GREEN)]:
+        body.append(box(x, 232, 246, title, detail, color))
+    for x in (310, 612, 914):
+        body.append(line(x, 277, x + 49, 277, BLUE, True))
+    body.extend([path("M1093 322V384H791V328", GREEN), text(818, 372, "还有步骤且预算足够", 17, GREEN),
+                 text(64, 409, "全部步骤完成 → 返回最终结果；预算耗尽 → 保留已完成部分并说明未完成。", 18, MUTED),
+                 line(64, 456, 1216, 456), text(64, 506, "REFLECTION  /  依据反馈，有限次地修订", 18, BLUE, 600),
+                 box(64, 608, 278, "初始回答", "围绕原问题生成草稿"),
+                 box(501, 608, 278, "评审", "给出通过或修改建议", GREEN),
+                 box(938, 608, 278, "修订", "使用草稿与评审反馈"),
+                 line(342, 651, 493, 651, BLUE, True), line(779, 651, 930, 651, BLUE, True),
+                 text(797, 617, "需修改", 17, MUTED), text(797, 640, "预算足够", 17, MUTED),
+                 path("M1077 608V555H640V600", GREEN), text(719, 544, "修订后再次评审", 17, GREEN),
+                 line(640, 698, 640, 766, GREEN, True), text(660, 741, "通过", 17, GREEN),
+                 box(501, 778, 278, "结束", "标明是否通过评审", GREEN),
+                 text(64, 920, "达到预算上限 → 保留草稿并标未通过；评审通过仍需外部事实或测试核验。", 18, MUTED)])
+    write("planning-reflection-zh.svg", "两种任务组织方式 · 计划执行与评审修订", "流程中的每次模型请求都计入预算；中间产物由程序保存并回传。", body, 970)
+
+
+def rag_evaluation():
+    body = [text(64, 198, "离线准备", 18, GREEN, 600),
+            box(64, 228, 290, "资料与出处", "教学语料 · 来源链接", GREEN),
+            box(464, 228, 290, "切分与编号", "段落 / 片段 / 可追溯标识", GREEN),
+            box(864, 228, 352, "检索索引", "本课程基线：词法相关性", GREEN),
+            line(354, 273, 456, 273, GREEN, True), line(754, 273, 856, 273, GREEN, True),
+            text(64, 385, "处理问题", 18, BLUE, 600),
+            box(64, 414, 246, "用户问题", "明确研究目标"),
+            box(366, 414, 246, "检索", "返回排名与来源片段", GREEN),
+            box(668, 414, 246, "组织证据", "选中内容与引用编号", GREEN),
+            box(970, 414, 246, "回答与报告", "依据证据 · 标注来源"),
+            line(310, 459, 358, 459, BLUE, True), line(612, 459, 660, 459, GREEN, True),
+            line(914, 459, 962, 459, BLUE, True), path("M1040 318V354H489V406", GREEN),
+            line(64, 565, 1216, 565), text(64, 607, "分别评估", 18, MUTED, 600),
+            box(64, 632, 352, "检索质量", "相关资料是否命中、排在哪里", GREEN),
+            box(464, 632, 352, "引用与覆盖", "引用能否追溯、主张是否标注", GREEN),
+            box(864, 632, 352, "答案质量", "人工核对事实与证据支持", BLUE),
+            text(64, 770, "检索分数、引用合法和答案正确是不同判断；没有证据时要明确说明。", 18, MUTED)]
+    write("rag-evaluation-zh.svg", "RAG 与评估 · 从资料到可追溯回答", "先构造证据，再生成回答；用固定问题分别检查检索与生成。", body, 820)
+
+
+def framework_protocol():
+    body = [text(64, 198, "LANGGRAPH  /  用真实图组织状态与节点", 18, BLUE, 600),
+            box(64, 228, 290, "understand", "准备查询词"),
+            box(464, 228, 290, "search", "读取本地资料", GREEN),
+            box(864, 228, 352, "answer", "根据返回证据作答"),
+            line(354, 273, 456, 273, BLUE, True), line(754, 273, 856, 273, GREEN, True),
+            text(64, 365, "State 在节点间传递；检查点示例保存进程内快照。天气循环另用条件边决定继续或结束。", 18, MUTED),
+            line(64, 407, 1216, 407), text(64, 458, "MCP  /  客户端与工具服务端的实际通信", 18, BLUE, 600),
+            box(64, 501, 290, "MCP 客户端", "会话与请求"),
+            box(464, 501, 290, "stdio 通道", "跨进程传输", GREEN),
+            box(864, 501, 352, "MCP 服务端", "注册工具并执行本地函数", GREEN),
+            line(354, 545, 456, 545, BLUE, True), line(754, 545, 856, 545, BLUE, True),
+            path("M1040 591V666H209V599", GREEN), text(471, 653, "工具结果返回客户端", 18, GREEN),
+            text(64, 725, "initialize  →  list_tools  →  call_tool", 22, INK, 600),
+            text(64, 770, "协议负责发现与调用；工具负责具体工作；模型是否参与决策由应用决定。", 18, MUTED)]
+    write("framework-protocol-zh.svg", "框架与协议 · 两种不同职责", "LangGraph 表达执行流程；MCP 让工具能力通过标准会话被调用。", body, 820)
+
+
+if __name__ == "__main__":
+    course_map()
+    architecture()
+    planning_reflection()
+    rag_evaluation()
+    framework_protocol()
+    print("已生成 5 张原创课程概览 SVG。")

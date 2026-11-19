@@ -1,89 +1,108 @@
-# 手册配套示例
+# 配套示例索引
 
-[手册正文](../README.md#章节目录) 已包含关键代码、已有结果与解释。这里列出可独立运行的配套示例，供希望进一步复现或修改的读者使用。环境配置见 [配套说明](../docs/getting-started.md)；以下命令均从仓库根目录执行。
+[手册目录](../README.md#章节目录) · [环境配置](../docs/getting-started.md) · [课程验收](../docs/course-map.md)
 
-| 知识主题 | 实验入口 | 运行后应能解释 |
+正文已直接展示代码、结果与分析；这里集中列出可运行入口。所有命令从仓库根目录执行，先激活虚拟环境。默认是否请求模型因教学目的而异，下表明确标注。
+
+## 无需模型 API 的核心示例
+
+| 对应章节 | 命令 | 实际执行什么 |
 | --- | --- | --- |
-| [模型调用与消息](../docs/learning/model-calls.md) | `python -m examples.model_call` | system 与 user 分别提供了什么信息 |
-| [Action 与工具执行](../docs/learning/tool-feedback.md) | `python -m examples.tool_execution` | 没有模型参与时，Python 为什么也能执行工具 |
-| [结果回传](../docs/learning/tool-feedback.md) | `python -m examples.tool_roundtrip --city 上海` | 哪一步让第二次请求获得了工具结果 |
-| [Agent Loop](../docs/learning/agent-loop.md) | `python -m examples.weather_loop` | 模型请求与工具执行为什么分别计数 |
-| [历史筛选与摘要](../docs/learning/state-and-context.md#58-截断历史会丢掉什么摘要怎样补回来) | `python -m examples.context_preview` | 怎样保留较早的工具证据 |
-| [先生成计划](../docs/learning/planning.md) | `python -m examples.plan_first` | 生成三条计划为什么只请求了一次模型 |
-| [本地检索](../docs/learning/retrieval-and-citations.md) | `python -m agent_learning.tools.notes --query "最大步数"` | 摘要、标签、编号和原文链接各有什么用途 |
-| [带引用的回答](../docs/practice/research-agent.md) | `python -m agent_learning --question "Agent Loop 为什么要有最大步数？"` | 回答是否引用了真正支持结论的资料 |
+| [02 工具回传](../docs/learning/tool-feedback.md) | `python -m examples.tool_execution` | Python 模拟天气工具 |
+| [04 检索引用](../docs/learning/retrieval-and-citations.md) | `python -m agent_learning.tools.notes --query "最大步数"` | 基础三条摘要的标签匹配 |
+| [05 上下文](../docs/learning/state-and-context.md) | `python -m examples.context_preview` | 三种上下文构造与实际本地工具 |
+| [06 规划器](../docs/learning/planning.md) | `python -m examples.plan_first --demo` | 解析固定示意计划 |
+| [06 计划执行](../docs/learning/planning.md) | `python -m examples.plan_solve --demo` | 固定模型回复驱动完整计划执行 |
+| [07 评审修订](../docs/learning/reflection.md) | `python -m examples.reflection --demo` | 固定草稿、反馈与修订驱动有限流程 |
+| [08 RAG](../docs/learning/rag.md) | `python -m examples.rag_research` | 真实本地检索与证据摘录报告 |
+| [09 评估](../docs/learning/evaluation.md) | `python -m examples.evaluate` | 固定开发题上的实际检索指标 |
 
-`python -m examples.model_call --check` 只检查配置。工具执行、本地检索、上下文预览及 `plan_first --demo` 不读取密钥、不联网；其余实验会产生模型 API 用量。
+固定回复演示会显示适配器调用次数，但真实 API 次数为 0。RAG 默认的 `evidence_only` 是证据摘录，不是模型生成的研究结论。
 
-## 只改变一个条件
+## 真实模型入口
 
-| 对照方式 | 观察重点 |
-| --- | --- |
-| 单次调用只改 system 中的回答语言 | 输入说明怎样影响回复形式 |
-| 回传实验将 `--city 上海` 改成 `--city 广州` | 缺少数据时是否如实说明 |
-| 天气循环加 `--max-steps 2` | 查到数据与输出有效 Finish 是否是同一件事 |
-| 研究助手的问题改为 checkpoint 的作用 | 当前摘要不足时是否编造回答 |
+这些命令需要本地配置，会产生服务商 API 用量。可以继续使用千问，配置见 [环境说明](../docs/getting-started.md)。
 
-天气只有北京与上海的模拟数据；不将结果解释为实时天气。上限实验中的 `step_limit` 与退出码 1 可以是符合预期的结果。更完整的验收见 [评估文档](../docs/evaluation.md)。
+| 主题 | 命令 | 观察重点 |
+| --- | --- | --- |
+| 单次模型调用 | `python -m examples.model_call` | 输入消息与回答文本 |
+| 工具回传 | `python -m examples.tool_roundtrip --city 上海` | 工具结果进入第二次请求 |
+| 有限循环 | `python -m examples.weather_loop --max-steps 3` | 请求、工具与 Finish 分别计数 |
+| 基础研究助手 | `python -m agent_learning --question "Agent Loop 为什么要有最大步数？"` | 检索、引用与来源范围 |
+| 只生成计划 | `python -m examples.plan_first` | 一次调用返回整个计划 |
+| 计划后执行 | `python -m examples.plan_solve` | 前序结果成为后续输入 |
+| 评审并修订 | `python -m examples.reflection` | 评审结构、修订预算、停止状态 |
+| RAG 报告 | `python -m examples.rag_research --live` | 证据支持、逐条引用、资料不足 |
 
-示例依次复用 `agent_learning` 中的配置、请求、工具与循环。学习时先定位一段关键代码，再做小幅修改，最后用观察结果解释机制。
+`python -m examples.model_call --check` 或 `python -m agent_learning --check` 只检查配置字段，不验证权限或额度，也不请求模型。`agent-research` 与基础研究助手入口等价。
 
 ## 状态与上下文：预算提示对照
 
-这个实验对应 Hello-Agents 第九章 §9.1、§9.2.1。保持问题、模型和请求上限一致，仅切换是否把本轮剩余预算加入模型消息：
+固定问题与模型，仅切换预算提示：
 
 ```bash
 python -m examples.weather_loop --max-steps 2
 python -m examples.weather_loop --max-steps 2 --budget-context
-```
-
-开启后，每轮会显示实际附加到请求中的预算提示；提示只加入本轮的消息副本，不累积到历史。程序的请求上限仍为 2。此处统计的是模型请求次数，不是 token 预算。
-
-两次已有真实运行都在两次查询后耗尽预算。保持提示开启，再只把上限改为 3：
-
-```bash
 python -m examples.weather_loop --max-steps 3 --budget-context
 ```
 
-该次运行在第三轮输出有效 Finish。完整结果与原因解释见 [第 5 章](../docs/learning/state-and-context.md)；不能据此归因于提示效果，因为这次同时增加了可用请求次数。
-
-离线检查使用固定模型回复，验证提示更新、历史保留和上限约束。真实模型结果另行核对数据是否齐全、是否有有效 Finish，以及结论是否有依据。
+学习者提供的前两次运行均在查询两地后达到上限；第三次增加请求次数后输出 Finish。因为执行预算改变，不能把成功归因于提示。完整分析见 [第 05 章](../docs/learning/state-and-context.md)。
 
 ## 状态与上下文：摘要接回循环
 
-先离线查看完整历史、最近两条历史、较早摘要加最近历史的区别：
-
-```bash
-python -m examples.context_preview
-```
-
-程序直接执行本地模拟天气工具，显示三种消息输入，不调用模型。结果和分析已经写入 [第 5 章](../docs/learning/state-and-context.md#58-截断历史会丢掉什么摘要怎样补回来)。
-
-接入循环后，保持问题、模型、预算提示和上限一致，仅切换历史整理方式：
+保持问题、模型、预算开关和上限一致，只切换历史模式：
 
 ```bash
 python -m examples.weather_loop --max-steps 3 --budget-context --context-mode full
 python -m examples.weather_loop --max-steps 3 --budget-context --context-mode summary
 ```
 
-默认使用 `full`。`summary` 在较早历史存在时，用带来源的工具结果摘要替代旧的 Action/Observation 对，保留最近一对原始消息；本轮预算最后追加。较早历史出现不能整理的格式时保留完整历史。原始任务历史不会被摘要覆盖。
-
-上述两条命令会调用模型 API。学习者已提供两次真实运行：均查询北京、上海并在第三轮有效 Finish，摘要模式没有丢失此次比较所需的信息。消息减少不等于 token 减少，也尚未证明摘要提高了正确率。
+已有真实对照均为 3 次模型请求、2 次工具执行。摘要在第三次请求前由程序生成，保留较早结果和来源；不增加摘要模型调用。消息数减少不代表 token 一定减少，也不是成功率改善的证据。
 
 ## 先规划，再执行：规划器
 
-对应 Hello-Agents 第四章 §4.3.1–4.3.2，使用教材三天销量题的数据。先只生成计划，不执行步骤：
+先用 `plan_first` 看计划，再用 `plan_solve` 跟踪整个执行过程。教材示例数据相同，输出不必有完全相同的措辞或条目数。格式检查不等于语义正确；执行完成也需要核对中间结果。
+
+预算边界可用以下离线命令检查，它们预期退出码为 1：
 
 ```bash
-python -m examples.plan_first
+python -m examples.plan_solve --demo --max-calls 2
+python -m examples.reflection --demo --max-calls 3
+python -m examples.reflection --demo --max-revisions 0
 ```
 
-真实模式请求模型一次，打印原始计划和解析后的列表。检查计划覆盖目标且按依赖顺序排列；格式通过不代表内容正确。计划步骤数不是模型请求次数，打印步骤也不代表执行步骤。
+逐步解释见 [第 06 章](../docs/learning/planning.md) 与 [第 07 章](../docs/learning/reflection.md)。
 
-无 API 的固定示意：
+## 研究与评估报告
 
 ```bash
-python -m examples.plan_first --demo
+python -m examples.rag_research --question "RAG 为什么要保留来源？" --output outputs/research-report.md
+python -m examples.evaluate --k 3 --output outputs/retrieval-evaluation.json
 ```
 
-此模式使用程序预设的三个步骤，适合查看列表和编号输出；不能作为真实模型结果。已有示意、代码与解释见 [第 6 章](../docs/learning/planning.md)。执行器将在下一节加入。
+报告保存问题、模式、检索轨迹、证据或回答及来源。评估保留语料指纹、逐题结果和失败案例；实际开发集并非独立测试集。对外部回答做引用检查使用 `--predictions`，输入结构见 [评估章](../docs/learning/evaluation.md)。
+
+## 真实框架与协议集成
+
+先安装 `python -m pip install -e ".[all]"`。以下默认模式不调用模型，但确实执行第三方框架或本地 MCP 会话：
+
+```bash
+python -m examples.langgraph_workflow
+python -m examples.langgraph_workflow --checkpoint
+python -m examples.langgraph_workflow --loop
+python -m examples.mcp_demo
+```
+
+图示例为理解、检索、回答三步；`--loop` 演示天气条件循环，`--checkpoint` 演示进程内状态快照。LangGraph 示例添加 `--live` 才使用真实模型。MCP 示例实际初始化会话、发现工具并执行本地函数，不访问公网天气服务。
+
+## 统一检查
+
+```bash
+python -m unittest discover -s tests -v
+python scripts/check_docs.py
+python scripts/check_examples.py
+# 已安装可选依赖后
+python scripts/check_examples.py --integrations
+```
+
+检查仅使用公开教学数据与离线模式，不读取真实密钥。缺少可选依赖时，相关单元测试会显示跳过；集成检查要求依赖已安装，并实际运行例子。

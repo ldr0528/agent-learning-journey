@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "dataset_kind": "small_development_set",
+  "description": "人工标注的小型开发集，与知识库一起设计；非独立盲测，不代表真实模型正确率。relevant_doc_ids 标注可支持问题的文档。",
+  "cases": [
+    {
+      "id": "E01",
+      "question": "为什么 Agent Loop 要限制最大步数？",
+      "relevant_doc_ids": [
+        "D01"
+      ]
+    },
+    {
+      "id": "E02",
+      "question": "只打印工具结果到终端，模型下一次能看到吗？",
+      "relevant_doc_ids": [
+        "D02"
+      ]
+    },
+    {
+      "id": "E03",
+      "question": "剩余预算怎样进入模型上下文？",
+      "relevant_doc_ids": [
+        "D03"
+      ]
+    },
+    {
+      "id": "E04",
+      "question": "截断历史后怎么保留较早证据？",
+      "relevant_doc_ids": [
+        "D04"
+      ]
+    },
+    {
+      "id": "E05",
+      "question": "RAG 包含哪些检索增强生成步骤？",
+      "relevant_doc_ids": [
+        "D05"
+      ]
+    },
+    {
+      "id": "E06",
+      "question": "BM25 和 Embedding 向量检索有什么区别？",
+      "relevant_doc_ids": [
+        "D06",
+        "D07"
+      ]
+    },
+    {
+      "id": "E07",
+      "question": "RAG 为什么要保留来源与引用？",
+      "relevant_doc_ids": [
+        "D08"
+      ]
+    },
+    {
+      "id": "E08",
+      "question": "分块大小和重叠有什么权衡？",
+      "relevant_doc_ids": [
+        "D09"
+      ]
+    },
+    {
+      "id": "E09",
+      "question": "检索评估能替代答案评估吗？",
+      "relevant_doc_ids": [
+        "D11"
+      ]
+    },
+    {
+      "id": "E10",
+      "question": "Recall MRR 与引用合法率能说明什么？",
+      "relevant_doc_ids": [
+        "D12"
+      ]
+    },
+    {
+      "id": "E11",
+      "question": "Plan-and-Solve 的执行阶段需要哪些信息？",
+      "relevant_doc_ids": [
+        "D13"
+      ]
+    },
+    {
+      "id": "E12",
+      "question": "Reflection 为什么需要限制修订次数？",
+      "relevant_doc_ids": [
+        "D14"
+      ]
+    },
+    {
+      "id": "E13",
+      "question": "火星明天的日出时间是多少？",
+      "relevant_doc_ids": []
+    },
+    {
+      "id": "E14",
+      "question": "RAG 服务每月收费多少钱？",
+      "relevant_doc_ids": []
+    }
+  ]
+}

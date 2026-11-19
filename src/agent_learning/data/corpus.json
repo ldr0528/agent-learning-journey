@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "description": "本课程独立的扩展检索语料；不替换基础三条 notes。所有条目是人工整理的教学摘要，非完整教材。",
+  "license": "CC-BY-NC-SA-4.0",
+  "attribution": "以 Datawhale Hello-Agents 为主要参考；本项目重新编写、分块并加入实现边界，详见 NOTICE.md。",
+  "documents": [
+    {
+      "id": "D01",
+      "title": "Agent Loop 与停止预算",
+      "text": "Agent Loop 交替进行模型决策和程序执行。模型提出 Action，程序调用工具，并将结果整理为 Observation 加入下一次请求。最大步数限制模型请求次数，防止持续循环；本项目达到上限仍没有有效 Finish 时返回未完成。预算耗尽不能证明答案正确。",
+      "source_section": "Hello-Agents 第四章 §4.2",
+      "source_url": "https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter4/第四章%20智能体经典范式构建.md",
+      "content_type": "教学摘要与本项目说明，非教材原文"
+    },
+    {
+      "id": "D02",
+      "title": "工具结果为何必须回传",
+      "text": "Action 是模型提出的操作请求，Observation 是程序组织的执行反馈。只打印工具结果到终端，模型下一次调用仍然看不到它。程序必须把工具结果加入实际发送的消息列表。Finish 表示尝试结束，任务还可能需要引用或格式检查。",
+      "source_section": "Hello-Agents 第四章 §4.2",
+      "source_url": "https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter4/第四章%20智能体经典范式构建.md",
+      "content_type": "教学摘要与本项目说明，非教材原文"
+    },
+    {
+      "id": "D03",
+      "title": "上下文与程序状态",
+      "text": "Python 的计数器、工具结果和消息列表属于程序状态。模型只能使用本次请求实际包含的信息。当前轮数、剩余预算不会自动进入模型上下文；程序可以每轮生成临时预算提示，追加到本轮输入，不将过时的预算积累进历史。",
+      "source_section": "Hello-Agents 第九章 §9.1–9.2",
+      "source_url": "https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter9/第九章%20上下文工程.md",
+      "content_type": "教学摘要与本项目说明，非教材原文"
+    },
+    {
+      "id": "D04",
+      "title": "摘要保留较早证据",
+      "text": "整理上下文时可保留最近消息，并用摘要承接较早的重要记录。摘要应保留任务还需要的事实、来源与资料缺失说明。天气例子中，较早的城市和温度不能在截断历史时一起丢弃。消息条数减少不等于 token 一定减少，摘要仍需检查信息损失。",
+      "source_section": "Hello-Agents 第九章 §9.1–9.2",
+      "source_url": "https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter9/第九章%20上下文工程.md",
+      "content_type": "教学摘要与本项目说明，非教材原文"
+    },
+    {
+      "id": "D05",
+      "title": "RAG 的检索增强生成流程",
+      "text": "RAG 在回答之前检索外部知识，将证据放入模型输入，再生成有依据的回答。数据准备包括文档收集、切分、保留来源和建立索引；应用阶段包括问题检索、选择证据、组装上下文与回答。只做搜索还没有生成答案，只让模型凭记忆作答也没有检索增强。",
+      "source_section": "Hello-Agents 第八章 §8.3",
+      "source_url": "https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter8/第八章%20记忆与检索.md",
+      "content_type": "教学摘要与本项目说明，非教材原文"
+    },
+    {
+      "id": "D06",
+      "title": "BM25 字面检索",
+      "text": "BM25 按查询词在资料中的出现情况排序。较少见的词通常带来更高区分度，词频增大时贡献逐渐饱和，长度归一化避免长文档仅凭字数占优。本项目中文采用相邻双字分词，英文按词；它能匹配字面重合，但不具备训练得到的语义理解能力。",
+      "source_section": "Hello-Agents 第八章 §8.3",
+      "source_url": "https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter8/第八章%20记忆与检索.md",
+      "content_type": "教学摘要与本项目说明，非教材原文"
+    },
+    {
+      "id": "D07",
+      "title": "Embedding 与向量检索",
+      "text": "Embedding 模型将文本编码成稠密向量，通过向量距离寻找表达不同但含义相近的资料。索引文档与查询必须使用兼容的同一嵌入空间；更换模型通常需要重新编码知识库。向量相似度并非答案正确概率，也不能替代来源核对。当前项目的 BM25 基线没有调用嵌入模型。",
+      "source_section": "Hello-Agents 第八章 §8.3",
+      "source_url": "https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter8/第八章%20记忆与检索.md",
+      "content_type": "教学摘要与本项目说明，非教材原文"
+    },
+    {
+      "id": "D08",
+      "title": "RAG 的来源与引用",
+      "text": "RAG 的每个资料块应保留文档编号、标题、出处与正文。生成时仅能引用实际纳入上下文的证据，最终链接由程序从资料记录读取。引用编号合法只表示它来自这次证据，不保证资料真的支持每一句结论。报告应同时展示依据与仍缺少的信息，便于读者核查。",
+      "source_section": "Hello-Agents 第八章 §8.3",
+      "source_url": "https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter8/第八章%20记忆与检索.md",
+      "content_type": "教学摘要与本项目说明，非教材原文"
+    },
+    {
+      "id": "D09",
+      "title": "分块大小与重叠",
+      "text": "把长文档切成资料块，可以缩小检索和上下文选择的单位。块太短会丢失解释与前提，块太长可能夹杂无关内容；重叠能减少边界割裂，也会引入重复。分块后保留原文起止偏移和来源。字符长度与模型 token 长度不同，需要分开计量。",
+      "source_section": "Hello-Agents 第八章 §8.3",
+      "source_url": "https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter8/第八章%20记忆与检索.md",
+      "content_type": "教学摘要与本项目说明，非教材原文"
+    },
+    {
+      "id": "D10",
+      "title": "混合检索与重排序",
+      "text": "关键词检索擅长名称和精确术语，稠密向量检索能补充语义相近的表达。混合检索可以合并两路候选，再去重或重排序。查询改写可能增加召回，也可能偏离原问题；需要用相同评估题对照，不能只展示一个命中的例子。本项目只实现 BM25，其他策略作为可替换的后续方案。",
+      "source_section": "Hello-Agents 第八章 §8.3",
+      "source_url": "https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter8/第八章%20记忆与检索.md",
+      "content_type": "教学摘要与本项目说明，非教材原文"
+    },
+    {
+      "id": "D11",
+      "title": "检索评估与答案评估分开",
+      "text": "检索评估关注相关资料是否被找到以及排在什么位置；答案评估关注事实是否正确、引用是否支持结论、问题是否得到解决。程序测试能够验证消息回传、停止条件和解析规则，不能证明真实模型的回答质量。比较版本时应固定题目、知识库和参数，并记录结果来源。",
+      "source_section": "Hello-Agents 第十二章 §12.1",
+      "source_url": "https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter12/第十二章%20智能体性能评估.md",
+      "content_type": "教学摘要与本项目说明，非教材原文"
+    },
+    {
+      "id": "D12",
+      "title": "Recall MRR 与引用检查",
+      "text": "本项目的检索开发集为每个有答案问题标注相关文档。Recall@k 是前 k 个结果覆盖的相关文档数除以相关文档总数；MRR@k 是首个相关结果名次倒数的平均值，未命中记零。引用合法率和逐条结论引用覆盖率只检查引用结构；语义支持仍需人工评分。无答案题单独统计空结果比例。",
+      "source_section": "Hello-Agents 第十二章 §12.1",
+      "source_url": "https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter12/第十二章%20智能体性能评估.md",
+      "content_type": "教学扩展：本项目指标定义，非教材原文"
+    },
+    {
+      "id": "D13",
+      "title": "Plan-and-Solve 的两阶段",
+      "text": "Plan-and-Solve 先生成有序计划，再逐项执行。执行当前步骤时，需要原始问题、完整计划和前面步骤的结果。一次模型回复列出三个步骤，不等于调用了三次模型，也不代表任务已经执行完成。计划可能遗漏依赖，执行结果也需要核对。",
+      "source_section": "Hello-Agents 第四章 §4.3",
+      "source_url": "https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter4/第四章%20智能体经典范式构建.md",
+      "content_type": "教学摘要与本项目说明，非教材原文"
+    },
+    {
+      "id": "D14",
+      "title": "Reflection 的有限修订",
+      "text": "Reflection 在初稿之后进行评审，根据反馈修订，再决定是否结束。评审需要具体指出问题，修订需要保留有效内容并回应反馈。评审和修改都会消耗模型请求，因此程序应限制迭代次数。模型自评通过不是客观正确性证明，仍应使用任务标准或外部证据检查。",
+      "source_section": "Hello-Agents 第四章 §4.4",
+      "source_url": "https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter4/第四章%20智能体经典范式构建.md",
+      "content_type": "教学摘要与本项目说明，非教材原文"
+    }
+  ]
+}

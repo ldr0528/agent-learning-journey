@@ -31,6 +31,19 @@ if [ ! -f .env ]; then cp .env.example .env; fi
 
 Windows 如果不方便激活环境，可以直接使用 `.\.venv\Scripts\python.exe` 替代后续命令中的 `python`。
 
+## 可选框架与协议
+
+01–09 章使用基础安装即可。第 10、11 章使用真实第三方库，可分别安装或一次装齐：
+
+```bash
+python -m pip install -e ".[graph]"
+python -m pip install -e ".[mcp]"
+# 或一次安装两项
+python -m pip install -e ".[all]"
+```
+
+课程固定使用 LangGraph 1.2.23 与 MCP Python SDK 1.30.0；MCP 选用 1.x 接口，不声称它是最新主版本。集成示例建议使用 Python 3.12，核心示例兼容 Python 3.10+。基础环境没有可选库时，集成测试会明确跳过；安装后再运行对应例子和测试，才能验证实际协议与框架行为。
+
 ## 配置模型
 
 打开本地 `.env`，填写千问配置：
@@ -60,6 +73,24 @@ python -m agent_learning.tools.notes --query "最大步数"
 
 前者执行手动指定的天气 Action，后者只检索本地摘要。两者都不需要密钥、不请求模型。可以先观察 Python 工具能独立做什么，再加入模型决策。
 
+后半程课程也提供无需 API Key 的完整演示：
+
+```bash
+python -m examples.plan_solve --demo
+python -m examples.reflection --demo
+python -m examples.rag_research --output outputs/research-report.md
+python -m examples.evaluate --output outputs/retrieval-evaluation.json
+```
+
+前两项使用固定模型回复验证控制流程；研究报告默认摘录真实本地检索结果，评估运行真实检索。模式均在输出中标明。安装可选依赖后，还可运行真实框架与本地协议：
+
+```bash
+python -m examples.langgraph_workflow
+python -m examples.mcp_demo
+```
+
+这些默认模式不请求付费模型，MCP 仅启动本地服务端子进程并在会话结束时关闭。
+
 ## 运行模型与完整循环
 
 以下实验会产生模型 API 用量。每次先预测模型请求次数和工具执行次数，再对照输出。
@@ -72,6 +103,8 @@ python -m agent_learning --question "Agent Loop 为什么要有最大步数？"
 ```
 
 安装后的 `agent-research` 与 `python -m agent_learning` 是等价入口。更多观察点见 [分层实验](../examples/README.md)。
+
+规划与反思去掉 `--demo` 后使用真实模型；RAG 和 LangGraph 显式添加 `--live` 后才使用真实模型。完整模式对照见 [示例索引](../examples/README.md)，不要把演示中的固定回复当成服务商实测。
 
 ## 观察边界
 
@@ -95,6 +128,8 @@ python -m agent_learning --question "Agent Loop 为什么要有最大步数？" 
 
 ```bash
 python -m unittest discover -s tests -v
+python scripts/check_docs.py
+python scripts/check_examples.py
 ```
 
 测试使用固定的模拟模型回复，不读取真实密钥、不请求 API。它检查程序是否正确回传结果、执行预算、校验引用和隔离任务。真实模型表现另按 [评估标准](evaluation.md) 人工核对。
