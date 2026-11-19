@@ -35,34 +35,39 @@
 
 | 模块 | 职责与边界 |
 | --- | --- |
-| `insurance/web.py`、`insurance/static/index.html` | 本机网页、需求表单、报告与来源展示；HTTP 只绑定 `127.0.0.1`，写操作检查同源与 CSRF |
+| `insurance/web.py`、`insurance/static/` | 本机聊天工作区、需求与产品选择、后台进度、报告与证据抽屉；HTTP 只绑定 `127.0.0.1`，写操作检查同源与 CSRF |
 | `insurance/cli.py` | 创建、恢复、查看会话及导出 Markdown 报告 |
-| `insurance/service.py` | 选择资料目录和运行模式，创建模型客户端，调用工作流并保存结果 |
+| `insurance/service.py`、`insurance/conversation.py` | 整理待确认需求；调用比较工作流；限定报告追问使用的证据；管理模型客户端与结果保存 |
+| `insurance/runs.py`、`insurance/execution.py` | 有界后台队列、运行事件、幂等提交与合作取消 |
 | `insurance/workflow.py` | 检查需求，维护本次产品与版本范围，校验证据，构建九维比较与缺口 |
 | `insurance/agent.py` | 模型工具循环、参数校验、错误反馈、模型与工具预算 |
 | `insurance/catalog.py` | 读取固定版本目录，按产品、维度或关键词提供带出处的事实 |
-| `insurance/store.py` | 本地会话快照、修订号、当前结果及最多五份历史结果；原子替换保存文件 |
+| `insurance/store.py` | SQLite 单表 JSON 存储；需求版本、消息、运行、当前结果及最多五份历史结果；事务检查会话占用与过期修改 |
 | `insurance/integrations.py`、`insurance/mcp_server.py` | 同一比较任务的 LangGraph 调度和 MCP 取证适配 |
 
-网页与保险 CLI 经过 `service.run_session` 使用 Python 工作流并持久化。`examples.insurance_compare` 用于对照 Python、LangGraph、MCP 三种执行方式，直接返回报告，可导出 JSON；它不创建会话。
+网页的需求沟通、比较和追问经过 `RunManager` 后台执行，再调用 `service.run_message` 或 `service.run_session`。保险 CLI 同步调用比较服务；两条路径在执行前都认领会话，避免跨进程重复处理。`examples.insurance_compare` 用于对照 Python、LangGraph、MCP 三种执行方式，直接返回报告，可导出 JSON；它不创建会话。
 
 一次比较沿以下路径进行：
 
 ```text
-网页 / 保险 CLI
-  → SessionStore 创建或读取需求
-  → service.run_session
-  → prepare_request 检查关注维度、比较对象与资料版本
-      ├─ 信息不足 → needs_input，保存补充问题
-      └─ 信息齐全 → run_comparison
-          ├─ offline：程序按维度读取目录
-          └─ live：模型提出取证操作，agent.run_agent 执行并反馈
-  → EvidenceWorkspace.finish 校验本次证据与九维覆盖
-  → 构建比较表、来源、缺口和下一步
-  → SessionStore.save → 网页展示 / CLI 导出
+网页聊天 → 后台 intake → run_message → 待确认提案
+  → 用户核对需求、选择产品 → 保存确认后的需求版本
+  → 后台 comparison → run_session → run_comparison
+      ├─ offline：程序按维度读取目录
+      └─ live：agent.run_agent 选择工具并接收反馈
+  → EvidenceWorkspace.finish → 比较表、来源、缺口
+  → 保存报告版本 → 后台 followup → run_message
+  → 筛选当前报告证据，按原事实与条件回复
+
+保险 CLI → 提交需求文件 → run_session → 同一比较工作流
+网页轮询 → 读取运行状态与新事件，不重新发起模型请求
 ```
 
 比较表单元来自目录事实及条件，模型负责选择取证操作并提交完成请求。`EvidenceWorkspace.remember` 对照目录核验整批返回内容，`finish` 检查产品版本、证据是否实际读过，以及全部维度是否覆盖。关注维度改变顺序，不删去其他维度的限制和未知项。
+
+需求提案只包含明确提供的年龄、医保、预算和关注维度，不直接应用，也不替用户选择产品。确认后的需求变更会让旧报告标为过期；追问只允许使用当前有效报告的来源。后台运行与报告具有不同状态：任务正常返回也可能只是提示补充信息或说明资料不足。
+
+本地状态写入 `outputs/insurance-sessions/state.sqlite3`。事务检查需求版本、运行归属和重复提交；旧 JSON 会话按需迁移并保留原文件。取消采用合作检查，重启后中断任务不自动重发模型请求。对象、接口与恢复边界见 [第 12 章状态与执行设计](insurance/architecture.md)。
 
 资料目录分为自拟教学示例与官方条款节选。年龄、医保和年度预算保存在需求中；当前实现没有报价或核保接口，因此报告列出待确认事项，不计算保费、排名或承保结论。缺少报价可以得到 `completed_with_gaps`：比较流程已完成，资料缺口仍然存在。
 
@@ -86,7 +91,8 @@
 | 计划与反思例题 | 由执行、评审与各自预算决定是否完成；保留未完成步骤或未通过草稿 |
 | RAG 例题 | 区分证据摘录、生成回答、资料不足与格式/引用失败 |
 | MCP 模型例题 | 区分有成功工具结果后的最终文本、无成功证据与预算耗尽；尚无程序化引用校验 |
-| 医疗险项目 | `needs_input` 等待补需求；`completed` / `completed_with_gaps` 通过完成校验；`call_limit` / `tool_limit` / `model_error` 保留已有证据并标记未完成 |
+| 医疗险比较 | `needs_input` 等待补需求；`completed` / `completed_with_gaps` 通过完成校验；`call_limit` / `tool_limit` / `model_error` / `cancelled` 保留已有证据并说明停止原因 |
+| 医疗险对话 | `needs_confirmation` 表示需求仍是提案；`needs_report` 要求先查证当前需求；`answered` / `partial_answer` 区分报告能否完整回答追问 |
 
 医疗险未知工具、参数错误和缺失证据会反馈给模型；预算耗尽后不追加隐藏的总结调用。普通文本不能代替 `finish_comparison`。各层的具体输入、反馈和测试位置见 [源码阅读](practice/source-reading.md)。
 

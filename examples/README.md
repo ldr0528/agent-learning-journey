@@ -70,9 +70,10 @@ python -m examples.weather_loop --max-steps 3 --budget-context --context-mode su
 | 用途 | 命令 | 模型 API 与输出 |
 | --- | --- | --- |
 | Python 对照 | `python -m examples.insurance_compare` | 默认不调用；`--live` 调用；`--output` 导出 JSON，不创建会话 |
+| 一次完整咨询 | `python -m examples.insurance_consultation` | 需求草稿 → 显式确认 → 比较 → 追问；默认不调用；`--live` 调用，`--output` 导出过程 JSON |
 | LangGraph 对照 | `python -m examples.insurance_compare --engine langgraph` | 默认不调用；`--live` 调用；需 `.[graph]` |
 | MCP 对照 | `python -m examples.insurance_compare --engine mcp` | 默认不调用；`--live` 调用；需 `.[mcp]` |
-| 本地网页 | `python -m agent_learning.insurance.web` | 默认不调用；页面中明确启用模型辅助才调用；保存会话，可下载 JSON |
+| 本地网页 | `python -m agent_learning.insurance.web` | 默认资料模式；切换模型辅助后调用；支持需求确认、任务进度、报告追问与 JSON 下载 |
 | 创建会话 | `python -m agent_learning.insurance compare --request examples/insurance_request.json --output outputs/insurance-report.md` | 默认不调用；`--live` 调用；保存会话，导出 Markdown |
 | 查看报告 | `python -m agent_learning.insurance show SESSION_ID` | 不调用；读取已保存结果 |
 | 补充后重跑 | `python -m agent_learning.insurance resume SESSION_ID --request examples/insurance_request.json` | 默认不调用；`--live` 调用；更新原会话 |
@@ -80,6 +81,8 @@ python -m examples.weather_loop --max-steps 3 --budget-context --context-mode su
 将 `SESSION_ID` 替换为创建时返回的编号。示例默认读取自拟教学目录；官方节选使用 `--catalog official --request examples/insurance_official_request.json`。`--catalog` 用于 `examples.insurance_compare` 或 CLI 的 `compare`；`resume` 沿用原会话目录。
 
 三种对照入口以及 `compare` / `resume` 均可用 `--max-calls` 限制模型请求。网页用 `--port` 指定端口；网页和会话 CLI 用 `--sessions` 指定保存目录。医疗险入口使用环境配置中选择的模型服务，没有独立 `--provider` 参数。
+
+网页与 CLI 的会话保存在 `outputs/insurance-sessions/state.sqlite3`，包含消息、需求版本、任务与报告历史。旧 JSON 会话在首次读取时迁移，原文件保留。示例 `insurance_consultation` 使用临时会话，并在代码中明确模拟用户确认产品这一步；它不会把模型提案直接当作用户选择。
 
 ## 检查入口
 

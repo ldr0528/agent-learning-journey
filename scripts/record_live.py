@@ -36,6 +36,7 @@ CASES = {
     "insurance-demo": ("examples.insurance_compare", ["--live", "--output", "outputs/insurance-demo-result.json"]),
     "insurance-official": ("examples.insurance_compare", ["--live", "--catalog", "official",
         "--request", "examples/insurance_official_request.json", "--output", "outputs/insurance-official-result.json"]),
+    "insurance-consultation": ("examples.insurance_consultation", ["--live", "--output", "outputs/insurance-consultation-result.json"]),
 }
 REQUEST_FIELDS = ("model", "messages", "tools", "tool_choice", "max_tokens", "max_completion_tokens",
                   "temperature", "reasoning_effort", "extra_body", "parallel_tool_calls", "response_format")
@@ -110,6 +111,7 @@ def source_manifest():
         files.extend((ROOT / folder).rglob("*.py"))
     files.extend((ROOT / "src/agent_learning/data").glob("*.json"))
     files.extend((ROOT / "examples").glob("*.json"))
+    files.extend(path for path in (ROOT / "src/agent_learning/insurance/static").glob("*") if path.is_file())
     return {path.relative_to(ROOT).as_posix(): sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
             for path in sorted(files) if "__pycache__" not in path.parts}
 

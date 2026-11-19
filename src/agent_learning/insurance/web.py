@@ -11,6 +11,7 @@ from urllib.parse import parse_qs, urlsplit
 
 from .catalog import DIMENSIONS
 from .workflow import prepare_request
+from .store import StoreConflict, StoreNotFound
 
 
 MAX_BODY_BYTES = 64 * 1024
@@ -24,7 +25,7 @@ class HTTPProblem(Exception):
         self.status, self.message = status, message
 
 
-def create_server(*, store, catalogs, runner, port=8765):
+def create_server(*, store, catalogs, runner, port=8765, message_runner=None, run_manager=None):
     """返回未启动的本地服务器；测试可注入目录、存储与不请求模型的 runner。"""
     if not catalogs or set(catalogs) - set(CATALOG_LABELS):
         raise ValueError("网页目录仅接受 demo 和 official。")
@@ -34,6 +35,11 @@ def create_server(*, store, catalogs, runner, port=8765):
     class InsuranceServer(ThreadingHTTPServer):
         daemon_threads = True
         block_on_close = False
+
+        def server_close(self):
+            if getattr(self, "run_manager", None):
+                self.run_manager.close(wait=False)
+            super().server_close()
 
     class Handler(BaseHTTPRequestHandler):
         server_version = "InsuranceLocal/1.0"
@@ -144,6 +150,40 @@ def create_server(*, store, catalogs, runner, port=8765):
             except ValueError as error:
                 raise HTTPProblem(400, str(error)) from None
 
+        def _manager(self):
+            if self.server.run_manager is None:
+                from .runs import RunManager
+                with self.server.manager_lock:
+                    if self.server.run_manager is None:
+                        self.server.run_manager = RunManager(self.server.store, self.server.runner,
+                            message_runner=self.server.message_runner, catalogs=self.server.catalogs)
+            return self.server.run_manager
+
+        @staticmethod
+        def _expected(data):
+            expected = data.get("expected_version")
+            if type(expected) is not int or expected < 1:
+                raise HTTPProblem(400, "请提供当前需求版本。")
+            return expected
+
+        def _products(self, kind, catalog):
+            products = catalog.list_products()
+            for product in products:
+                facts = []
+                try:
+                    record = catalog.get_product(product["product_id"], product["version"])
+                    all_facts = record.get("facts", [])
+                    for dimension in ("coverage", "renewal", "premium"):
+                        if hasattr(catalog, "facts"):
+                            facts.extend(catalog.facts(product["product_id"], product["version"], dimension))
+                    product["preview"] = {"facts": facts,
+                        "known_count": sum(fact.get("status") == "known" for fact in all_facts),
+                        "total_count": len(all_facts)}
+                except (AttributeError, KeyError, ValueError):
+                    product["preview"] = {"facts": [], "known_count": 0, "total_count": 0}
+            return {"catalog": kind, "metadata": {"label": CATALOG_LABELS[kind],
+                "data_kind": "synthetic" if kind == "demo" else "official_excerpt"}, "products": products}
+
         def _load(self, session_id):
             try:
                 saved = self.server.store.load(session_id)
@@ -162,6 +202,12 @@ def create_server(*, store, catalogs, runner, port=8765):
             path = parsed.path
             if not mutation and path in ("/", "/index.html"):
                 return self._send(200, PAGE_PATH.read_bytes(), "text/html; charset=utf-8")
+            if not mutation and path in ("/app.css", "/app.js"):
+                asset = PAGE_PATH.parent / path[1:]
+                if not asset.is_file():
+                    raise HTTPProblem(404, "没有找到页面资源。")
+                content_type = "text/css; charset=utf-8" if path.endswith(".css") else "text/javascript; charset=utf-8"
+                return self._send(200, asset.read_bytes(), content_type)
             if not mutation and path == "/api/bootstrap":
                 return self._send(200, {
                     "csrf_token": self.server.csrf_token,
@@ -175,7 +221,25 @@ def create_server(*, store, catalogs, runner, port=8765):
                 if len(kinds) != 1:
                     raise HTTPProblem(400, "请只选择一个资料目录。")
                 catalog = self._catalog(kinds[0])
-                return self._send(200, {"catalog": kinds[0], "products": catalog.list_products()})
+                return self._send(200, self._products(kinds[0], catalog))
+            if not mutation and path == "/api/sessions":
+                self._manager()
+                return self._send(200, {"sessions": self.server.store.list_sessions()})
+            run_match = re.fullmatch(r"/api/runs/([a-f0-9]{32})(?:/(cancel))?", path)
+            if run_match:
+                run_id, run_action = run_match.groups()
+                manager = self._manager()
+                if not mutation and run_action is None:
+                    query = parse_qs(parsed.query)
+                    values = query.get("after_seq", ["0"])
+                    if len(values) != 1 or not re.fullmatch(r"[0-9]{1,10}", values[0]):
+                        raise HTTPProblem(400, "事件序号需为非负整数。")
+                    return self._send(200, manager.get(run_id, int(values[0])))
+                if mutation and run_action == "cancel":
+                    if self._json_body():
+                        raise HTTPProblem(400, "取消操作无需其他参数。")
+                    return self._send(200, manager.cancel(run_id))
+                raise HTTPProblem(405, "此操作不支持当前请求方式。")
             if mutation and path == "/api/sessions":
                 data = self._json_body()
                 kind = data.pop("catalog", "demo")
@@ -186,7 +250,7 @@ def create_server(*, store, catalogs, runner, port=8765):
                 if not isinstance(session_id, str) or not SESSION_ID.fullmatch(session_id):
                     raise HTTPProblem(500, "会话编号生成失败。")
                 return self._send(201, {"session_id": session_id, "catalog_kind": kind})
-            match = re.fullmatch(r"/api/sessions/([A-Za-z0-9][A-Za-z0-9_-]{0,79})(?:/(run|report))?", path)
+            match = re.fullmatch(r"/api/sessions/([A-Za-z0-9][A-Za-z0-9_-]{0,79})(?:/(run|report|brief|messages|runs))?", path)
             if not match:
                 raise HTTPProblem(404, "没有找到该页面或操作。")
             session_id, action = match.groups()
@@ -198,7 +262,42 @@ def create_server(*, store, catalogs, runner, port=8765):
                 report = saved.get("result")
                 if not report:
                     raise HTTPProblem(404, "这个会话还没有比较报告。")
+                formats = parse_qs(parsed.query).get("format", ["json"])
+                if formats == ["markdown"]:
+                    from .workflow import render_markdown
+                    return self._send(200, render_markdown(report).encode("utf-8"), "text/markdown; charset=utf-8",
+                                      filename=f"insurance-report-{session_id}.md")
+                if formats != ["json"]:
+                    raise HTTPProblem(400, "报告格式需为 json 或 markdown。")
                 return self._send(200, report, filename=f"insurance-report-{session_id}.json")
+            if mutation and action == "brief":
+                data = self._json_body()
+                if set(data) != {"request", "expected_version", "confirm"} or data.get("confirm") is not True:
+                    raise HTTPProblem(400, "请提交完整需求、当前版本并明确确认。")
+                request = self._prepare(data["request"], self._catalog(kind))
+                updated = self.server.store.update_brief(session_id, request,
+                    expected_version=self._expected(data), confirm=True)
+                return self._send(200, updated)
+            if mutation and action in ("messages", "runs"):
+                data = self._json_body()
+                allowed = {"mode", "expected_version", "client_request_id"} | (
+                    {"message", "intent"} if action == "messages" else {"max_calls"})
+                if set(data) - allowed:
+                    raise HTTPProblem(400, "请求包含不支持的字段。")
+                expected = self._expected(data)
+                payload = {"mode": data.get("mode", "offline")}
+                if action == "messages":
+                    intent = data.get("intent", "intake")
+                    message = data.get("message")
+                    if intent not in ("intake", "followup") or not isinstance(message, str) or not 1 <= len(message.strip()) <= 1500:
+                        raise HTTPProblem(400, "请选择需求沟通或报告追问，并填写 1–1500 字的内容。")
+                    payload["message"] = message.strip()
+                else:
+                    intent = "comparison"
+                    payload["max_calls"] = data.get("max_calls", 6)
+                run = self._manager().submit(session_id, kind=intent, payload=payload,
+                    expected_version=expected, client_request_id=data.get("client_request_id"))
+                return self._send(202, run)
             if mutation and action == "run":
                 data = self._json_body()
                 if set(data) - {"request", "mode", "max_calls", "catalog"}:
@@ -215,6 +314,15 @@ def create_server(*, store, catalogs, runner, port=8765):
                 request = data.get("request")
                 if request is not None:
                     request = self._prepare(request, catalog)
+                if hasattr(self.server.store, "create_run"):
+                    manager = self._manager()
+                    run = manager.submit(session_id, kind="comparison", payload={"mode": mode, "max_calls": max_calls,
+                        "request": request, "legacy": True}, expected_version=saved["brief_version"],
+                        client_request_id=secrets.token_hex(16))
+                    completed = manager.wait(run["id"])
+                    if completed["result"] is None:
+                        raise HTTPProblem(500, completed["error"] or "本次比较未完成。")
+                    return self._send(200, completed["result"])
                 if not self.server.run_lock.acquire(blocking=False):
                     raise HTTPProblem(409, "已有比较正在进行，请稍后再试。")
                 try:
@@ -232,6 +340,14 @@ def create_server(*, store, catalogs, runner, port=8765):
                 self.close_connection = True
                 self._discard_rejected_body()
                 self._send(error.status, {"error": error.message})
+            except StoreConflict as error:
+                self.close_connection = True
+                self._discard_rejected_body()
+                self._send(409, {"error": str(error)})
+            except StoreNotFound as error:
+                self.close_connection = True
+                self._discard_rejected_body()
+                self._send(404, {"error": str(error)})
             except ValueError:
                 self.close_connection = True
                 self._send(400, {"error": "本次输入或本地配置不符合要求，请检查后重试。"})
@@ -253,10 +369,15 @@ def create_server(*, store, catalogs, runner, port=8765):
 
     server = InsuranceServer(("127.0.0.1", port), Handler)
     server.store, server.catalogs, server.runner = store, dict(catalogs), runner
+    server.message_runner, server.run_manager = message_runner, run_manager
+    server.manager_lock = threading.Lock()
     server.authority = "127.0.0.1" + (f":{server.server_port}" if server.server_port != 80 else "")
     server.origin = f"http://{server.authority}"
     server.csrf_token = secrets.token_urlsafe(32)
     server.run_lock = threading.Lock()
+    if server.run_manager is None and hasattr(store, "create_run"):
+        from .runs import RunManager
+        server.run_manager = RunManager(store, runner, message_runner=message_runner, catalogs=catalogs)
     return server
 
 

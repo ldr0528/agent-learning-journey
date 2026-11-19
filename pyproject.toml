@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agent-learning-journey"
-version = "0.3.0"
+version = "0.4.0"
 description = "A Chinese agent learning handbook with inspectable workflows, retrieval, evaluation, LangGraph and MCP examples."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -27,4 +27,4 @@ where = ["src"]
 license-files = ["LICENSE", "NOTICE.md", "LICENSES/*.txt"]
 
 [tool.setuptools.package-data]
-agent_learning = ["data/*.json", "insurance/static/*.html"]
+agent_learning = ["data/*.json", "insurance/static/*.html", "insurance/static/*.css", "insurance/static/*.js"]

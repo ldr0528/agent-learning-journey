@@ -94,18 +94,20 @@ MCP list_tools → 工具定义 → 模型请求的 tools 参数
 
 ## 综合项目：从医疗险需求到比较报告
 
-阅读 [第 12 章](../insurance/course-guide.md) 的需求和报告后，选择“比较普通门诊与续保”这条路径。先沿网页或 CLI 进入业务服务，再进入取证循环：
+阅读 [第 12 章](../insurance/course-guide.md) 的需求和报告后，选择“比较普通门诊与续保”这条路径。网页先处理需求草稿与确认，再在后台运行比较；CLI 直接提交需求文件。沿下面的位置区分交互状态与取证状态：
 
 | 顺序 | 文件与函数 | 追踪什么 |
 | --- | --- | --- |
-| 1 | [web.py](../../src/agent_learning/insurance/web.py) 的会话与运行路由，或 [cli.main](../../src/agent_learning/insurance/cli.py) | 需求中的 profile、selections；单独保存的 catalog_kind |
-| 2 | [service.run_session](../../src/agent_learning/insurance/service.py) | 何时沿用保存需求、何时替换为补充后的完整需求；offline / live 分支 |
-| 3 | [prepare_request / run_comparison](../../src/agent_learning/insurance/workflow.py) | 关注维度和产品版本是否齐全；缺需求时怎样返回 needs_input |
-| 4 | [insurance.agent.run_agent](../../src/agent_learning/insurance/agent.py) | 每轮 request_messages、剩余预算、tool_calls 与工具反馈 |
-| 5 | execute_tool → EvidenceWorkspace | 工具名与参数校验，本次允许的产品版本，实际读到的证据 |
-| 6 | [Catalog](../../src/agent_learning/insurance/catalog.py) → remember | 来源定位、条件、已知/未知/冲突状态；整批证据是否与目录一致 |
-| 7 | finish_comparison → EvidenceWorkspace.finish / report | 已读证据是否覆盖所有产品九个维度，比较单元怎样从事实生成 |
-| 8 | [SessionStore.save](../../src/agent_learning/insurance/store.py) → 网页或 CLI | 当前需求、报告、修订号与历史；展示或导出的对象来自哪里 |
+| 1 | [web.py](../../src/agent_learning/insurance/web.py) 的 `messages` 与 `brief` 路由 | 自然语言消息与完整需求是两种输入；确认时检查 expected_version |
+| 2 | [conversation.propose_needs](../../src/agent_learning/insurance/conversation.py) | profile 字段与本轮原话如何对应；proposal 为什么不直接覆盖 request |
+| 3 | [RunManager.submit / _execute](../../src/agent_learning/insurance/runs.py) | 需求确认、幂等键、会话占用、任务参数；进度与取消如何传入业务层 |
+| 4 | [service.run_session](../../src/agent_learning/insurance/service.py)，或 [cli.main](../../src/agent_learning/insurance/cli.py) | claim_session 在模型调用前认领会话；offline / live 分支 |
+| 5 | [prepare_request / run_comparison](../../src/agent_learning/insurance/workflow.py) | 关注维度和产品版本是否齐全；缺需求时怎样返回 needs_input |
+| 6 | [insurance.agent.run_agent](../../src/agent_learning/insurance/agent.py) | 每轮 request_messages、剩余预算、tool_calls、工具反馈与取消检查 |
+| 7 | execute_tool → EvidenceWorkspace → [Catalog](../../src/agent_learning/insurance/catalog.py) | 产品版本范围、来源定位与条件；remember 怎样将整批证据与目录比对 |
+| 8 | finish_comparison → EvidenceWorkspace.finish / report | 已读证据是否覆盖所有产品九个维度，比较单元怎样从事实生成 |
+| 9 | [SessionStore.save](../../src/agent_learning/insurance/store.py) → 网页或 CLI | SQLite 中的当前需求、报告修订号与历史；需求版本和报告版本的区别 |
+| 10 | conversation.answer_report → service.run_message | 追问怎样限定在当前有效报告；模型选择编号后，正文由谁生成 |
 
 先比较两种执行路径，避免把离线读取误认为模型决策：
 
@@ -127,6 +129,10 @@ run_session → prepare_request
 在 `agent.run_agent` 中，`tool_call_id` 将反馈关联到模型提出的操作。模型只能通过 `finish_comparison` 提交最终依据；普通文本会收到格式反馈。完成检查通过后，程序直接从目录事实构造比较表，没有额外调用模型改写产品条件。
 
 重点找出三道检查：`_scope` 限定本次产品与版本；`remember` 将整批返回内容与目录原记录比对，全部通过才纳入；`finish` 要求引用实际读过的证据，并覆盖全部九个维度。`focus` 决定优先顺序，不能用来省略免责、等待期或未知报价。
+
+再追踪一次“为什么报价仍待确认”的追问：`run_message` 读取保存的会话，`answer_report` 检查 `result_stale` 与需求版本，从报告 `sources` 选择相关编号。模型模式只提交编号与 `answerable`；程序用原有事实、条件和编号拼接回复。追问不会调用目录检索，不会因本地目录更新而换掉报告的依据。需求变更后返回 `needs_report`，历史报告当前只能回看。
+
+最后看执行与保存的边界。`RunManager` 用运行标识关联事件，网页按 `after_seq` 读取新增内容；轮询不进入模型调用。`store.create_run` 在事务内检查需求版本与占用，`claim_session` 让同步 CLI 共享同一保护。网络请求发生在数据库事务外，取消标志在执行边界检查。`recover_runs` 发现执行进程已退出时标记 `interrupted`，没有自动重发 API 或恢复调用栈的步骤。
 
 随后阅读 [保险适配层](../../src/agent_learning/insurance/integrations.py)，对照哪些代码改变、哪些规则沿用：
 
@@ -161,10 +167,12 @@ python -m unittest discover -s tests -p test_mcp_agent.py -v
 ```bash
 python -m unittest discover -s tests -p test_insurance_catalog.py -v
 python -m unittest discover -s tests -p test_insurance_workflow.py -v
+python -m unittest discover -s tests -p test_insurance_conversation.py -v
+python -m unittest discover -s tests -p test_insurance_runs.py -v
 python -m unittest discover -s tests -p test_insurance_web.py -v
 ```
 
-依次检查产品版本隔离、工具结果回传与证据覆盖、会话恢复及 HTTP 边界。阅读 `test_native_tool_feedback_and_finish` 时，找出下一次模型输入里的工具结果；阅读 `test_early_finish_requires_other_product_and_restrictions` 时，说明为什么已有部分正确证据仍不能完成比较。
+依次检查产品版本隔离、工具反馈与证据覆盖、提案确认与报告追问、后台状态与并发、HTTP 边界。阅读 `test_native_tool_feedback_and_finish` 时，找出下一次模型输入里的工具结果；阅读 `test_early_finish_requires_other_product_and_restrictions` 时，说明为什么已有部分正确证据仍不能完成比较。再对照 `test_stale_report_never_calls_model` 和 `test_duplicate_submission_does_not_execute_twice_even_after_completion`，定位避免过期回答与重复执行的检查。
 
 ## 练习与参考答案
 
@@ -177,6 +185,9 @@ python -m unittest discover -s tests -p test_insurance_web.py -v
 7. **看到 trace 有三个节点，就能说 API 调用了三次吗？** 不能；节点也可能只做本地检索或资料不足处理，应定位实际模型请求。
 8. **医疗险目录中存在某条证据，就能直接提交它的编号吗？** 不能；`finish` 只接受本次工具实际返回并纳入工作区的证据，还要检查全部维度的覆盖。
 9. **医疗险报告显示 completed_with_gaps，是否说明预算匹配已经确认？** 不是；该状态表示比较通过完成校验，同时保留资料缺口。没有适用报价时，年度预算仍是待确认事项。
+10. **模型从聊天中提取了预算，就会直接修改已确认需求吗？** 不会；它先形成 proposal，用户核对并确认后才更新 request。产品选择不在模型可提取字段中。
+11. **刷新页面是否需要重新调用模型？** 不需要；会话与运行已保存，页面读取消息、报告和增量事件。只有明确提交新任务才进入执行入口。
+12. **追问可以引用目录中新增加的条款吗？** 当前不可以；追问限定在有效报告保存的 sources。要使用新资料，应重新比较并形成新报告。
 
 验收时，任选一条路径，用自己的话标出“模型调用、程序控制、工具执行、结果回传、停止检查”五个位置，并给出实际文件或函数名。能够定位到源码，比背诵框架术语更能说明已经理解。
 

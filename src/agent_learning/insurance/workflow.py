@@ -4,6 +4,7 @@ from copy import deepcopy
 import math
 
 from .catalog import Catalog, DIMENSIONS
+from .execution import emit
 
 
 def prepare_request(request, catalog):
@@ -162,8 +163,10 @@ class EvidenceWorkspace:
                 "catalog_fingerprint": self.catalog.fingerprint, "error": error}
 
 
-def run_comparison(request, *, catalog=None, mode="offline", max_calls=6, max_tools=12, request_model=None):
+def run_comparison(request, *, catalog=None, mode="offline", max_calls=6, max_tools=12, request_model=None,
+                   on_event=None, should_cancel=None):
     workspace = EvidenceWorkspace(request, catalog)
+    emit(on_event, "checking_request", "正在检查已确认的需求与比较范围。")
     if mode not in ("offline", "live"):
         raise ValueError("运行模式需为 offline 或 live。")
     if workspace.state["status"] == "needs_input":
@@ -172,15 +175,27 @@ def run_comparison(request, *, catalog=None, mode="offline", max_calls=6, max_to
         if request_model is None:
             raise ValueError("模型模式需要显式提供请求接口。")
         from .agent import run_agent
-        return {**run_agent(workspace, request_model, max_calls=max_calls, max_tools=max_tools), "mode": mode}
+        return {**run_agent(workspace, request_model, max_calls=max_calls, max_tools=max_tools,
+                           on_event=on_event, should_cancel=should_cancel), "mode": mode}
     count = 0
     for item in workspace.state["request"]["selections"]:
+        if should_cancel and should_cancel():
+            return {**workspace.report(status="cancelled", tool_calls=count,
+                                       error="查证已停止，保留已取得的资料。"), "mode": mode}
+        name = workspace.catalog.get_product(**item)["name"]
+        emit(on_event, "tool_started", f"正在读取{name}的九维资料。", tool="read_product_clauses")
         facts = workspace.read_dimensions(item["product_id"], item["version"], workspace.state["dimensions"])
         count += 1
         workspace.trace.append({"step": count, "name": "read_product_clauses", "arguments": item,
                                 "evidence_ids": [f["evidence_id"] for f in facts], "is_error": False})
+        emit(on_event, "evidence_received", f"已读取{name}，取得 {len(facts)} 条依据。",
+             evidence_ids=[f["evidence_id"] for f in facts], evidence_count=len(workspace.evidence))
+    if should_cancel and should_cancel():
+        return {**workspace.report(status="cancelled", tool_calls=count, error="查证已停止。"), "mode": mode}
+    emit(on_event, "verifying", "正在核对全部产品的来源、条件与资料缺口。")
     result = workspace.finish(list(workspace.evidence))
     result.update(mode="offline", tool_calls=count)
+    emit(on_event, "report_ready", "资料比较已整理。", evidence_count=len(result["sources"]))
     return result
 
 

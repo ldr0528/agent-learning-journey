@@ -5,6 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 import http.client
 import json
 import threading
+from tempfile import TemporaryDirectory
 import unittest
 
 from agent_learning.insurance.web import MAX_BODY_BYTES, create_server
@@ -245,6 +246,132 @@ class InsuranceWebTests(unittest.TestCase):
         self.assertEqual(status, 500)
         self.assertNotIn("private-response", result["error"])
         self.assertFalse(self.server.run_lock.locked())
+
+
+class InsuranceAsyncWebTests(unittest.TestCase):
+    request = InsuranceWebTests.request
+    get = InsuranceWebTests.get
+    post = InsuranceWebTests.post
+
+    def setUp(self):
+        from agent_learning.insurance.catalog import Catalog
+        from agent_learning.insurance.service import run_message, run_session
+        from agent_learning.insurance.store import SessionStore
+        self.temp = TemporaryDirectory()
+        self.store = SessionStore(self.temp.name)
+        self.gate, self.started = threading.Event(), threading.Event()
+        def runner(store, session_id, **kwargs):
+            if store.load(session_id)["request"]["question"] == "等待取消测试":
+                self.started.set()
+                self.gate.wait(3)
+            return run_session(store, session_id, **kwargs)
+        self.server = create_server(store=self.store, catalogs={"demo": Catalog()}, runner=runner,
+                                    message_runner=run_message, port=0)
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+        self.thread.start()
+        self.origin = self.server.origin
+        self.csrf = self.get("/api/bootstrap")[2]["csrf_token"]
+
+    def tearDown(self):
+        self.gate.set()
+        self.server.shutdown()
+        self.server.run_manager.close()
+        self.server.server_close()
+        self.thread.join(timeout=3)
+        self.temp.cleanup()
+
+    def create(self, question="比较普通门诊与续保。", confirm=False):
+        request = {"question": question, "profile": {"focus": ["coverage", "renewal"]},
+                   "selections": [{"product_id": "demo_hospital", "version": "demo-v1"},
+                                  {"product_id": "demo_outpatient", "version": "demo-v1"}]}
+        status, _, result = self.post("/api/sessions", request)
+        self.assertEqual(status, 201)
+        session_id = result["session_id"]
+        record = self.get("/api/sessions/" + session_id)[2]
+        if confirm:
+            status, _, record = self.post(f"/api/sessions/{session_id}/brief", {
+                "request": record["request"], "expected_version": record["brief_version"], "confirm": True})
+            self.assertEqual(status, 200)
+        return session_id, record
+
+    def test_async_run_requires_confirmation_and_supports_poll_restore_and_export(self):
+        session_id, record = self.create()
+        route = f"/api/sessions/{session_id}/runs"
+        payload = {"expected_version": 1, "client_request_id": "compare-1"}
+        self.assertEqual(self.post(route, payload)[0], 409)
+        self.assertEqual(self.post(f"/api/sessions/{session_id}/brief", {
+            "request": record["request"], "expected_version": 1, "confirm": True})[0], 200)
+        status, _, run = self.post(route, payload)
+        self.assertEqual(status, 202)
+        self.server.run_manager.wait(run["id"])
+        status, _, completed = self.get(f'/api/runs/{run["id"]}?after_seq=1')
+        self.assertEqual(status, 200)
+        self.assertEqual(completed["status"], "succeeded")
+        self.assertTrue(all(event["seq"] > 1 for event in completed["events"]))
+        restored = self.get(f"/api/sessions/{session_id}")[2]
+        self.assertEqual(len(restored["result"]["rows"]), 9)
+        self.assertEqual(restored["messages"][-1]["kind"], "report")
+        self.assertFalse(restored["result_stale"])
+        self.assertIsNone(restored["active_run"])
+        self.assertEqual(self.post(route, payload)[2]["id"], run["id"])
+        self.assertEqual(self.post(route, {**payload, "mode": "live"})[0], 409)
+        status, headers, report = self.get(f"/api/sessions/{session_id}/report?format=markdown")
+        self.assertEqual(status, 200)
+        self.assertIn("text/markdown", headers["Content-Type"])
+        self.assertIn("保障".encode(), report)
+        self.assertEqual(self.get("/api/sessions")[2]["sessions"][0]["id"], session_id)
+
+    def test_message_proposal_is_saved_but_requires_explicit_brief_confirmation(self):
+        session_id, record = self.create()
+        status, _, run = self.post(f"/api/sessions/{session_id}/messages", {
+            "message": "我关注门诊和续保，预算2000元。", "intent": "intake", "mode": "offline",
+            "expected_version": 1, "client_request_id": "intake-1"})
+        self.assertEqual(status, 202)
+        self.assertEqual(self.server.run_manager.wait(run["id"])["status"], "succeeded")
+        saved = self.get(f"/api/sessions/{session_id}")[2]
+        self.assertEqual(saved["request"], record["request"])
+        self.assertIsNotNone(saved["proposal"])
+        self.assertEqual([message["role"] for message in saved["messages"]], ["user", "assistant"])
+        updated = self.post(f"/api/sessions/{session_id}/brief", {
+            "request": saved["proposal"]["request"], "expected_version": 1, "confirm": True})
+        self.assertEqual(updated[0], 200)
+        self.assertEqual(updated[2]["confirmed_version"], updated[2]["brief_version"])
+        self.assertIsNone(updated[2]["proposal"])
+
+    def test_cancel_endpoint_keeps_active_run_visible_until_worker_stops(self):
+        session_id, _ = self.create("等待取消测试", confirm=True)
+        status, _, run = self.post(f"/api/sessions/{session_id}/runs", {
+            "expected_version": 1, "client_request_id": "cancel-1"})
+        self.assertEqual(status, 202)
+        self.assertTrue(self.started.wait(2))
+        saved = self.get(f"/api/sessions/{session_id}")[2]
+        self.assertEqual(saved["active_run"]["id"], run["id"])
+        self.assertEqual(self.post(f"/api/sessions/{session_id}/brief", {
+            "request": saved["request"], "expected_version": 1, "confirm": True})[0], 409)
+        self.assertEqual(self.post(f'/api/runs/{run["id"]}/cancel', {})[2]["status"], "cancelling")
+        self.gate.set()
+        self.assertEqual(self.server.run_manager.wait(run["id"])["status"], "cancelled")
+
+    def test_preview_fields_and_invalid_async_input(self):
+        products = self.get("/api/products?catalog=demo")[2]
+        self.assertEqual(products["metadata"]["data_kind"], "synthetic")
+        for product in products["products"]:
+            self.assertEqual({fact["dimension"] for fact in product["preview"]["facts"]}, {"coverage", "renewal", "premium"})
+            self.assertGreater(product["preview"]["total_count"], 0)
+        session_id, _ = self.create(confirm=True)
+        route = f"/api/sessions/{session_id}/messages"
+        common = {"message": "续保？", "intent": "followup", "expected_version": 1, "client_request_id": "invalid"}
+        self.assertEqual(self.post(route, {**common, "expected_version": 0})[0], 400)
+        self.assertEqual(self.post(route, {**common, "message": "x" * 1501})[0], 400)
+        self.assertEqual(self.post(route, common, headers={"X-CSRF-Token": "wrong"})[0], 403)
+        self.assertEqual(self.get("/api/runs/" + "a" * 32 + "?after_seq=-1")[0], 400)
+
+    def test_legacy_synchronous_route_keeps_returning_report(self):
+        session_id, _ = self.create()
+        status, _, report = self.post(f"/api/sessions/{session_id}/run", {"mode": "offline"})
+        self.assertEqual(status, 200)
+        self.assertEqual(report["status"], "completed_with_gaps")
+        self.assertEqual(report["model_calls"], 0)
 
 
 if __name__ == "__main__":

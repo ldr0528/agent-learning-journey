@@ -17,6 +17,7 @@ CORE = [
     ["examples.rag_research", "--output", "outputs/checks/research-report.md"],
     ["examples.evaluate", "--output", "outputs/checks/retrieval-evaluation.json"],
     ["examples.insurance_compare", "--output", "outputs/checks/insurance.json"],
+    ["examples.insurance_consultation", "--output", "outputs/checks/insurance-consultation.json"],
     ["examples.insurance_compare", "--catalog", "official", "--request", "examples/insurance_official_request.json"],
 ]
 INTEGRATIONS = [
