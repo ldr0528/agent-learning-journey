@@ -10,6 +10,9 @@
 | `src/agent_learning/data/corpus.json` 与 `eval_cases.json` | 按课程内容原创转述的资料摘要及开发评估题 | CC BY-NC-SA 4.0；不是教材全文或官方测试集，资料保留来源，评估题仅衡量当前语料与规则 |
 | `docs/learning/` 下的手册正文 | 以 Hello-Agents 为主要参考，按自己的计划结合本项目代码与实验重新编排 | CC BY-NC-SA 4.0；各章标注教材出处、教学简化和项目扩展，非教材原文 |
 | `docs/runs/` 下的教学实验记录与分析 | 实际模型请求、响应、引用的本地教学摘要及本项目判读 | CC BY-NC-SA 4.0；包含教材衍生摘要，不代表教材作者对模型输出作出背书 |
+| `insurance_demo.json` | 本项目自拟的九维教学条款 | MIT；非销售产品，也不是完整保险合同 |
+| `insurance_official.json` | 官方公开资料的少量自行概括、定位及链接 | 原来源的权利保留；不将保险机构条款重新授权为 MIT，不表示在售或得到保险机构背书 |
+| `docs/insurance/` 的课程讲解与分析 | 结合 Hello-Agents 和本项目保险案例编排 | CC BY-NC-SA 4.0；第三方资料仍按原来源权利使用 |
 
 ## Hello-Agents
 

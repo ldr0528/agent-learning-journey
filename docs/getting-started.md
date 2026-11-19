@@ -128,6 +128,12 @@ python -m agent_learning --question "Agent Loop 为什么要有最大步数？" 
 
 天气始终是模拟数据。达到请求上限且没有有效 Finish 时，程序报告未完成，退出码为 `1`；这是上限实验中的预期行为。有效的“资料不足”答复可以正常结束，但没有解决原始知识问题。
 
+## 医疗险比较工作区
+
+完成基础安装后，运行 `python -m agent_learning.insurance.web`，打开终端显示的本地地址。默认按固定流程整理资料；开启页面中的模型辅助选项后才使用上述模型配置。
+
+业务输入、比较结果和练习见 [医疗险 Agent](insurance/README.md)。需要对照 LangGraph 或 MCP 时，再安装可选依赖并按 [示例索引](../examples/README.md) 操作。
+
 ## 运行离线检查
 
 ```bash

@@ -212,6 +212,34 @@ def mcp_model_roundtrip():
     write("mcp-model-roundtrip-zh.svg", "MCP 工具回传 · 模型与程序各做什么", "应用将模型的工具请求转换为 MCP 调用，再把结果送回下一轮消息。", body, 1220)
 
 
+def insurance_flow():
+    body = [
+        box(64, 210, 248, "投保关注点", "需求 · 产品 · 资料版本"),
+        box(366, 210, 248, "模型选择取证", "查询 / 读取指定维度"),
+        box(668, 210, 248, "程序执行工具", "限定产品、版本与证据", GREEN),
+        box(970, 210, 246, "版本化资料", "事实 · 条件 · 条款定位", GREEN),
+        line(312, 255, 358, 255, BLUE, True),
+        line(614, 255, 660, 255, BLUE, True),
+        line(916, 255, 962, 255, GREEN, True),
+        path("M1093 300V350H490V306", GREEN),
+        text(675, 337, "工具结果进入下一轮模型请求", 18, GREEN),
+        path("M366 280H338V475H358"),
+        text(64, 383, "缺需求 → 先补充", 18, MUTED),
+        text(64, 451, "材料齐全 → 提交", 18, BLUE),
+        box(366, 430, 248, "提交比较依据", "只提交已读取的证据 ID"),
+        box(668, 430, 248, "覆盖与来源校验", "完整性 · 归属 · 适用条件", GREEN),
+        box(970, 430, 246, "生成比较报告", "事实对照 · 缺口 · 下一步", GREEN),
+        line(614, 475, 660, 475, BLUE, True),
+        line(916, 475, 962, 475, GREEN, True),
+        text(366, 562, "校验有缺项 → 将错误回传模型，在剩余预算内补查。", 18, MUTED),
+        line(64, 603, 1216, 603),
+        text(64, 646, "会话与预算", 19, GREEN, 600),
+        text(235, 646, "保存需求和结果；补充后重新取证。达到调用上限，保留部分证据并说明未完成。", 19),
+        text(64, 687, "Python、LangGraph 与 MCP 共用同一资料契约；表格内容由程序从条款事实生成。", 19, MUTED),
+    ]
+    write("insurance-flow-zh.svg", "医疗险比较 · 从需求到有出处的报告", "每个比较单元都保留产品、资料版本、适用条件和证据编号。", body, 730)
+
+
 if __name__ == "__main__":
     course_map()
     architecture()
@@ -220,4 +248,5 @@ if __name__ == "__main__":
     framework_protocol()
     evidence_checks()
     mcp_model_roundtrip()
-    print("已生成 7 张原创课程 SVG。")
+    insurance_flow()
+    print("已生成 8 张原创课程 SVG。")

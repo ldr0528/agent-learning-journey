@@ -16,12 +16,16 @@ CORE = [
     ["examples.reflection", "--demo"],
     ["examples.rag_research", "--output", "outputs/checks/research-report.md"],
     ["examples.evaluate", "--output", "outputs/checks/retrieval-evaluation.json"],
+    ["examples.insurance_compare", "--output", "outputs/checks/insurance.json"],
+    ["examples.insurance_compare", "--catalog", "official", "--request", "examples/insurance_official_request.json"],
 ]
 INTEGRATIONS = [
     ["examples.langgraph_workflow"],
     ["examples.langgraph_workflow", "--checkpoint"],
     ["examples.langgraph_workflow", "--loop"],
     ["examples.mcp_demo"],
+    ["examples.insurance_compare", "--engine", "langgraph"],
+    ["examples.insurance_compare", "--engine", "mcp"],
 ]
 
 

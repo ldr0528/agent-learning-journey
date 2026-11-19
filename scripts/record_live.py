@@ -33,6 +33,9 @@ CASES = {
     "langgraph-checkpoint": ("examples.langgraph_workflow", ["--live", "--provider", "qwen", "--checkpoint"]),
     "langgraph-loop": ("examples.langgraph_workflow", ["--live", "--provider", "qwen", "--loop"]),
     "mcp": ("examples.mcp_demo", ["--live", "--provider", "qwen"]),
+    "insurance-demo": ("examples.insurance_compare", ["--live", "--output", "outputs/insurance-demo-result.json"]),
+    "insurance-official": ("examples.insurance_compare", ["--live", "--catalog", "official",
+        "--request", "examples/insurance_official_request.json", "--output", "outputs/insurance-official-result.json"]),
 }
 REQUEST_FIELDS = ("model", "messages", "tools", "tool_choice", "max_tokens", "max_completion_tokens",
                   "temperature", "reasoning_effort", "extra_body", "parallel_tool_calls", "response_format")
@@ -105,6 +108,8 @@ def source_manifest():
     files = [ROOT / "pyproject.toml"]
     for folder in ("src", "examples", "scripts"):
         files.extend((ROOT / folder).rglob("*.py"))
+    files.extend((ROOT / "src/agent_learning/data").glob("*.json"))
+    files.extend((ROOT / "examples").glob("*.json"))
     return {path.relative_to(ROOT).as_posix(): sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
             for path in sorted(files) if "__pycache__" not in path.parts}
 
@@ -116,7 +121,7 @@ def render_transcript(record):
              f'- API 尝试：{record["api_attempts"]}；成功返回：{record["api_responses"]}；退出码：{record["exit_code"]}',
              f'- 服务商报告 token：{record["total_tokens"]}；未返回用量的调用：{record["calls_without_usage"]}',
              f'- 源码基准提交：`{record["source_commit"]}`；执行时源码有未提交改动：`{record["source_dirty"]}`',
-             '- 完整请求、响应与源码文件指纹见同名 JSON；工具数据为本地教学资料或模拟天气。',
+             '- 完整请求、响应与源码文件指纹见同名 JSON；资料性质以各例的目录标记为准。',
              '- Markdown 展示仅去除行尾空格和文件末尾空行；JSON 保留原始文本。', "",
              "## 复现命令", "", "```bash", record["command"], "```", "", "## 程序输出", "", "```text",
              record["stdout"].rstrip(), "```", "", "## 逐次模型响应", ""]

@@ -1,0 +1,13 @@
+{
+  "question": "比较这两份医疗险资料。我关心普通门诊和续保安排，年度预算2000元；哪些差异有依据，哪些还需要确认？",
+  "profile": {
+    "focus": ["coverage", "renewal"],
+    "annual_budget": 2000,
+    "age": 30,
+    "social_insurance": "yes"
+  },
+  "selections": [
+    {"product_id": "demo_hospital", "version": "demo-v1"},
+    {"product_id": "demo_outpatient", "version": "demo-v1"}
+  ]
+}

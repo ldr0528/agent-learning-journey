@@ -101,6 +101,20 @@ python -m examples.mcp_demo
 
 若需要保存完整请求与响应，可显式运行 `python scripts/record_live.py mcp --output-dir outputs/my-live-run`。该记录命令使用真实API，目标已存在时拒绝覆盖；公开结果前需检查输入是否适合公开。
 
+## 医疗险业务案例
+
+输入、报告与逐步解释见 [保险课程指南](../docs/insurance/course-guide.md)，本地界面见 [项目说明](../docs/insurance/README.md)。三个入口对照同一任务：
+
+```bash
+python -m examples.insurance_compare
+python -m examples.insurance_compare --engine langgraph
+python -m examples.insurance_compare --engine mcp
+```
+
+默认读取自拟案例资料，不请求模型。加 `--live` 后由模型选择取证工具。官方节选使用 `--catalog official --request examples/insurance_official_request.json`。未知报价和未摘录维度仍按缺口保留。
+
+网页使用 `python -m agent_learning.insurance.web`。需要持久化与导出时，使用 `python -m agent_learning.insurance compare --request examples/insurance_request.json --output outputs/insurance-report.md`；之后按返回的会话编号使用 `resume` 或 `show`。
+
 ## 统一检查
 
 ```bash

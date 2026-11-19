@@ -6,13 +6,19 @@
 
 **从一次模型请求出发，理解 Agent 的工作过程，逐步构建有来源的资料问答。**
 
-[开始阅读](docs/learning/model-calls.md) · [课程地图](docs/course-map.md) · [项目任务书](docs/practice/research-agent.md) · [迁移练习](docs/practice/transfer-exercises.md) · [环境配置](docs/getting-started.md)
+[开始阅读](docs/learning/model-calls.md) · [医疗险 Agent](docs/insurance/README.md) · [课程地图](docs/course-map.md) · [迁移练习](docs/practice/transfer-exercises.md) · [环境配置](docs/getting-started.md)
 
 </div>
 
 Agent 学习手册是一套以 [Datawhale Hello-Agents](https://github.com/datawhalechina/hello-agents) 为主要教材的中文学习资料。围绕“模型看到了什么、程序执行了什么、结论依据是什么”这三个问题，连接原理、关键代码、图解、输出和练习。
 
-模拟天气用于看清工具与循环，本地资料问答用于练习检索、引用和评估；规划、反思、LangGraph 与 MCP 各有独立示例。当前研究助手包含基础循环与 RAG 两条实现，多轮研究与报告修订是后续建设重点。
+模拟天气用于看清工具与循环，本地资料问答用于练习检索、引用和评估。在此基础上，用医疗险保障比较承接业务实践：明确投保关注点、读取指定产品版本、检查证据、输出比较与资料缺口。
+
+## 业务主线：医疗险资料比较
+
+[医疗险 Agent](docs/insurance/README.md) 面向投保用户，提供本地网页、模型取证、九维保障对照、来源查看、会话恢复与报告导出。Python、LangGraph 和 MCP 三种入口复用同一任务与证据规则。
+
+从“我关心普通门诊和续保”开始，学习怎样把需求变成有出处的比较。项目包含自拟教学方案与官方资料节选；没有适用报价时，明确保留预算缺口。先读 [完整案例与工具轨迹](docs/insurance/course-guide.md)，再查看 [业务任务书](docs/insurance/requirements.md)。
 
 ## 适合谁，学完能做什么
 
@@ -60,6 +66,7 @@ Agent 学习手册是一套以 [Datawhale Hello-Agents](https://github.com/dataw
 | 你想做什么 | 入口 |
 | --- | --- |
 | 按课程循序学习 | [课程地图与练习](docs/course-map.md) |
+| 学习一个贯穿业务的 Agent | [医疗险比较：需求、代码、界面与结果](docs/insurance/README.md) |
 | 明确项目要解决什么、交付什么 | [项目任务书与验收](docs/practice/research-agent.md) |
 | 检查能否把概念用于新问题 | [研究计划与报告修订练习](docs/practice/transfer-exercises.md) |
 | 先运行无需密钥的例子 | [配套示例索引](examples/README.md) |
@@ -80,7 +87,7 @@ LangGraph 与 MCP 作为可选安装项，基础章节无需这些库。每个�
 | 小型例题解释规划、执行和评审 | 需要前序证据的研究任务，以及初稿到修订稿的对照 |
 | 14 篇短教学摘要与词法检索 | 较长章节材料、多来源比较与信息缺口处理 |
 | 检索开发题与引用结构检查 | 独立问题、逐条证据判定和失败类型分析 |
-| 独立的图工作流与协议工具示例 | 将已验证的研究流程接入框架和协议 |
+| 医疗险比较的本地流程、图节点与协议取证 | 扩充经过核对的产品资料，增加更复杂的条件与独立验收题 |
 
 具体交付物与完成条件见 [建设路线](docs/roadmap.md#后续建设与完成条件)。课程聚焦单体 Agent，框架选 LangGraph，协议选本地 MCP；低代码平台、多 Agent、训练和长期记忆不在当前范围。
 
@@ -89,8 +96,10 @@ LangGraph 与 MCP 作为可选安装项，基础章节无需这些库。每个�
 ```text
 docs/learning/          11 章教材：解释、代码、图、结果与练习
 docs/practice/          项目任务、迁移练习与源码调用链
+docs/insurance/         医疗险业务任务、案例、资料规范与实验
 docs/assets/            原创中文 SVG
 src/agent_learning/     模型接入、循环、任务、检索与集成
+  insurance/           医疗险比较、会话、本地网页与协议适配
 examples/               每章可独立运行的入口
 tests/                  不调用付费模型的逻辑与集成检查
 scripts/                文档、示例与图示维护工具

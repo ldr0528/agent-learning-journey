@@ -1,0 +1,282 @@
+{
+  "schema_version": 1,
+  "products": [
+    {
+      "product_id": "official_pingan_1072",
+      "version": "snapshot-2026-11-19",
+      "name": "平安e生保长期医疗保险（费率可调）资料快照",
+      "data_kind": "official_excerpt",
+      "source": {
+        "title": "平安e生保长期医疗保险（费率可调）条款",
+        "url": "https://life.pingan.com/ilife-home/product/getPlanClausePdf?attachmentType=1&planCode=1072&versionNo=1072-4",
+        "checked_at": "2026-11-19",
+        "effective_date": null,
+        "locator": "资料快照，非合同生效版本；不据此判断在售。URL版本参数1072-4；条款生效日期未核实。"
+      },
+      "facts": [
+        {
+          "evidence_id": "OFFICIAL-PINGAN-1072-20261119-COVERAGE",
+          "dimension": "coverage",
+          "status": "known",
+          "text": "含住院、指定门诊及住院前后门急诊责任。",
+          "conditions": [
+            "适用范围见相应责任。"
+          ],
+          "locator": "§1.2.3 一般医疗保险金"
+        },
+        {
+          "evidence_id": "OFFICIAL-PINGAN-1072-20261119-DEDUCTIBLE",
+          "dimension": "deductible",
+          "status": "unknown",
+          "text": "该维度未摘录，不能据此判断。",
+          "conditions": [],
+          "locator": "资料快照：该维度未摘录"
+        },
+        {
+          "evidence_id": "OFFICIAL-PINGAN-1072-20261119-REIMBURSEMENT",
+          "dimension": "reimbursement",
+          "status": "unknown",
+          "text": "该维度未摘录，不能据此判断。",
+          "conditions": [],
+          "locator": "资料快照：该维度未摘录"
+        },
+        {
+          "evidence_id": "OFFICIAL-PINGAN-1072-20261119-HOSPITAL",
+          "dimension": "hospital",
+          "status": "unknown",
+          "text": "该维度未摘录，不能据此判断。",
+          "conditions": [],
+          "locator": "资料快照：该维度未摘录"
+        },
+        {
+          "evidence_id": "OFFICIAL-PINGAN-1072-20261119-WAITING-PERIOD",
+          "dimension": "waiting_period",
+          "status": "known",
+          "text": "疾病等待期90日，条款另列豁免情形。",
+          "conditions": [
+            "意外、续保等例外须分别核对。"
+          ],
+          "locator": "§1.2.1 等待期"
+        },
+        {
+          "evidence_id": "OFFICIAL-PINGAN-1072-20261119-RENEWAL",
+          "dimension": "renewal",
+          "status": "known",
+          "text": "保证续保期间仍可能调整保险费率。",
+          "conditions": [
+            "不等于保费固定。"
+          ],
+          "locator": "§3.3 保险费率调整；费率表重要提示"
+        },
+        {
+          "evidence_id": "OFFICIAL-PINGAN-1072-20261119-EXCLUSIONS",
+          "dimension": "exclusions",
+          "status": "unknown",
+          "text": "该维度未摘录，不能据此判断。",
+          "conditions": [],
+          "locator": "资料快照：该维度未摘录"
+        },
+        {
+          "evidence_id": "OFFICIAL-PINGAN-1072-20261119-PREMIUM",
+          "dimension": "premium",
+          "status": "unknown",
+          "text": "该维度未摘录，不能据此判断。",
+          "conditions": [],
+          "locator": "资料快照：该维度未摘录"
+        },
+        {
+          "evidence_id": "OFFICIAL-PINGAN-1072-20261119-UNDERWRITING",
+          "dimension": "underwriting",
+          "status": "unknown",
+          "text": "该维度未摘录，不能据此判断。",
+          "conditions": [],
+          "locator": "资料快照：该维度未摘录"
+        }
+      ]
+    },
+    {
+      "product_id": "official_cpic_inpatient",
+      "version": "snapshot-2026-11-19",
+      "name": "太保个人住院医疗保险（互联网）资料快照",
+      "data_kind": "official_excerpt",
+      "source": {
+        "title": "太保个人住院医疗保险（互联网）条款",
+        "url": "https://www.cpic.com.cn/upload/resources/file/2024/09/04/82106.pdf?oldName=%E9%99%84%E4%BB%B65%EF%BC%9A%E5%A4%AA%E4%BF%9D%E5%81%A5%E3%80%942024%E3%80%95143%E5%8F%B7%E5%A4%AA%E4%BF%9D%E4%B8%AA%E4%BA%BA%E4%BD%8F%E9%99%A2%E5%8C%BB%E7%96%97%E4%BF%9D%E9%99%A9%EF%BC%88%E4%BA%92%E8%81%94%E7%BD%91%EF%BC%89%E6%9D%A1%E6%AC%BE.pdf",
+        "checked_at": "2026-11-19",
+        "effective_date": null,
+        "locator": "资料快照，非合同生效版本；不据此判断在售。以PDF正文标题识别；上传路径不代表生效日期。"
+      },
+      "facts": [
+        {
+          "evidence_id": "OFFICIAL-CPIC-INPATIENT-20261119-COVERAGE",
+          "dimension": "coverage",
+          "status": "unknown",
+          "text": "该维度未摘录，不能据此判断。",
+          "conditions": [],
+          "locator": "资料快照：该维度未摘录"
+        },
+        {
+          "evidence_id": "OFFICIAL-CPIC-INPATIENT-20261119-DEDUCTIBLE",
+          "dimension": "deductible",
+          "status": "known",
+          "text": "免赔额按责任及所选计划确定，特药责任无免赔额。",
+          "conditions": [],
+          "locator": "§2.5 免赔额"
+        },
+        {
+          "evidence_id": "OFFICIAL-CPIC-INPATIENT-20261119-REIMBURSEMENT",
+          "dimension": "reimbursement",
+          "status": "unknown",
+          "text": "该维度未摘录，不能据此判断。",
+          "conditions": [],
+          "locator": "资料快照：该维度未摘录"
+        },
+        {
+          "evidence_id": "OFFICIAL-CPIC-INPATIENT-20261119-HOSPITAL",
+          "dimension": "hospital",
+          "status": "unknown",
+          "text": "该维度未摘录，不能据此判断。",
+          "conditions": [],
+          "locator": "资料快照：该维度未摘录"
+        },
+        {
+          "evidence_id": "OFFICIAL-CPIC-INPATIENT-20261119-WAITING-PERIOD",
+          "dimension": "waiting_period",
+          "status": "known",
+          "text": "首次合同等待期为30日。",
+          "conditions": [
+            "续保及保证续保期满另有约定。"
+          ],
+          "locator": "§2.4 等待期；§2.3.4"
+        },
+        {
+          "evidence_id": "OFFICIAL-CPIC-INPATIENT-20261119-RENEWAL",
+          "dimension": "renewal",
+          "status": "known",
+          "text": "保险期间1年，保证续保期间3年。",
+          "conditions": [
+            "续保权及期满续保存在条件。"
+          ],
+          "locator": "§2.2；§2.3.1至§2.3.4"
+        },
+        {
+          "evidence_id": "OFFICIAL-CPIC-INPATIENT-20261119-EXCLUSIONS",
+          "dimension": "exclusions",
+          "status": "unknown",
+          "text": "该维度未摘录，不能据此判断。",
+          "conditions": [],
+          "locator": "资料快照：该维度未摘录"
+        },
+        {
+          "evidence_id": "OFFICIAL-CPIC-INPATIENT-20261119-PREMIUM",
+          "dimension": "premium",
+          "status": "unknown",
+          "text": "该维度未摘录，不能据此判断。",
+          "conditions": [],
+          "locator": "资料快照：该维度未摘录"
+        },
+        {
+          "evidence_id": "OFFICIAL-CPIC-INPATIENT-20261119-UNDERWRITING",
+          "dimension": "underwriting",
+          "status": "unknown",
+          "text": "该维度未摘录，不能据此判断。",
+          "conditions": [],
+          "locator": "资料快照：该维度未摘录"
+        }
+      ]
+    },
+    {
+      "product_id": "official_zhongan_2026",
+      "version": "snapshot-2026-11-19",
+      "name": "尊享e生·百万医疗保险2026版页面资料快照",
+      "data_kind": "official_excerpt",
+      "source": {
+        "title": "众安尊享e生·百万医疗保险2026版官方产品页",
+        "url": "https://m.zhongan.com/gp/91114707?bannerPosition=za_dm&bizOrigin=cpyxj_zdtz&channelOrigin=cpyxj_zdtz&cid=10002542175&sourceLink=https%3A%2F%2Fm.zhongan.com%2Fgp%2F99633347%3Fcid%3D10002542175%26templateType%3DB&templateType=BXCX",
+        "checked_at": "2026-11-19",
+        "effective_date": null,
+        "locator": "资料快照，非合同生效版本；不据此判断在售。产品说明页；完整条款版本与生效日期未核实。"
+      },
+      "facts": [
+        {
+          "evidence_id": "OFFICIAL-ZHONGAN-2026-20261119-COVERAGE",
+          "dimension": "coverage",
+          "status": "known",
+          "text": "页面列有一般门急诊医疗责任。",
+          "conditions": [
+            "具体保障范围需核对条款。"
+          ],
+          "locator": "保障内容：一般门急诊医疗及外购药械费用医疗保险金"
+        },
+        {
+          "evidence_id": "OFFICIAL-ZHONGAN-2026-20261119-DEDUCTIBLE",
+          "dimension": "deductible",
+          "status": "known",
+          "text": "页面列示一般医疗与一般门急诊共享1万元年免赔额。",
+          "conditions": [
+            "仅对应页面所列两项责任。"
+          ],
+          "locator": "投保规则：免赔额"
+        },
+        {
+          "evidence_id": "OFFICIAL-ZHONGAN-2026-20261119-REIMBURSEMENT",
+          "dimension": "reimbursement",
+          "status": "unknown",
+          "text": "该维度未摘录，不能据此判断。",
+          "conditions": [],
+          "locator": "资料快照：该维度未摘录"
+        },
+        {
+          "evidence_id": "OFFICIAL-ZHONGAN-2026-20261119-HOSPITAL",
+          "dimension": "hospital",
+          "status": "unknown",
+          "text": "该维度未摘录，不能据此判断。",
+          "conditions": [],
+          "locator": "资料快照：该维度未摘录"
+        },
+        {
+          "evidence_id": "OFFICIAL-ZHONGAN-2026-20261119-WAITING-PERIOD",
+          "dimension": "waiting_period",
+          "status": "known",
+          "text": "页面列示30天等待期，特定加油包药品责任为7天。",
+          "conditions": [
+            "按责任核对。"
+          ],
+          "locator": "投保规则：等待期"
+        },
+        {
+          "evidence_id": "OFFICIAL-ZHONGAN-2026-20261119-RENEWAL",
+          "dimension": "renewal",
+          "status": "unknown",
+          "text": "该维度未摘录，不能据此判断。",
+          "conditions": [],
+          "locator": "资料快照：该维度未摘录"
+        },
+        {
+          "evidence_id": "OFFICIAL-ZHONGAN-2026-20261119-EXCLUSIONS",
+          "dimension": "exclusions",
+          "status": "unknown",
+          "text": "该维度未摘录，不能据此判断。",
+          "conditions": [],
+          "locator": "资料快照：该维度未摘录"
+        },
+        {
+          "evidence_id": "OFFICIAL-ZHONGAN-2026-20261119-PREMIUM",
+          "dimension": "premium",
+          "status": "unknown",
+          "text": "该维度未摘录，不能据此判断。",
+          "conditions": [],
+          "locator": "资料快照：该维度未摘录"
+        },
+        {
+          "evidence_id": "OFFICIAL-ZHONGAN-2026-20261119-UNDERWRITING",
+          "dimension": "underwriting",
+          "status": "unknown",
+          "text": "该维度未摘录，不能据此判断。",
+          "conditions": [],
+          "locator": "资料快照：该维度未摘录"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "question": "比较这两份医疗险官方资料中的等待期与续保表述，列出目前缺少的条件。",
+  "profile": {
+    "focus": ["waiting_period", "renewal"],
+    "annual_budget": null,
+    "age": null,
+    "social_insurance": "unknown"
+  },
+  "selections": [
+    {"product_id": "official_pingan_1072", "version": "snapshot-2026-11-19"},
+    {"product_id": "official_cpic_inpatient", "version": "snapshot-2026-11-19"}
+  ]
+}
