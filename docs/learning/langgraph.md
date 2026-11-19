@@ -82,10 +82,9 @@ app = graph.compile()
 
 ## 10.3 从检索词到带引用的回答
 
-运行条件：2026-11-19，Python 3.12、LangGraph 1.2.23、qwen-plus，`--live --checkpoint`；2 次模型请求，349 tokens。[运行记录](../runs/2026-11-19/langgraph-checkpoint.md) · [请求与响应](../runs/2026-11-19/langgraph-checkpoint.json)。
+下面节选检索词、资料与最终回答，观察状态如何沿三个节点传递。完整消息见 [运行记录](../runs/2026-11-19/langgraph-checkpoint.md)。
 
 ```text
-真实模型模式：qwen / qwen-plus
 节点：understand -> search -> answer
 检索词：Action 由 Agent 产生，Observation 由 Environment 产生。
 资料：N02
@@ -144,7 +143,7 @@ START → model ── 有效 Finish ──→ END
 
 `max_steps` 仍然限制模型决策节点的次数。LangGraph 的 `recursion_limit` 是图执行层面的保护，不能直接当作模型请求预算：一次模型决策后可能还要执行工具节点。
 
-运行条件：同日、同一环境，`--live --loop`；3 次模型请求，774 tokens。[运行记录](../runs/2026-11-19/langgraph-loop.md) · [请求与响应](../runs/2026-11-19/langgraph-loop.json)。
+下面节选两次工具请求和最终回答，完整消息见 [运行记录](../runs/2026-11-19/langgraph-loop.md)。
 
 ```text
 Action: get_weather(city="北京")

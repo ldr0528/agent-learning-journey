@@ -130,7 +130,7 @@ for index, step in enumerate(state["plan"], start=1):
 
 ## 6.6 规划与执行的四次请求
 
-运行条件：`qwen-plus`，总调用上限 6。输出节选如下，完整输入与响应见 [实验记录](../runs/2026-11-19/planning.md) 和 [JSON](../runs/2026-11-19/planning.json)。
+将总调用上限设为 6，观察规划器和执行器如何分配请求。下面节选计划与逐步结果；完整输入与响应见 [实验记录](../runs/2026-11-19/planning.md)。
 
 ```text
 [规划器原始输出]
@@ -219,13 +219,13 @@ for index, step in enumerate(state["plan"], start=1):
 配套命令：
 
 ```bash
-python -m examples.plan_solve --provider qwen
+python -m examples.plan_solve
 python -m examples.plan_first --demo
 python -m examples.plan_solve --demo
 python -m examples.plan_solve --demo --max-calls 2
 ```
 
-第一条使用已配置的千问服务，其余使用固定输入。`plan_first` 只生成计划，`plan_solve` 执行整个计划。
+第一条调用配置的模型，其余使用固定输入。`plan_first` 只生成计划，`plan_solve` 执行整个计划。
 
 先预测，再对照参考解析。前两题不需要运行模型；最后一题先手算，再与模型结果比较。
 

@@ -132,7 +132,7 @@ evidence = select_evidence(retrieved, max_context_chars)
 用两个问题观察检索与回答的关系。设置 `top_k=3`、证据预算 1800 字符，每题最多生成一次。先询问来源与引用的作用：
 
 ```bash
-python -m examples.rag_research --live --provider qwen --question "RAG 为什么要保留来源与引用？"
+python -m examples.rag_research --live --question "RAG 为什么要保留来源与引用？"
 ```
 
 该题的三块资料全部进入请求：

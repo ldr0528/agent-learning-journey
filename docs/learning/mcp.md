@@ -88,10 +88,9 @@ async def exchange():
 
 ## 11.5 两次工具结果怎样进入三轮对话
 
-运行条件：2026-11-19，qwen-plus、`mcp==1.30.0`，`--live --provider qwen`；3 次模型请求、2 次 MCP 工具请求，1329 tokens。[运行记录](../runs/2026-11-19/mcp.md) · [请求与响应](../runs/2026-11-19/mcp.json)。
+将模型请求上限设为 4，下面节选工具发现、调用和最终回答。完整消息见 [运行记录](../runs/2026-11-19/mcp.md)。
 
 ```text
-真实模型 + MCP：qwen / qwen-plus；模型请求上限 4。
 问题：分别查询北京和上海的模拟天气，再比较哪里更暖和。
 initialize：agent-learning-tools；协商协议版本：2025-11-25
 list_tools：search_notes, weather
@@ -117,10 +116,9 @@ tool 结果：{"city": "上海", "weather": "晴天，22℃", "simulated": true}
 
 ### 由程序指定工具的调用路径
 
-也可以由程序直接指定查询北京和摘要，无需先让模型选择工具。对应输出如下：
+也可以由程序直接指定查询北京和摘要，无需先让模型选择工具。下面节选协议交互与工具结果：
 
 ```text
-真实 MCP stdio 会话；工具在子进程执行，本次模型请求 0 次。
 initialize：agent-learning-tools；协商协议版本：2025-11-25
 list_tools：search_notes, weather
 call_tool weather：北京，下雨，12℃，模拟数据。
@@ -211,9 +209,9 @@ python -m examples.mcp_demo --city 广州 --query "没有匹配的词"
 添加 `--live` 后使用配置的模型选择工具并生成答案，会产生 API 用量：
 
 ```bash
-python -m examples.mcp_demo --live --provider qwen
-python -m examples.mcp_demo --live --provider qwen --question "Action 和 Observation 分别由谁产生？"
-python -m examples.mcp_demo --live --provider qwen --max-calls 1
+python -m examples.mcp_demo --live
+python -m examples.mcp_demo --live --question "Action 和 Observation 分别由谁产生？"
+python -m examples.mcp_demo --live --max-calls 1
 ```
 
 任务来自 `--question`，工具名和参数由模型选择。最后一条用于观察预算边界：若模型先请求工具，将以 `step_limit` 和退出码 1 结束。每次 MCP 调用最多等待 20 秒，模型请求沿用客户端的 30 秒超时。

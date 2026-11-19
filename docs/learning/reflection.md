@@ -116,7 +116,7 @@ if state["model_calls"] >= max_calls:
 
 ## 7.5 初稿接受与约束检查
 
-运行条件：`qwen-plus`，总调用上限 6，最多修订 2 次。输出节选如下，完整输入与响应见 [实验记录](../runs/2026-11-19/reflection.md) 和 [JSON](../runs/2026-11-19/reflection.json)。
+将总调用上限设为 6、修订上限设为 2，观察评审何时结束。下面节选初稿与评审结果；完整输入与响应见 [实验记录](../runs/2026-11-19/reflection.md)。
 
 ```text
 [初稿]
@@ -228,13 +228,13 @@ API 连接、服务或响应检查失败时，程序报错并退出。所有阶�
 ## 7.8 动手与参考答案
 
 ```bash
-python -m examples.reflection --provider qwen
+python -m examples.reflection
 python -m examples.reflection --demo
 python -m examples.reflection --demo --max-calls 3
 python -m examples.reflection --demo --max-revisions 0
 ```
 
-第一条使用已配置的千问服务，后三条使用固定输入。若要比较修订前后的质量，应准备一组任务并采用统一评分标准。
+第一条调用配置的模型，后三条使用固定输入。若要比较修订前后的质量，应准备一组任务并采用统一评分标准。
 
 **练习 1：跟踪版本。** 在上述修订练习中，第三次调用结束时，`draft`、`answer`、`revisions` 分别是什么？若此时预算耗尽，能否把第一轮评审用于验收这个最新草稿？
 

@@ -53,7 +53,7 @@ action = ask_model(client, model, request_messages, options)
 
 ## 5.3 相同上限下的预算提示对照
 
-运行条件：`qwen / qwen-plus`，问题为“分别查询北京和上海的模拟天气，再比较哪里更暖和”。下面比较请求上限和预算提示这两个条件。
+仍用“分别查询北京和上海的模拟天气，再比较哪里更暖和”这个问题，观察请求上限和预算提示怎样影响执行过程。
 
 先将上限固定为 2，分别关闭与开启预算上下文。两次的行动与工具结果相同：
 
@@ -243,7 +243,7 @@ request_messages = base_messages + [summary_message] + recent_history
 
 ## 5.10 完整历史与摘要的对照
 
-保持问题、请求上限 3 和预算提示不变，使用 `qwen / qwen-plus` 对照 `--context-mode full` 与 `--context-mode summary`。命令见 [摘要接入实验](../../examples/README.md#状态与上下文摘要接回循环)。
+保持模型、问题、请求上限 3 和预算提示不变，对照 `--context-mode full` 与 `--context-mode summary`。命令见 [摘要接入实验](../../examples/README.md#状态与上下文摘要接回循环)。
 
 | 模式 | 实际行动 | 模型请求 / 工具执行 | 最终比较 |
 | --- | --- | --- | --- |

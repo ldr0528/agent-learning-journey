@@ -80,7 +80,7 @@ text = response.choices[0].message.content
 
 ## 1.4 中文问题，英文回答
 
-把回答语言要求改成英文后，`qwen-plus` 的回答如下。这里只节选字典定义和示例；当前代码默认使用中文要求。
+把回答语言要求改成英文后，模型的回答如下。这里只节选字典定义和示例；当前代码默认使用中文要求。
 
 ```text
 Sure! Here's a simple example to explain Python dictionaries:
