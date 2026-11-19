@@ -2,6 +2,10 @@
 
 [章节目录](../../README.md#章节目录) · [上一章：Agent Loop](agent-loop.md) · [下一章：状态与上下文](state-and-context.md)
 
+**本章目标：** 将检索结果回传给模型，检查回答引用的来源，并在资料不足时保留未知项。
+
+**配套示例：** [资料问答入口](../../src/agent_learning/cli.py) · **核心实现：** [检索工具](../../src/agent_learning/tools/notes.py)、[问答与引用校验](../../src/agent_learning/agents/research.py)
+
 本章沿用 [Hello-Agents 第四章 §4.2](https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter4/第四章%20智能体经典范式构建.md) 的工具循环，把天气查询改成资料问答。我们先用标签检索找到摘要，再让回答带上来源编号，并处理资料不足的情况。第 8 章将进一步讨论文档分块和检索排序。
 
 ## 4.1 同一个循环，换一种工具
@@ -169,7 +173,7 @@ Action: Finish[资料不足：本地教学摘要中未检索到关于 LangGraph 
 
 </details>
 
-**配套代码**：[资料检索](../../src/agent_learning/tools/notes.py)、[研究助手与引用校验](../../src/agent_learning/agents/research.py)。进一步的实现关系见 [贯穿案例](../practice/research-agent.md)。
+**配套代码**：[资料检索](../../src/agent_learning/tools/notes.py)、[问答与引用校验](../../src/agent_learning/agents/research.py)。进一步的实现关系见 [课程资料问答练习](../practice/research-agent.md)。
 
 ---
 

@@ -2,6 +2,10 @@
 
 [章节目录](../../README.md#章节目录) · [上一章：Reflection](reflection.md) · [下一章：评估](evaluation.md)
 
+**本章目标：** 理解文档切分、BM25 排名与证据组装怎样衔接，并核对回答引用是否来自本次证据。
+
+**配套示例：** [RAG 资料问答](../../examples/rag_research.py) · **核心实现：** [切分与检索](../../src/agent_learning/tools/retrieval.py)、[证据组装与回答校验](../../src/agent_learning/agents/rag.py)
+
 主要参考 [Hello-Agents 第八章 §8.3](https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter8/第八章%20记忆与检索.md)。本章将课程资料组织成 RAG 工作流：文档切分后用 BM25 排序，把入选内容连同来源放进上下文，再生成带引用的回答。
 
 ## 8.1 从标签检索到资料排序

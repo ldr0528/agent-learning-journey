@@ -2,6 +2,10 @@
 
 [章节目录](../../README.md#章节目录) · [上一章：RAG](rag.md) · [下一章：LangGraph](langgraph.md)
 
+**本章目标：** 分别检查检索覆盖、排名、引用结构与内容支持，解释各项指标能说明什么及其局限。
+
+**配套示例：** [检索与引用评估](../../examples/evaluate.py) · **核心实现：** [指标计算与逐题报告](../../src/agent_learning/evaluation.py)
+
 主要参考 [Hello-Agents 第十二章 §12.1](https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter12/第十二章%20智能体性能评估.md)。本章围绕课程研究助手，分别评估检索覆盖、排名、引用结构和回答质量，并用失败样本寻找改进方向。
 
 ## 9.1 一次成功不能替代评估

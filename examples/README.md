@@ -1,48 +1,34 @@
-# 配套示例索引
+# 课程例题与综合实战入口
 
-[手册目录](../README.md#章节目录) · [环境配置](../docs/getting-started.md) · [课程验收](../docs/course-map.md)
+[章节目录](../README.md#章节目录) · [环境配置](../docs/getting-started.md) · [运行记录](../docs/runs/README.md)
 
-正文已直接展示代码、结果与分析；这里集中列出可运行入口。所有命令从仓库根目录执行，先激活虚拟环境。默认是否请求模型因教学目的而异，下表明确标注。
+第 01–11 章的脚本对应独立例题；第 12 章使用医疗险资料比较项目。命令均从仓库根目录执行，先完成安装并激活虚拟环境。表中标注“调用 API”的模式需要模型配置，会产生服务商用量。
 
-各例的输入、响应与参数见 [实验记录](../docs/runs/README.md)。
+## 模型、工具与循环 · 01–04
 
-## 无需模型 API 的核心示例
-
-| 对应章节 | 命令 | 实际执行什么 |
+| 章节与入口 | 模型 API | 可用参数 |
 | --- | --- | --- |
-| [02 工具回传](../docs/learning/tool-feedback.md) | `python -m examples.tool_execution` | Python 模拟天气工具 |
-| [04 检索引用](../docs/learning/retrieval-and-citations.md) | `python -m agent_learning.tools.notes --query "最大步数"` | 基础三条摘要的标签匹配 |
-| [05 上下文](../docs/learning/state-and-context.md) | `python -m examples.context_preview` | 三种上下文构造与实际本地工具 |
-| [06 规划器](../docs/learning/planning.md) | `python -m examples.plan_first --demo` | 解析固定示意计划 |
-| [06 计划执行](../docs/learning/planning.md) | `python -m examples.plan_solve --demo` | 固定模型回复驱动完整计划执行 |
-| [07 评审修订](../docs/learning/reflection.md) | `python -m examples.reflection --demo` | 固定草稿、反馈与修订驱动有限流程 |
-| [08 RAG](../docs/learning/rag.md) | `python -m examples.rag_research` | 真实本地检索与证据摘录报告 |
-| [09 评估](../docs/learning/evaluation.md) | `python -m examples.evaluate` | 固定开发题上的实际检索指标 |
+| [01 模型调用](../docs/learning/model-calls.md)：`python -m examples.model_call` | 默认调用；加 `--check` 仅检查配置 | `--provider qwen` / `--provider openai` |
+| [02 工具执行](../docs/learning/tool-feedback.md)：`python -m examples.tool_execution` | 不调用 | 本地模拟天气 |
+| [02 结果回传](../docs/learning/tool-feedback.md)：`python -m examples.tool_roundtrip --city 上海` | 调用 | `--city`、`--provider` |
+| [03 有限循环](../docs/learning/agent-loop.md)：`python -m examples.weather_loop --max-steps 3` | 调用 | `--question`、`--max-steps`、`--provider` |
+| [04 本地检索](../docs/learning/retrieval-and-citations.md)：`python -m agent_learning.tools.notes --query "最大步数"` | 不调用 | `--query` |
+| [04 检索与引用](../docs/learning/retrieval-and-citations.md)：`python -m agent_learning --question "Agent Loop 为什么要有最大步数？"` | 默认调用；加 `--check` 仅检查配置 | `--question`、`--max-steps`、`--provider` |
 
-固定回复演示会显示适配器调用次数，但真实 API 次数为 0。RAG 默认的 `evidence_only` 是证据摘录，不是模型生成的研究结论。
+`agent-research` 与 `python -m agent_learning` 等价，是第 04 章的资料问答例题。`--check` 不验证服务权限或额度。
 
-## 调用模型
+## 上下文与任务组织 · 05–07
 
-这些命令需要本地配置，会产生服务商 API 用量。可以继续使用千问，配置见 [环境说明](../docs/getting-started.md)。
-
-| 主题 | 命令 | 观察重点 |
+| 章节与入口 | 模型 API | 可用参数 |
 | --- | --- | --- |
-| 单次模型调用 | `python -m examples.model_call` | 输入消息与回答文本 |
-| 工具回传 | `python -m examples.tool_roundtrip --city 上海` | 工具结果进入第二次请求 |
-| 有限循环 | `python -m examples.weather_loop --max-steps 3` | 请求、工具与 Finish 分别计数 |
-| 基础研究助手 | `python -m agent_learning --question "Agent Loop 为什么要有最大步数？"` | 检索、引用与来源范围 |
-| 只生成计划 | `python -m examples.plan_first` | 一次调用返回整个计划 |
-| 计划后执行 | `python -m examples.plan_solve` | 前序结果成为后续输入 |
-| 评审并修订 | `python -m examples.reflection` | 评审结构、修订预算、停止状态 |
-| RAG 报告 | `python -m examples.rag_research --live` | 证据支持、逐条引用、资料不足 |
-| LangGraph + 模型 | `python -m examples.langgraph_workflow --live --checkpoint` | 节点如何组织两次实际请求 |
-| MCP + 模型 | `python -m examples.mcp_demo --live` | 工具发现、原生tool_calls与结果回传 |
+| [05 上下文预览](../docs/learning/state-and-context.md)：`python -m examples.context_preview` | 不调用 | 展示构造后的消息 |
+| [06 生成计划](../docs/learning/planning.md)：`python -m examples.plan_first --demo` | `--demo` 不调用；去掉后调用 | `--question`、`--provider` |
+| [06 计划执行](../docs/learning/planning.md)：`python -m examples.plan_solve --demo` | `--demo` 不调用；去掉后调用 | `--question`、`--max-calls`、`--max-plan-steps`、`--provider` |
+| [07 评审修订](../docs/learning/reflection.md)：`python -m examples.reflection --demo` | `--demo` 不调用；去掉后调用 | `--task`、`--max-calls`、`--max-revisions`、`--provider` |
 
-`python -m examples.model_call --check` 或 `python -m agent_learning --check` 只检查配置字段，不验证权限或额度，也不请求模型。`agent-research` 与基础研究助手入口等价。
+### 状态与上下文：预算提示对照
 
-## 状态与上下文：预算提示对照
-
-固定问题与模型，仅切换预算提示：
+以下命令均调用 API：
 
 ```bash
 python -m examples.weather_loop --max-steps 2
@@ -50,79 +36,59 @@ python -m examples.weather_loop --max-steps 2 --budget-context
 python -m examples.weather_loop --max-steps 3 --budget-context
 ```
 
-学习者提供的前两次运行均在查询两地后达到上限；第三次增加请求次数后输出 Finish。因为执行预算改变，不能把成功归因于提示。完整分析见 [第 05 章](../docs/learning/state-and-context.md)。
+### 状态与上下文：摘要接回循环
 
-## 状态与上下文：摘要接回循环
-
-保持问题、模型、预算开关和上限一致，只切换历史模式：
+以下命令均调用 API；只切换历史模式：
 
 ```bash
 python -m examples.weather_loop --max-steps 3 --budget-context --context-mode full
 python -m examples.weather_loop --max-steps 3 --budget-context --context-mode summary
 ```
 
-已有真实对照均为 3 次模型请求、2 次工具执行。摘要在第三次请求前由程序生成，保留较早结果和来源；不增加摘要模型调用。消息数减少不代表 token 一定减少，也不是成功率改善的证据。
+## 检索与质量 · 08–09
 
-## 先规划，再执行：规划器
+| 章节与入口 | 模型 API | 可用参数 |
+| --- | --- | --- |
+| [08 RAG](../docs/learning/rag.md)：`python -m examples.rag_research` | 默认不调用，输出证据摘录；`--live` 调用 | `--question`、`--top-k`、`--context-chars`、`--provider`、`--output`（Markdown） |
+| [09 评估](../docs/learning/evaluation.md)：`python -m examples.evaluate` | 不调用 | `--k`、`--predictions`（外部回答 JSON）、`--output`（JSON） |
 
-先用 `plan_first` 看计划，再用 `plan_solve` 跟踪整个执行过程。教材示例数据相同，输出不必有完全相同的措辞或条目数。格式检查不等于语义正确；执行完成也需要核对中间结果。
+## 框架与协议 · 10–11
 
-预算边界可用以下离线命令检查，它们预期退出码为 1：
+先安装可选依赖：`python -m pip install -e ".[all]"`；也可分别安装 `.[graph]` 或 `.[mcp]`。
 
-```bash
-python -m examples.plan_solve --demo --max-calls 2
-python -m examples.reflection --demo --max-calls 3
-python -m examples.reflection --demo --max-revisions 0
-```
+| 章节与入口 | 模型 API | 可用参数 |
+| --- | --- | --- |
+| [10 LangGraph](../docs/learning/langgraph.md)：`python -m examples.langgraph_workflow` | 默认不调用；`--live` 调用 | `--question`、`--provider`；`--loop` 切换天气循环，配合 `--max-steps`；`--checkpoint` 仅用于三步问答图，与 `--loop` 互斥 |
+| [11 MCP](../docs/learning/mcp.md)：`python -m examples.mcp_demo` | 默认不调用；`--live` 调用 | 默认模式用 `--city`、`--query`；模型模式用 `--question`、`--max-calls`、`--provider` |
 
-逐步解释见 [第 06 章](../docs/learning/planning.md) 与 [第 07 章](../docs/learning/reflection.md)。
+默认模式执行 LangGraph 或本地 MCP 会话，天气数据仍为模拟数据。保存完整模型请求与响应可用 `python scripts/record_live.py mcp --output-dir outputs/my-live-run`；该记录命令调用 API。
 
-## 研究与评估报告
+## 综合实战 · 12 医疗险资料比较
 
-```bash
-python -m examples.rag_research --question "RAG 为什么要保留来源？" --output outputs/research-report.md
-python -m examples.evaluate --k 3 --output outputs/retrieval-evaluation.json
-```
+[第 12 章](../docs/insurance/course-guide.md) 解释业务输入、取证与比较报告；[项目说明](../docs/insurance/README.md) 介绍本地使用流程。下列入口使用同一份需求和证据规则。
 
-报告保存问题、模式、检索轨迹、证据或回答及来源。评估保留语料指纹、逐题结果和失败案例；实际开发集并非独立测试集。对外部回答做引用检查使用 `--predictions`，输入结构见 [评估章](../docs/learning/evaluation.md)。
+| 用途 | 命令 | 模型 API 与输出 |
+| --- | --- | --- |
+| Python 对照 | `python -m examples.insurance_compare` | 默认不调用；`--live` 调用；`--output` 导出 JSON，不创建会话 |
+| LangGraph 对照 | `python -m examples.insurance_compare --engine langgraph` | 默认不调用；`--live` 调用；需 `.[graph]` |
+| MCP 对照 | `python -m examples.insurance_compare --engine mcp` | 默认不调用；`--live` 调用；需 `.[mcp]` |
+| 本地网页 | `python -m agent_learning.insurance.web` | 默认不调用；页面中明确启用模型辅助才调用；保存会话，可下载 JSON |
+| 创建会话 | `python -m agent_learning.insurance compare --request examples/insurance_request.json --output outputs/insurance-report.md` | 默认不调用；`--live` 调用；保存会话，导出 Markdown |
+| 查看报告 | `python -m agent_learning.insurance show SESSION_ID` | 不调用；读取已保存结果 |
+| 补充后重跑 | `python -m agent_learning.insurance resume SESSION_ID --request examples/insurance_request.json` | 默认不调用；`--live` 调用；更新原会话 |
 
-## LangGraph 与 MCP
+将 `SESSION_ID` 替换为创建时返回的编号。示例默认读取自拟教学目录；官方节选使用 `--catalog official --request examples/insurance_official_request.json`。`--catalog` 用于 `examples.insurance_compare` 或 CLI 的 `compare`；`resume` 沿用原会话目录。
 
-先安装 `python -m pip install -e ".[all]"`。以下默认模式不调用模型，但确实执行第三方框架或本地 MCP 会话：
+三种对照入口以及 `compare` / `resume` 均可用 `--max-calls` 限制模型请求。网页用 `--port` 指定端口；网页和会话 CLI 用 `--sessions` 指定保存目录。医疗险入口使用环境配置中选择的模型服务，没有独立 `--provider` 参数。
 
-```bash
-python -m examples.langgraph_workflow
-python -m examples.langgraph_workflow --checkpoint
-python -m examples.langgraph_workflow --loop
-python -m examples.mcp_demo
-```
-
-图示例为理解、检索、回答三步；`--loop` 演示天气条件循环，`--checkpoint` 演示进程内状态快照。LangGraph和MCP示例添加 `--live` 才使用真实模型。MCP默认只验证协议；`--live` 会让模型依据发现的工具定义选择调用，程序执行并回传。天气仍来自本地模拟数据。
-
-若需要保存完整请求与响应，可显式运行 `python scripts/record_live.py mcp --output-dir outputs/my-live-run`。该记录命令使用真实API，目标已存在时拒绝覆盖；公开结果前需检查输入是否适合公开。
-
-## 医疗险业务案例
-
-输入、报告与逐步解释见 [保险课程指南](../docs/insurance/course-guide.md)，本地界面见 [项目说明](../docs/insurance/README.md)。三个入口对照同一任务：
-
-```bash
-python -m examples.insurance_compare
-python -m examples.insurance_compare --engine langgraph
-python -m examples.insurance_compare --engine mcp
-```
-
-默认读取自拟案例资料，不请求模型。加 `--live` 后由模型选择取证工具。官方节选使用 `--catalog official --request examples/insurance_official_request.json`。未知报价和未摘录维度仍按缺口保留。
-
-网页使用 `python -m agent_learning.insurance.web`。需要持久化与导出时，使用 `python -m agent_learning.insurance compare --request examples/insurance_request.json --output outputs/insurance-report.md`；之后按返回的会话编号使用 `resume` 或 `show`。
-
-## 统一检查
+## 检查入口
 
 ```bash
 python -m unittest discover -s tests -v
 python scripts/check_docs.py
 python scripts/check_examples.py
-# 已安装可选依赖后
+# 安装可选依赖后执行
 python scripts/check_examples.py --integrations
 ```
 
-检查仅使用公开教学数据与离线模式，不读取真实密钥。缺少可选依赖时，相关单元测试会显示跳过；集成检查要求依赖已安装，并实际运行例子。
+这些检查不调用付费模型。缺少可选依赖时，相应单元测试跳过；`--integrations` 要求依赖已安装并运行集成例子。预算耗尽实验的退出码可能为 1，应结合该例的输出状态判断。

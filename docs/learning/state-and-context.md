@@ -2,6 +2,10 @@
 
 [章节目录](../../README.md#章节目录) · [上一章：检索、引用与资料不足](retrieval-and-citations.md) · [下一章：先生成计划](planning.md)
 
+**本章目标：** 区分程序状态与模型上下文，说明预算提示和保留来源的历史摘要怎样进入请求。
+
+**配套示例：** [上下文预览](../../examples/context_preview.py)、[天气循环对照](../../examples/weather_loop.py) · **核心实现：** [请求构造](../../src/agent_learning/loop.py)、[历史摘要](../../src/agent_learning/context.py)
+
 本章参考 [Hello-Agents 第九章 §9.1、§9.2.1、§9.2.3](https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter9/第九章%20上下文工程.md)，讨论每次请求前如何组织模型可见的信息，以及如何整理较早的记录。请求预算提示与天气摘要是本项目的教学扩展。
 
 ## 5.1 程序保存的信息，不会自动成为模型输入

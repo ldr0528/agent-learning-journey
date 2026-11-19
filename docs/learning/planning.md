@@ -2,11 +2,13 @@
 
 [章节目录](../../README.md#章节目录) · [上一章：状态与上下文](state-and-context.md) · [下一章：Reflection](reflection.md)
 
+**本章目标：** 区分生成计划与逐步执行，追踪前序结果的传递，并核对总调用预算与任务是否答全。
+
+**配套示例：** [生成计划](../../examples/plan_first.py)、[逐步执行](../../examples/plan_solve.py) · **核心实现：** [规划器](../../src/agent_learning/agents/planning.py)、[计划执行器](../../src/agent_learning/agents/plan_solve.py)
+
 本章参考 [Hello-Agents 第四章 §4.3.1–4.3.4](https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter4/第四章%20智能体经典范式构建.md)，通过三天销量题理解规划、逐步执行和结果回传。JSON 计划、总调用预算和失败状态是本项目的工程扩展。
 
 **先修知识：** 能读懂 Python 的列表、字典和 `for` 循环；知道模型只能看到本次 `messages` 中的内容。若仍分不清“程序保存了历史”和“历史已发给模型”，先回看 [第五章](state-and-context.md)。
-
-**读完本章，要能做到：** 从日志区分“生成计划”和“执行计划”，画出每次请求带入了哪些数据，算出整个任务的调用预算，并指出一个“程序跑完了，但任务没有答全”的反例。
 
 带着这个问题开始：**如果模型一次写出了三个步骤，究竟是谁让这三个步骤依次发生？** 答案藏在规划后的 Python 循环中，而不是计划文本本身。
 

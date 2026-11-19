@@ -1,48 +1,49 @@
-# 教材与呈现方式参考
+# 教材与开源项目参考
 
-[返回项目首页](../README.md)
+[课程目录](../README.md#章节目录) · [教材映射](roadmap.md) · [保险资料来源](insurance/references.md)
 
-本资料库以 **Datawhale Hello-Agents 为知识主线**，按本项目的学习范围重新编排。其他开源课程与项目用于参考阅读导航、案例递进和验收表达；具体技术内容仍以各章的教材定位为起点。
+本仓库以 Hello-Agents 为主要教材。课程型仓库用于确定阅读结构，保险应用用于理解业务组织；两者分别服务于教材与综合实践。
 
-## 主教材：概念、实现与结果连在一起
+## 三个主要参考及落点
 
-[Hello-Agents 仓库](https://github.com/datawhalechina/hello-agents) 按基础、智能体构建、高级扩展与应用组织内容，并在目录中交代每章主题。本项目沿用“先理解机制，再进入框架和项目”的学习顺序，具体取舍见 [课程对应关系](roadmap.md)。
-
-重点参考 [第四章：智能体经典范式构建](https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter4/第四章%20智能体经典范式构建.md)。它将流程讲解、图示、分模块代码和运行结果放在同一章内，便于读者把设计与实际行为对照。本项目对应的改编范围是：
-
-| 教材部分 | 本项目使用方式 | 明确调整之处 |
+| 参考项目 | 上游的组织方式 | 本项目对应位置 |
 | --- | --- | --- |
-| §4.2 ReAct | 理解模型决策、程序执行与观察回传 | 用模拟天气与本地资料降低外部服务依赖 |
-| §4.3 Plan-and-Solve | 先生成计划，再携带原题与历史逐步执行 | 采用 JSON 计划，增加总调用预算与状态区分 |
-| §4.4 Reflection | 初稿、评审、修订和再次评审 | 将代码优化改为文字解释修订，采用结构化评审协议 |
+| [Datawhale Hello-Agents](https://github.com/datawhalechina/hello-agents) | README 按部分与章节导航，正文与配套代码对应，综合案例位于基础和进阶知识之后 | 首页是唯一总目录；01–11 讲机制，12 章讲医疗险综合实战；正文放在 `docs/`，入口和实现分别放在 `examples/`、`src/` |
+| [Microsoft AI Agents for Beginners](https://github.com/microsoft/ai-agents-for-beginners) | 每课说明学习目标并关联代码，安装准备集中在独立课程配置页 | 章首提供目标、示例与实现入口；环境配置只维护一份；正文保留代码和输出解释 |
+| [AWS Frictionless Insurance Advisor](https://github.com/aws-samples/sample-frictionless-insurance-advisor) | 保险应用有明确的用户场景、比较对象、工具和资料展示 | 第 12 章围绕需求、产品版本、证据和比较报告展开；业务契约、资料规范与实验记录分别维护 |
 
-例题保留教材来源，补充实现说明输入与输出；固定输入练习在入口注明运行方式。
+这三者的技术栈和用户群并不相同。我们的课程选用单体 Agent、LangGraph 与本地 MCP；保险案例面向投保用户，采用本地工作区。上游的多 Agent、云端客户系统和顾问销售流程不属于本项目当前实现。
 
-## README、需求与课程设计参考
+## 知识来源怎样落到章节
 
-下表记录值得借鉴的组织方式，以及它们在本手册中的落点。课程型仓库与工具型仓库的读者目标不同，应按用途取舍。
+[Hello-Agents 第四章](https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter4/第四章%20智能体经典范式构建.md) 是模型调用、ReAct、Plan-and-Solve 和 Reflection 的主要来源。各章保留教材链接，并用本项目的输入、代码和结果重新解释。
 
-| 来源 | 参考之处 | 本项目如何使用 |
+| 教材机制 | 本项目的练习 | 实现取舍 |
 | --- | --- | --- |
-| [Hello-Agents 第十六章 §16.2、§16.4](https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter16/第十六章%20毕业设计.md) | 选题从问题、功能与预期成果展开；README 包含示例、评估和未来计划 | [项目任务书](practice/research-agent.md) 集中说明读者问题、输入输出、场景与验收；课程范围仍为单体 Agent |
-| [Microsoft AI Agents for Beginners](https://github.com/microsoft/ai-agents-for-beginners) · [Planning Design](https://github.com/microsoft/ai-agents-for-beginners/blob/main/07-planning-design/README.md) | 课程目录连接文字、代码和扩展阅读；章节先说明学习目标 | 首页保留逐章问题，环境配置独立；[课程地图](course-map.md) 对应先修、目标和产物 |
-| [Hugging Face Agents Course](https://huggingface.co/learn/agents-course/unit0/introduction) · [循环讲解](https://huggingface.co/learn/agents-course/unit1/agent-steps-and-structure) | 先修提示、逐步例子与自查帮助读者进入课程 | 基础章节围绕消息流展开；练习先预测，再对照解析 |
-| [smolagents](https://github.com/huggingface/smolagents) | README 用具体任务展示用途，并提供机制图与详细文档入口 | 首页直接呈现资料问答的结果差异；细节时序图放在对应章节 |
-| [Deep Research From Scratch](https://github.com/langchain-ai/deep_research_from_scratch) | 先定义研究的范围、过程和报告，再按构件递进 | [建设路线](roadmap.md#后续建设与完成条件) 以同一个研究任务组织后续扩展；先写任务要求，再整合工具 |
-| [Open Deep Research](https://github.com/langchain-ai/open_deep_research) | 配置、用途、评估方法与结果有明确入口 | [项目验收](practice/research-agent.md) 与 [评估说明](evaluation.md) 连接到逐题结果，避免只展示成功案例 |
+| ReAct 的决策与观察 | 天气查询和课程资料问答 | 基础章节使用文本 Action，保险案例使用原生工具调用 |
+| Plan-and-Solve | 计划解析与逐步执行 | JSON 计划、前序结果、总请求预算 |
+| Reflection | 解释草稿的评审与修订 | 有限修订和结构化反馈；评审通过仍需核对依据 |
 
-这些参考启发了本项目的编排，不代表本项目具备上游工具的全部能力。框架、服务、认证或排行榜不因被参考而加入课程；项目当前实现与待建设内容分别列出。
+上下文、检索、评估、LangGraph 与 MCP 的准确教材位置见 [对应表](roadmap.md)。保险中的固定计划和程序校验，与模型生成计划、模型评审分别说明，不把尚未整合的机制写成已有能力。
 
-## 图示与结果的使用规则
+## 文档各自负责什么
 
-本项目图示根据自己的代码和课程问题绘制，采用白底、细线与少量配色。概览图交代学习阶段与产物；时序图放在对应机制旁，便于沿箭头对照代码。上述项目的图片与标识未移入本仓库。
+| 位置 | 维护内容 |
+| --- | --- |
+| 根 README | 项目介绍、唯一课程总目录、开始阅读与安装入口 |
+| `docs/learning/` 与保险 `course-guide.md` | 学习问题、原理与图、代码、输出解释和练习 |
+| `docs/course-map.md` | 学习目标、先修要求和阶段验收 |
+| `docs/roadmap.md` | Hello-Agents 映射、范围取舍与后续建设 |
+| `docs/insurance/requirements.md` | 综合项目的业务规格与完成条件 |
+| `examples/README.md` | 复现命令、参数与是否请求模型 |
+| `docs/runs/` 与保险 `runs/` | 原始记录、运行参数、版本与用量 |
 
-每幅图应回答一个明确问题，例如“下一次请求从哪里得到历史”“修订完成为何仍要评审”。模型、程序和工具的职责应能从节点及连接读出，调用预算和停止出口应与代码一致。颜色只辅助分组，关键含义还要用文字和箭头表达。图源与维护方式见 [图示规范](assets/README.md)。
+天气和课程资料问答是章节练习，医疗险是综合项目。新增材料应归入相应章节或项目文档，并同步目录与前后章导航。
 
-正文围绕实验结果解释机制，模型、日期和参数放入运行记录。固定输入练习用于复现特定分支；质量比较需要同题、同条件的多次实验。
+## 图示、结果与许可
 
-阅读者应能在每章顺序找到：要解决的问题、核心机制、关键代码、实际结果、逐步解释、边界条件和带参考解析的练习。运行命令与完整源码用于复现这条学习过程。
+图示按本项目机制重新绘制，遵循 [白底、细线与少量配色的规范](assets/README.md)。每幅图对应明确的流程或数据关系；架构图与实际实现保持一致。
 
----
+正文直接展示理解机制所需的代码和结果。模型名称、日期、请求参数与用量集中在实验记录；节选与整理注明范围，原始结果不改写。
 
-各上游项目的文字、代码与图片仍受其自身许可证约束。本页记录来源与借鉴范围，不把其他项目内容重新声明为本项目原创。本文采用 [CC BY-NC-SA 4.0](../LICENSES/CC-BY-NC-SA-4.0.txt)。
+其他补充实现参考及产品资料来源集中在 [保险参考文档](insurance/references.md) 与相应章节。第三方文字、代码和图片仍遵循原许可证；本页采用 [CC BY-NC-SA 4.0](../LICENSES/CC-BY-NC-SA-4.0.txt)。

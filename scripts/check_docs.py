@@ -17,6 +17,9 @@ CHAPTERS = (
     "model-calls", "tool-feedback", "agent-loop", "retrieval-and-citations",
     "state-and-context", "planning", "reflection", "rag", "evaluation", "langgraph", "mcp",
 )
+CHAPTER_PATHS = tuple(f"docs/learning/{name}.md" for name in CHAPTERS) + (
+    "docs/insurance/course-guide.md",
+)
 EXACT_FUNCTIONS = {
     "get_weather": "src/agent_learning/tools/weather.py",
     "execute_action": "src/agent_learning/tools/weather.py",
@@ -85,15 +88,15 @@ def main():
                     if language == "python":
                         tree = ast.parse(code)
                         compile("async def _excerpt():\n" + textwrap.indent(code, "    "), name, "exec")
-                        if name.startswith("docs/learning/"):
+                        if name in CHAPTER_PATHS:
                             snippets.append(tree)
                     elif language == "json":
                         json.loads(code)
                 except (SyntaxError, ValueError) as error:
                     errors.append(f"{name}: {language} 片段无效 ({error})")
 
-    for chapter in CHAPTERS:
-        path = ROOT / f"docs/learning/{chapter}.md"
+    for chapter in CHAPTER_PATHS:
+        path = ROOT / chapter
         if not path.is_file():
             errors.append(f"缺少章节：{chapter}")
             continue
@@ -114,7 +117,7 @@ def main():
     if errors:
         print("\n".join(errors))
         return 1
-    print(f"文档检查通过：{len(CHAPTERS)} 章，{len(snippets)} 段 Python，链接、图示、JSON 与关键函数一致。")
+    print(f"文档检查通过：{len(CHAPTER_PATHS)} 章，{len(snippets)} 段 Python，链接、图示、JSON 与关键函数一致。")
     return 0
 
 

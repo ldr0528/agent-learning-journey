@@ -2,6 +2,10 @@
 
 [章节目录](../../README.md#章节目录) · [下一章：工具调用与结果回传](tool-feedback.md)
 
+**本章目标：** 读懂消息列表怎样成为模型输入，并从响应中提取回答。
+
+**配套示例：** [单次模型调用](../../examples/model_call.py) · **核心实现：** [请求封装](../../src/agent_learning/llm.py)
+
 本章参考 [Hello-Agents 第四章 §4.1](https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter4/第四章%20智能体经典范式构建.md)，通过字典问答案例，理解消息组织、模型请求与回答提取。
 
 ## 1.1 从一个问题开始

@@ -2,6 +2,10 @@
 
 [章节目录](../../README.md#章节目录) · [上一章：模型调用](model-calls.md) · [下一章：Agent Loop](agent-loop.md)
 
+**本章目标：** 分清模型提出操作、程序执行工具和结果回传三个环节，追踪 Observation 怎样进入下一次请求。
+
+**配套示例：** [工具结果回传](../../examples/tool_roundtrip.py) · **核心实现：** [天气工具与行动解析](../../src/agent_learning/tools/weather.py)
+
 本章参考 [Hello-Agents 第一章 §1.2](https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter1/第一章%20初识智能体.md) 与 [第四章 §4.2](https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter4/第四章%20智能体经典范式构建.md)。天气函数与消息组织采用我们自己的教学简化实现。
 
 ## 2.1 模型怎样知道有一个工具

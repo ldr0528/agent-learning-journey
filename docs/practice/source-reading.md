@@ -1,10 +1,12 @@
 # 沿一次请求追踪控制与数据
 
-[章节目录](../../README.md#章节目录) · [LangGraph](../learning/langgraph.md) · [实现架构](../architecture.md)
+[章节目录](../../README.md#章节目录) · [实现架构](../architecture.md) · [第 12 章：医疗险综合实战](../insurance/course-guide.md)
 
 本练习结合 [Hello-Agents 第七章](https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter7/第七章%20构建你的Agent框架.md) 的分层思路，沿一次请求追踪“谁调用谁、数据在哪里改变、错误从哪里返回”。先读懂已有函数怎样协作，再考虑怎样划分自己的模块。
 
-## 先选一条可观察的路径
+本页先沿第 04 章的资料问答和第 10–11 章的适配例题练习，再追踪第 12 章医疗险项目。前者用较短的调用链看清机制，后者把需求、取证、证据校验与保存连起来。
+
+## 课程例题：从一次资料问答开始
 
 以第 4 章的问题“Agent Loop 为什么要有最大步数？”为例：模型请求本地检索，程序返回 N01、N03，下一次模型请求用 N03 回答。沿这条路径阅读，可以将每个函数与一项具体工作对应起来。
 
@@ -90,6 +92,51 @@ MCP list_tools → 工具定义 → 模型请求的 tools 参数
 
 再看 [三步图记录](../runs/2026-11-19/langgraph-checkpoint.md)：understand 返回一句回答而不是关键词，标签检索仍命中 N02。沿代码可找到原因——query 没有格式质量检查；沿第二次请求则能看到 N02 已进入 answer 的输入。两项观察分别定位查询改写和证据回传，便于确定下一步该改哪里。
 
+## 综合项目：从医疗险需求到比较报告
+
+阅读 [第 12 章](../insurance/course-guide.md) 的需求和报告后，选择“比较普通门诊与续保”这条路径。先沿网页或 CLI 进入业务服务，再进入取证循环：
+
+| 顺序 | 文件与函数 | 追踪什么 |
+| --- | --- | --- |
+| 1 | [web.py](../../src/agent_learning/insurance/web.py) 的会话与运行路由，或 [cli.main](../../src/agent_learning/insurance/cli.py) | 需求中的 profile、selections；单独保存的 catalog_kind |
+| 2 | [service.run_session](../../src/agent_learning/insurance/service.py) | 何时沿用保存需求、何时替换为补充后的完整需求；offline / live 分支 |
+| 3 | [prepare_request / run_comparison](../../src/agent_learning/insurance/workflow.py) | 关注维度和产品版本是否齐全；缺需求时怎样返回 needs_input |
+| 4 | [insurance.agent.run_agent](../../src/agent_learning/insurance/agent.py) | 每轮 request_messages、剩余预算、tool_calls 与工具反馈 |
+| 5 | execute_tool → EvidenceWorkspace | 工具名与参数校验，本次允许的产品版本，实际读到的证据 |
+| 6 | [Catalog](../../src/agent_learning/insurance/catalog.py) → remember | 来源定位、条件、已知/未知/冲突状态；整批证据是否与目录一致 |
+| 7 | finish_comparison → EvidenceWorkspace.finish / report | 已读证据是否覆盖所有产品九个维度，比较单元怎样从事实生成 |
+| 8 | [SessionStore.save](../../src/agent_learning/insurance/store.py) → 网页或 CLI | 当前需求、报告、修订号与历史；展示或导出的对象来自哪里 |
+
+先比较两种执行路径，避免把离线读取误认为模型决策：
+
+```text
+run_session → prepare_request
+  ├─ needs_input → 保存补充问题，不创建模型客户端
+  └─ ready → run_comparison
+      ├─ offline → 逐产品 read_dimensions → finish → report
+      └─ live → agent.run_agent → request_model(messages, tools)
+                    ↓ tool_calls
+               execute_tool → search / read_dimensions
+                    ↓ 已核验的事实
+               messages 追加 role=tool → 下一次 request_model
+                    ↓ finish_comparison
+               finish 校验 → report
+  → SessionStore.save
+```
+
+在 `agent.run_agent` 中，`tool_call_id` 将反馈关联到模型提出的操作。模型只能通过 `finish_comparison` 提交最终依据；普通文本会收到格式反馈。完成检查通过后，程序直接从目录事实构造比较表，没有额外调用模型改写产品条件。
+
+重点找出三道检查：`_scope` 限定本次产品与版本；`remember` 将整批返回内容与目录原记录比对，全部通过才纳入；`finish` 要求引用实际读过的证据，并覆盖全部九个维度。`focus` 决定优先顺序，不能用来省略免责、等待期或未知报价。
+
+随后阅读 [保险适配层](../../src/agent_learning/insurance/integrations.py)，对照哪些代码改变、哪些规则沿用：
+
+| 入口 | 调用链 | 仍由谁检查证据 |
+| --- | --- | --- |
+| `examples.insurance_compare --engine langgraph` | run_graph_comparison → intake → research → verify → deliver；缺需求时走 clarify → deliver | research 使用 run_comparison；verify 再用 EvidenceWorkspace 校验证据 |
+| `examples.insurance_compare --engine mcp` | run_mcp_comparison → initialize / list_tools → call_tool → insurance.mcp_server → Catalog | 客户端核验返回事实并纳入 EvidenceWorkspace；finish_comparison 留在本地 |
+
+这两个对照入口直接返回报告，不经过 `run_session`，也不创建持久化会话。网页与保险 CLI 当前使用 Python 工作流。医疗险图未配置 checkpoint；`resume` 读取保存的需求和目录版本后重新取证，不是从暂停的图节点继续。
+
 ## 用测试验证阅读结论
 
 不需要 API Key 的检查：
@@ -109,6 +156,16 @@ python -m unittest discover -s tests -p test_mcp_integration.py -v
 python -m unittest discover -s tests -p test_mcp_agent.py -v
 ```
 
+医疗险项目的检查同样不请求付费模型：
+
+```bash
+python -m unittest discover -s tests -p test_insurance_catalog.py -v
+python -m unittest discover -s tests -p test_insurance_workflow.py -v
+python -m unittest discover -s tests -p test_insurance_web.py -v
+```
+
+依次检查产品版本隔离、工具结果回传与证据覆盖、会话恢复及 HTTP 边界。阅读 `test_native_tool_feedback_and_finish` 时，找出下一次模型输入里的工具结果；阅读 `test_early_finish_requires_other_product_and_restrictions` 时，说明为什么已有部分正确证据仍不能完成比较。
+
 ## 练习与参考答案
 
 1. **删掉打印 Observation 的语句，会让模型失去结果吗？** 不会，只要追加消息和下一次调用仍然存在。打印用于观察。
@@ -118,6 +175,8 @@ python -m unittest discover -s tests -p test_mcp_agent.py -v
 5. **MCP 发现工具时是否已经调用模型？** 没有；客户端发现是协议操作。默认例子就此验证工具；`--live` 才在发现之后发起模型请求。
 6. **工具参数格式正确，就能认定名字存在吗？** 不能；宿主先对照本次发现的名称列表，再解析参数并调用服务端。
 7. **看到 trace 有三个节点，就能说 API 调用了三次吗？** 不能；节点也可能只做本地检索或资料不足处理，应定位实际模型请求。
+8. **医疗险目录中存在某条证据，就能直接提交它的编号吗？** 不能；`finish` 只接受本次工具实际返回并纳入工作区的证据，还要检查全部维度的覆盖。
+9. **医疗险报告显示 completed_with_gaps，是否说明预算匹配已经确认？** 不是；该状态表示比较通过完成校验，同时保留资料缺口。没有适用报价时，年度预算仍是待确认事项。
 
 验收时，任选一条路径，用自己的话标出“模型调用、程序控制、工具执行、结果回传、停止检查”五个位置，并给出实际文件或函数名。能够定位到源码，比背诵框架术语更能说明已经理解。
 

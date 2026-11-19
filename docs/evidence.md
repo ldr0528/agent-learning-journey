@@ -41,15 +41,19 @@
 
 自动检查见 [GitHub Actions](https://github.com/ldr0528/agent-learning-journey/actions)。基础环境缺少可选库时跳过相关测试，集成环境安装依赖后执行完整检查。
 
-## 本版验证记录
+## 基础章节验证记录
 
-2026-11-19，本地 Windows / Python 3.12 验证结果：
+2026-11-19，加入医疗险综合项目之前，本地 Windows / Python 3.12 的基础章节验证结果：
 
 - 基础环境：74 项测试中 65 项通过，9 项因未安装可选库而跳过。
 - 安装全部可选依赖后：74 项测试全部通过，无跳过。
 - 12 个无需模型 API 的示例入口全部运行通过，包含实际 LangGraph 和 MCP 调用。
-- 文档检查覆盖 11 章、正文 Python 片段、相对链接、标题锚点、SVG、JSON 及关键函数与源码的一致性。
+- 当时的文档检查覆盖 01–11 章、正文 Python 片段、相对链接、标题锚点、SVG、JSON 及关键函数与源码的一致性。
 - 固定开发题的检索结果：Recall@3 为 0.9583，MRR@3 为 1.0，无答案题空结果比例为 0.5。失败案例保留在 [评估章](learning/evaluation.md)，这些指标不等于回答正确率。
+
+## 综合实战与课程整理验证
+
+同日加入医疗险项目后，完整测试增至 117 项，离线示例增至 16 个，均通过；案例范围与报告见 [医疗险实验记录](insurance/runs/README.md)。课程整理后的文档检查覆盖 12 章、33 段 Python、全部相对链接与图示，并核对关键函数与源码一致。
 
 云端检查覆盖 Ubuntu 与 Windows、Python 3.10 与 3.12；具体提交的结果见对应 [Actions 运行](https://github.com/ldr0528/agent-learning-journey/actions)。模型实验手动运行，CI不请求模型。
 

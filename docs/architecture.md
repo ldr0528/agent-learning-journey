@@ -1,76 +1,93 @@
-# 项目架构与执行边界
+# 课程例题与综合项目的实现
 
-[手册目录](../README.md) · [贯穿项目](practice/research-agent.md) · [调用链阅读](practice/source-reading.md)
+[手册目录](../README.md#章节目录) · [第 12 章：医疗险综合实战](insurance/course-guide.md) · [调用链阅读](practice/source-reading.md)
 
-本项目将教材与配套实现放在同一个仓库。章节负责解释机制；示例负责选择参数和运行模式；核心包提供模型、任务、工具与检索函数。章节示例共用模型配置和部分工具函数，分别观察不同的任务组织方式。
+仓库分为两层：第 01–11 章用天气、资料问答等例题拆解 Agent 机制；第 12 章把需求、取证、校验与会话连接成医疗险资料比较项目。例题保持独立入口，综合项目有自己的业务数据与完成条件，共用模型配置。
 
-![课程入口、任务组织、模型工具与可选集成的职责](assets/architecture-zh.svg)
+## 目录分层
 
-## 目录与职责
-
-| 区域 | 主要文件 | 职责 |
+| 层次 | 资料位置 | 实现入口 |
 | --- | --- | --- |
-| 教材 | `docs/learning/` | 11 章原理、代码、图、输出、练习与答案 |
-| 入口 | `examples/`、`cli.py` | 参数检查、运行模式、配置、退出状态 |
-| 模型适配 | `config.py`、`llm.py` | 共享服务配置与一次文本请求；原生工具响应由MCP桥接层处理 |
-| 循环与上下文 | `loop.py`、`context.py` | 原始历史、选择本轮输入、预算、Finish 与反馈 |
-| 基础任务 | `agents/weather.py`、`agents/research.py` | 工具说明、查询去重、当前任务来源范围 |
-| 任务组织 | `agents/planning.py`、`plan_solve.py`、`reflection.py` | 计划生成、顺序执行、有限评审与修订 |
-| 检索与研究 | `tools/retrieval.py`、`agents/rag.py` | 文档切分、排名、证据、回答校验和报告 |
-| 数据与工具 | `tools/weather.py`、`tools/notes.py`、`data/` | 本地模拟数据、基础摘要、课程语料与评估题 |
-| 评估 | `evaluation.py` | 检索与引用指标，保留逐题结果与失败项 |
-| 可选集成 | `integrations/` | LangGraph工作流、MCP客户端/服务端，以及模型工具调用桥接 |
-| 质量维护 | `tests/`、`scripts/`、`.github/workflows/` | 控制逻辑、协议/框架集成、文档与图示检查 |
+| 课程例题 | `docs/learning/`：01–11 章；`docs/practice/`：资料问答、迁移与源码练习 | `examples/` 中各章脚本；`src/agent_learning/` 下的循环、任务、检索与集成模块 |
+| 综合实战 | `docs/insurance/course-guide.md`：第 12 章；同目录中的任务书、资料规范与项目说明 | `src/agent_learning/insurance/`；`examples/insurance_compare.py` |
+| 共用支持 | 环境配置、运行记录、测试与维护说明 | `config.py`、`tests/`、`scripts/`、`.github/workflows/` |
 
-以上 Python 文件均位于 `src/agent_learning/`，完整示例索引见 [配套入口](../examples/README.md)。
+下文 Python 路径均相对于 `src/agent_learning/`。命令与运行模式集中列在 [示例索引](../examples/README.md)。
 
-## 两个研究助手入口怎样衔接
+## 课程例题：分别观察一种机制
 
-基础版 `python -m agent_learning` 使用三条摘要、完整消息历史与有限 Agent Loop。模型选择 `search_notes`，程序执行、保存来源并验证 Finish；适合观察模型逐轮选择行动。
+![课程例题中的入口、任务、模型与工具](assets/architecture-zh.svg)
 
-RAG 版 `python -m examples.rag_research` 使用独立的课程语料，按固定工作流完成一次检索、证据选择与报告。默认生成离线证据摘录，`--live` 才让模型依据证据生成结论。检索和生成顺序由程序规定。
-
-基础版使用独立资料库，便于复现“资料不足”等实验；扩展语料只用于后续RAG工作流。
-
-规划、Reflection、LangGraph 和 MCP 各有独立章节入口。LangGraph 重用天气工具与基础摘要，MCP 将这两种工具暴露给客户端；它们用于对照控制流与调用边界，尚未接入上述 RAG 工作流。历史摘要和逐轮预算提示目前由天气入口提供，可与基础研究入口的完整历史作比较。
-
-## 一条信息怎样进入回答
-
-1. 示例入口检查参数，选择模型调用或固定输入练习。
-2. 任务函数组织输入，明确原问题、当前阶段、已有资料与预算。
-3. 文本任务由 `llm.py` 发送一次请求；MCP模型桥接层直接保留API的原生 `tool_calls`。需要工具时调用明确的Python函数或协议工具。
-4. 程序保存实际结果。后续请求只看到被选入输入的内容，无法自动读取其他变量或文件。
-5. 控制逻辑按当前流程的预算、输出格式与任务规则，决定继续、结束或报告未完成。
-6. 报告与评估保留模式、状态和来源；格式合格与引用合法不替代事实核验。
-
-## 可替换的边界
-
-模型接入复用 `config.py` 创建的客户端。`llm.py` 提取文本回复；`integrations/mcp_agent.py` 保留工具请求结构，根据MCP发现的工具定义进行映射与执行，再回传带 `tool_call_id` 的结果。
-
-`scripts/record_live.py` 保存模型请求、响应、用量及源码指纹，供追踪输入与复现实验。CI使用固定回复检查控制流程。
-
-检索输出携带资料编号、内容、出处与排名，生成模块围绕这些字段组织证据。词法检索可以在保持输出契约的前提下替换为语义向量检索；两者的含义和限制在第 08 章说明。
-
-LangGraph 示例用状态与边重新表达天气循环和三步问答；MCP 示例通过跨进程通信调用本地工具。它们共用业务函数，各自组织运行过程。基础研究、RAG 和三步问答图会检查引用编号范围；MCP 模型示例通过提示词要求引用，尚未接入程序化引用校验。
-
-## 停止、失败与预算
-
-| 流程 | 何时停止 | 如何解释结果 |
+| 课程部分 | 实现模块 | 用途 |
 | --- | --- | --- |
-| Agent Loop | 合法 Finish 或请求上限 | `finished` 是流程结束，`step_limit` 是未取得有效最终答复 |
-| Plan-and-Solve | 计划执行完或调用预算耗尽 | 保留已完成步骤，不能把部分结果冒充总答案 |
-| Reflection | 评审通过或修订/调用预算耗尽 | 未复审或未通过的草稿仍标未通过 |
-| RAG | 无证据、生成完成或格式/引用失败 | `evidence_only` 是摘录；回答仍需核对支持关系 |
-| LangGraph | 到达结束节点或配置边界 | 节点状态与执行顺序可以检查，图本身不保证答案正确 |
-| MCP 协议演示 | 固定工具调用完成，或会话、工具报错 | 只检查工具通信与返回结果 |
-| MCP 模型循环 | 模型返回最终文本、请求预算耗尽，或异常中止 | `finished` 表示有过成功工具返回后形成文本；`no_evidence` 表示未取得成功工具结果；`step_limit` 表示预算内没有最终文本 |
+| 模型、工具与循环（01–04） | `llm.py`、`loop.py`、`agents/weather.py`、`agents/research.py` | 一次请求、工具反馈、停止条件与引用范围 |
+| 上下文与任务组织（05–07） | `context.py`、`agents/planning.py`、`agents/plan_solve.py`、`agents/reflection.py` | 选择本轮输入、计划执行、评审修订 |
+| 检索与质量（08–09） | `tools/retrieval.py`、`agents/rag.py`、`evaluation.py` | 切分、检索、证据选择与质量检查 |
+| 框架与协议（10–11） | `integrations/` | 用 LangGraph 表达流程；用 MCP 调用另一个进程的工具 |
 
-MCP 模型循环中的未知工具、参数错误和工具执行失败会作为 tool 消息反馈，预算允许时继续请求模型；模型请求失败或会话无法建立则由入口结束运行。
+资料问答有两个练习入口。`python -m agent_learning` 让模型在三条基础摘要上逐轮选择查询，使用完整历史并验证 Finish；`examples.rag_research` 用课程语料执行固定的检索、证据选择和报告流程。默认 RAG 报告是离线摘录，添加 `--live` 才生成回答。两者服务于不同章节，不是综合项目的两个版本。
 
-API 超时、无权限与输出截断由入口给出简短错误；密钥不进入报告。对于明确的预算不足等教学边界，退出码 1 可能是预期结果，应结合状态理解。
+天气入口提供规则摘要与逐轮预算提示。规划、Reflection、LangGraph 和 MCP 例题各自组织流程，复用部分工具函数；这些选项没有自动组合成一套通用 Agent。
 
-## 为什么不做一个万能框架
+## 综合实战：医疗险资料比较
 
-代码围绕课程中可以解释清楚的机制组织。模型、工具与运行控制保持可分辨，后续框架章节再映射到现成抽象。可复用函数和明确数据契约足以支持本课程；不增加尚无教学用途的插件注册、服务部署或多 Agent 调度层。
+![医疗险比较的需求、取证、校验与报告](assets/insurance-flow-zh.svg)
 
-来源：[Hello-Agents 第四章](https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter4/第四章%20智能体经典范式构建.md)、[第六章](https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter6/第六章%20框架开发实践.md)。本页描述本项目的实现分层与取舍。
+| 模块 | 职责与边界 |
+| --- | --- |
+| `insurance/web.py`、`insurance/static/index.html` | 本机网页、需求表单、报告与来源展示；HTTP 只绑定 `127.0.0.1`，写操作检查同源与 CSRF |
+| `insurance/cli.py` | 创建、恢复、查看会话及导出 Markdown 报告 |
+| `insurance/service.py` | 选择资料目录和运行模式，创建模型客户端，调用工作流并保存结果 |
+| `insurance/workflow.py` | 检查需求，维护本次产品与版本范围，校验证据，构建九维比较与缺口 |
+| `insurance/agent.py` | 模型工具循环、参数校验、错误反馈、模型与工具预算 |
+| `insurance/catalog.py` | 读取固定版本目录，按产品、维度或关键词提供带出处的事实 |
+| `insurance/store.py` | 本地会话快照、修订号、当前结果及最多五份历史结果；原子替换保存文件 |
+| `insurance/integrations.py`、`insurance/mcp_server.py` | 同一比较任务的 LangGraph 调度和 MCP 取证适配 |
+
+网页与保险 CLI 经过 `service.run_session` 使用 Python 工作流并持久化。`examples.insurance_compare` 用于对照 Python、LangGraph、MCP 三种执行方式，直接返回报告，可导出 JSON；它不创建会话。
+
+一次比较沿以下路径进行：
+
+```text
+网页 / 保险 CLI
+  → SessionStore 创建或读取需求
+  → service.run_session
+  → prepare_request 检查关注维度、比较对象与资料版本
+      ├─ 信息不足 → needs_input，保存补充问题
+      └─ 信息齐全 → run_comparison
+          ├─ offline：程序按维度读取目录
+          └─ live：模型提出取证操作，agent.run_agent 执行并反馈
+  → EvidenceWorkspace.finish 校验本次证据与九维覆盖
+  → 构建比较表、来源、缺口和下一步
+  → SessionStore.save → 网页展示 / CLI 导出
+```
+
+比较表单元来自目录事实及条件，模型负责选择取证操作并提交完成请求。`EvidenceWorkspace.remember` 对照目录核验整批返回内容，`finish` 检查产品版本、证据是否实际读过，以及全部维度是否覆盖。关注维度改变顺序，不删去其他维度的限制和未知项。
+
+资料目录分为自拟教学示例与官方条款节选。年龄、医保和年度预算保存在需求中；当前实现没有报价或核保接口，因此报告列出待确认事项，不计算保费、排名或承保结论。缺少报价可以得到 `completed_with_gaps`：比较流程已完成，资料缺口仍然存在。
+
+## 框架与协议适配在哪里
+
+| 适配 | 章节例题 | 医疗险综合项目 |
+| --- | --- | --- |
+| LangGraph | 三步问答 `understand → search → answer`，另有天气条件循环 | `intake → research → verify → deliver`；缺需求时转 `clarify → deliver`。research 调用原有比较工作流 |
+| MCP | 暴露模拟天气、基础摘要工具；模型桥接将工具结果写回 `role=tool` | 服务端暴露条款搜索与读取；客户端校验证据后纳入本次任务，完成检查仍在本地 |
+| 状态保存 | 三步问答图的 `--checkpoint` 使用进程内快照 | 网页与 CLI 由 `SessionStore` 保存；恢复后按当前需求重新取证，不是从图节点续跑 |
+
+医疗险 LangGraph 适配在工作流外组织节点，没有把模型循环内的每一步都拆成图节点，也没有配置 checkpoint。MCP 改变取证的传输边界，完成校验与报告格式仍复用同一业务实现。
+
+## 模型输入与停止状态
+
+模型接入共用 `config.py` 创建客户端。文本例题由 `llm.py` 提取回复；MCP 模型例题和医疗险 `service.model_adapter` 保留原生 `tool_calls`。工具结果必须明确写入下一次请求，程序变量、终端打印和持久化文件都不会自动成为模型上下文。
+
+| 流程 | 停止与结果含义 |
+| --- | --- |
+| 天气与基础资料问答循环 | 有效 Finish 返回 `finished`；请求耗尽返回 `step_limit` |
+| 计划与反思例题 | 由执行、评审与各自预算决定是否完成；保留未完成步骤或未通过草稿 |
+| RAG 例题 | 区分证据摘录、生成回答、资料不足与格式/引用失败 |
+| MCP 模型例题 | 区分有成功工具结果后的最终文本、无成功证据与预算耗尽；尚无程序化引用校验 |
+| 医疗险项目 | `needs_input` 等待补需求；`completed` / `completed_with_gaps` 通过完成校验；`call_limit` / `tool_limit` / `model_error` 保留已有证据并标记未完成 |
+
+医疗险未知工具、参数错误和缺失证据会反馈给模型；预算耗尽后不追加隐藏的总结调用。普通文本不能代替 `finish_comparison`。各层的具体输入、反馈和测试位置见 [源码阅读](practice/source-reading.md)。
+
+实现按课程与业务需要组合函数，没有插件注册、云部署或多 Agent 调度层。教材分层线索来自 [Hello-Agents 第四章](https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter4/第四章%20智能体经典范式构建.md) 与 [第六章](https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter6/第六章%20框架开发实践.md)；本页描述本仓库当前实现。

@@ -1,6 +1,10 @@
 # 第 11 章 · MCP：让工具通过标准协议被调用
 
-[章节目录](../../README.md#章节目录) · [上一章：LangGraph](langgraph.md) · [贯穿项目：Research Agent](../practice/research-agent.md)
+[章节目录](../../README.md#章节目录) · [上一章：LangGraph](langgraph.md) · [下一章：医疗险综合实战](../insurance/course-guide.md)
+
+**本章目标**：沿工具发现、调用和结果回传，区分模型决策、客户端会话与服务端函数的职责。
+
+**配套示例**：[MCP 入口](../../examples/mcp_demo.py) · **核心实现**：[客户端与服务端](../../src/agent_learning/integrations/)。
 
 本章参考 [Hello-Agents 第十章 §10.2 MCP 协议实战](https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter10/第十章%20智能体通信协议.md)，把天气工具和本地摘要检索放到服务端，再沿工具发现、调用和结果回传理解 MCP。示例使用官方 Python SDK，可以直接看到客户端与服务端的会话边界。
 
@@ -230,6 +234,8 @@ python -m examples.mcp_demo --live --max-calls 1
 推荐动手扩展：增加一个返回本地摘要数量的只读工具，检查 `list_tools` 的 schema，再由客户端显式调用一次。验收时分别展示发现结果和执行结果，而不是只展示服务端注册成功。
 
 [MCP 集成测试](../../tests/test_mcp_integration.py) 检查工具发现与服务端调用；[模型桥接测试](../../tests/test_mcp_agent.py) 用固定回复检查结果回传、调用编号、未知工具和预算边界。阅读时重点找出断言检查的是协议、输入消息还是最终答案。
+
+下一步进入 [第 12 章：医疗险综合实战](../insurance/course-guide.md)，把需求澄清、版本化条款、证据校验和报告连接起来，再比较本地工具调用与 MCP 取证如何遵守同一业务规则。
 
 ---
 

@@ -2,6 +2,10 @@
 
 [章节目录](../../README.md#章节目录) · [上一章：工具结果回传](tool-feedback.md) · [下一章：检索与引用](retrieval-and-citations.md)
 
+**本章目标：** 跟踪多轮工具循环，区分模型请求次数、工具执行次数与任务停止原因。
+
+**配套示例：** [天气循环](../../examples/weather_loop.py) · **核心实现：** [循环与停止判断](../../src/agent_learning/loop.py)
+
 本章参考 [Hello-Agents 第四章 §4.2，重点 §4.2.3](https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter4/第四章%20智能体经典范式构建.md)。本项目沿用行动与反馈交替的思路，省略 Thought 长文本；请求计数与 `step_limit` 状态是自己的实现约定。
 
 ## 3.1 从固定回传到多轮决策
@@ -151,7 +155,7 @@ Observation: 晴天，22℃
 
 </details>
 
-**配套代码**：[循环实现](../../src/agent_learning/loop.py)、[天气任务](../../src/agent_learning/agents/weather.py)。完整研究助手架构另见 [附录](../architecture.md)。
+**配套代码**：[循环实现](../../src/agent_learning/loop.py)、[天气任务](../../src/agent_learning/agents/weather.py)。课程资料问答练习的实现关系另见 [附录](../architecture.md)。
 
 ---
 

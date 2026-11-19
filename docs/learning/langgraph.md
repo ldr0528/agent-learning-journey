@@ -2,6 +2,10 @@
 
 [章节目录](../../README.md#章节目录) · [上一章：评估](evaluation.md) · [下一章：MCP](mcp.md)
 
+**本章目标：** 将问答与工具循环映射为状态、节点和边，并通过进程内快照观察图状态。
+
+**配套示例：** [三步问答与天气循环](../../examples/langgraph_workflow.py) · **核心实现：** [图定义与状态更新](../../src/agent_learning/integrations/langgraph_workflow.py)
+
 本章以 [Hello-Agents 第六章 §6.5.1–6.5.3](https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter6/第六章%20框架开发实践.md) 为主线：先做“理解、搜索、回答”三步图，再把天气循环映射为节点与条件边。三步图使用本地教学摘要，便于跟踪查询、证据和答案；随后通过进程内快照观察图状态。第七章的分层思路可结合 [源码阅读练习](../practice/source-reading.md) 选读。
 
 ## 10.1 图组织的是执行过程
