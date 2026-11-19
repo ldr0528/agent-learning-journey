@@ -9,6 +9,7 @@
 | `src/agent_learning/data/notes.json` | 根据 Datawhale Hello-Agents 第一章与第四章整理的教学摘要 | CC BY-NC-SA 4.0；非教材原文，保留作者、章节与链接 |
 | `src/agent_learning/data/corpus.json` 与 `eval_cases.json` | 按课程内容原创转述的资料摘要及开发评估题 | CC BY-NC-SA 4.0；不是教材全文或官方测试集，资料保留来源，评估题仅衡量当前语料与规则 |
 | `docs/learning/` 下的手册正文 | 以 Hello-Agents 为主要参考，按自己的计划结合本项目代码与实验重新编排 | CC BY-NC-SA 4.0；各章标注教材出处、教学简化和项目扩展，非教材原文 |
+| `docs/runs/` 下的教学实验记录与分析 | 实际模型请求、响应、引用的本地教学摘要及本项目判读 | CC BY-NC-SA 4.0；包含教材衍生摘要，不代表教材作者对模型输出作出背书 |
 
 ## Hello-Agents
 
@@ -23,6 +24,8 @@ LangGraph 与 MCP 示例调用各自官方 Python 包，并按使用版本提供
 ## 仓库呈现参考
 
 参考 [smolagents](https://github.com/huggingface/smolagents) 的源码、示例与测试分层，及 [LangGraph](https://github.com/langchain-ai/langgraph) 的功能说明与文档导航。不复制这两个项目的代码、图像或标识，不表示与其存在隶属或背书关系。
+
+课程阅读组织还参考 Microsoft AI Agents for Beginners 与 Hugging Face Agents Course。具体页面、观察到的教学方法及本仓库的对应改进见 [参考资料与阅读设计](docs/references.md)。本轮图示为根据自己的实际消息与结果重新绘制的SVG。
 
 ## 图示的视觉参考
 

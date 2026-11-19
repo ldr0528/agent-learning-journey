@@ -85,6 +85,24 @@ class RetrievalTests(unittest.TestCase):
         self.assertEqual((result["status"], result["model_requests"]), ("evidence_only", 0))
         self.assertEqual(result["claims"], [])
 
+    def test_missing_requires_string_in_both_response_states(self):
+        for status in ("answered", "insufficient_evidence"):
+            claims = [{"text": "北京下雨。", "citations": ["D01-C01"]}] if status == "answered" else []
+            for missing in ([], ["缺少信息"], None, {"reason": "缺少信息"}):
+                with self.subTest(status=status, missing=missing):
+                    generator = Mock(return_value=json.dumps({"status": status, "claims": claims, "missing": missing}))
+                    result = run_rag("北京", index=self.index, generate=generator, generation_mode="scripted")
+                    self.assertEqual(result["status"], "invalid_answer")
+                    self.assertIn("missing 必须是字符串", result["validation_error"])
+                    self.assertEqual(result["claims"], [])
+                    self.assertEqual(result["sources"], [])
+                    generator.assert_called_once()
+        for status, claims, missing in (("answered", [{"text": "北京下雨。", "citations": ["D01-C01"]}], ""),
+                                        ("insufficient_evidence", [], "缺少历史温度资料")):
+            with self.subTest(valid_status=status):
+                result = validate_response(json.dumps({"status": status, "claims": claims, "missing": missing}), self.index.chunks)
+                self.assertEqual((result["status"], result["missing"]), (status, missing))
+
     def test_body_citations_must_match_structured_citations(self):
         evidence = self.index.search("天气")
         raw = json.dumps({"status": "answered", "claims": [

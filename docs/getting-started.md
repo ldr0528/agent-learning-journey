@@ -64,6 +64,8 @@ python -m agent_learning --check
 
 本项目已有千问 `qwen-plus` 的真实运行证据。OpenAI 配置入口保留，但尚未取得成功运行证据；如需使用，填写模板中的 `LLM_API_KEY`、`LLM_MODEL_ID`、`LLM_BASE_URL`，运行时加 `--provider openai`。模型与参数是否可用取决于所选服务。
 
+第06–11章已有可直接阅读的 [真实 API 实验](runs/README.md)。需要亲手复现时使用章节中的真实命令；以下离线入口便于无需密钥验证程序分支，二者用途分别标明。
+
 ## 先运行一个不调用模型的实验
 
 ```bash
@@ -90,6 +92,8 @@ python -m examples.mcp_demo
 ```
 
 这些默认模式不请求付费模型，MCP 仅启动本地服务端子进程并在会话结束时关闭。
+
+连接真实模型使用 `python -m examples.langgraph_workflow --live --checkpoint` 或 `python -m examples.mcp_demo --live`。MCP模型示例默认最多4次模型请求；它与纯协议验证共享服务端。
 
 ## 运行模型与完整循环
 

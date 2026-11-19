@@ -164,10 +164,60 @@ def framework_protocol():
     write("framework-protocol-zh.svg", "框架与协议 · 两种不同职责", "LangGraph 表达执行流程；MCP 让工具能力通过标准会话被调用。", body, 820)
 
 
+def evidence_checks():
+    body = []
+    gates = [(64, "01  检索命中", "词语相关，能找到候选", GREEN),
+             (360, "02  纳入上下文", "预算内选入模型请求", GREEN),
+             (656, "03  引用合法", "编号来自本轮证据", GREEN),
+             (952, "04  语义支持", "结论没有越过证据", BLUE)]
+    for x, title, detail, color in gates:
+        body.append(box(x, 208, 264, title, detail, color))
+    for x in (328, 624, 920):
+        body.append(line(x, 253, x + 24, 253, BLUE, True))
+    body.extend([text(64, 356, "前三项可做程序检查；最后一项还需要逐条读证据、看限定条件。", 21),
+                 line(64, 395, 1216, 395), text(64, 447, "真实样本  /  RAG 为什么要保留来源与引用？", 20, BLUE, 600),
+                 box(64, 478, 545, "D08-C01 · 资料中的要求", "只引用实际纳入上下文的资料；仍需核对语义。", GREEN),
+                 box(671, 478, 545, "模型回答 · 需要审慎理解的词", "“确保”生成的回答仅基于上下文证据。", BLUE),
+                 line(609, 523, 663, 523, BLUE, True),
+                 text(64, 621, "引用编号存在 ≠ 已证明“确保”。", 25, ORANGE, 600),
+                 text(64, 665, "这一句可表达设计目标，但保留来源本身不能保证模型绝不引入外部信息。", 20),
+                 text(64, 705, "阅读顺序：找到编号 → 对照原句 → 检查因果与强弱 → 给出判读。", 19, MUTED),
+                 text(64, 774, "依据本仓库 2026-11-19 的真实 qwen-plus 样本绘制；保留原回答，不代替模型改写。", 17, MUTED)])
+    write("evidence-checks-zh.svg", "从检索命中到结论可信 · 四个检查点", "排序、上下文、引用编号和语义支持，需要分别判断。", body, 820)
+
+
+def mcp_model_roundtrip():
+    body = [box(64, 190, 292, "千问模型", "原生 tool_calls / 最终文本"),
+            box(494, 190, 292, "Python 应用", "模型 API + MCP 客户端", GREEN),
+            box(924, 190, 292, "MCP 服务端", "子进程中的本地工具", GREEN)]
+    for x in (210, 640, 1070):
+        body.append(line(x, 280, x, 1020, LINE, dashed=True))
+    steps = [(640, 1070, 330, "initialize / list_tools", GREEN),
+             (1070, 640, 390, "返回工具名与参数 schema", GREEN),
+             (640, 210, 475, "请求 1：问题 + 工具定义", BLUE),
+             (210, 640, 535, "tool_calls：weather（北京）", BLUE),
+             (640, 1070, 595, "call_tool：weather（北京）", GREEN),
+             (1070, 640, 655, "返回模拟天气：12℃", GREEN),
+             (640, 210, 740, "请求 2：加入 role=tool 结果", BLUE)]
+    for x1, x2, y, label, color in steps:
+        body.extend([line(x1, y, x2, y, color, True), text((x1+x2)/2, y-15, label, 18, color, anchor="middle")])
+    body.extend([f'<rect x="64" y="790" width="1152" height="66" rx="7" fill="#F3FAF7" stroke="{LINE}"/>',
+                 text(640, 830, "模型再请求上海 → MCP 实际执行 → 返回模拟天气 22℃", 21, GREEN, anchor="middle"),
+                 line(640, 915, 210, 915, BLUE, True), text(425, 900, "请求 3：携带两地工具结果", 18, BLUE, anchor="middle"),
+                 line(210, 985, 640, 985, BLUE, True), text(425, 970, "最终文本：上海更暖和", 18, BLUE, anchor="middle"),
+                 line(64, 1050, 1216, 1050),
+                 text(64, 1096, "实际轨迹：3 次模型请求，2 次 MCP 工具调用。", 23, INK, 600),
+                 text(64, 1137, "tool_call_id 将结果关联到对应的工具请求；MCP 会话负责另一层通信。", 19, MUTED),
+                 text(64, 1174, "模型无需直接连接 MCP 服务端；Python 应用负责发现、映射、执行与回传。", 19, MUTED)])
+    write("mcp-model-roundtrip-zh.svg", "真实 MCP 工具回传 · 模型与程序各做什么", "根据 2026-11-19 千问实验重画；中间的应用连接两套不同接口。", body, 1220)
+
+
 if __name__ == "__main__":
     course_map()
     architecture()
     planning_reflection()
     rag_evaluation()
     framework_protocol()
-    print("已生成 5 张原创课程概览 SVG。")
+    evidence_checks()
+    mcp_model_roundtrip()
+    print("已生成 7 张原创课程 SVG。")

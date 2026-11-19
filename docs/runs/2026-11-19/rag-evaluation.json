@@ -1,0 +1,769 @@
+{
+  "kind": "saved_real_api_records_review",
+  "run_date": "2026-11-19",
+  "api_calls_by_this_evaluation": 0,
+  "method": "离线读取真实请求中的证据和模型原始响应，重放字段与引用校验；Codex 助教逐条对照证据撰写审阅理由，属于 AI 辅助审阅，不是独立人工标注，也不由固定模拟回复给自己评分。",
+  "limitations": "每版仅两例，同样问题且提示不同，非独立测试集或多次重复实验；不合并为普遍准确率。引用指标仅检查结构。助教审阅附理由供读者核查，不伪装成人工 gold 或自动语义分数。",
+  "corpus_sha256": "7cace095e0e475b61713cb67134bc9155d15740573db895825c9a342297e1516",
+  "retrieval_development_set": {
+    "kind": "offline_retrieval_development_set",
+    "k": 3,
+    "corpus_sha256": "7cace095e0e475b61713cb67134bc9155d15740573db895825c9a342297e1516",
+    "index": {
+      "chunks": 14,
+      "max_chars": 180,
+      "overlap": 30,
+      "k1": 1.5,
+      "b": 0.75
+    },
+    "answerable_cases": 12,
+    "no_answer_cases": 2,
+    "mean_recall_at_k": 0.9583333333333334,
+    "mrr_at_k": 1.0,
+    "empty_result_rate_on_no_answer": 0.5,
+    "semantic_answer_accuracy": null,
+    "note": "当前分数仅对应这个与语料一起设计的小型开发集；没有调用模型，不代表答案正确率。",
+    "cases": [
+      {
+        "id": "E01",
+        "question": "为什么 Agent Loop 要限制最大步数？",
+        "relevant_doc_ids": [
+          "D01"
+        ],
+        "returned_ids": [
+          "D01-C01",
+          "D11-C01",
+          "D14-C01"
+        ],
+        "recall_at_k": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "E02",
+        "question": "只打印工具结果到终端，模型下一次能看到吗？",
+        "relevant_doc_ids": [
+          "D02"
+        ],
+        "returned_ids": [
+          "D02-C01",
+          "D01-C01",
+          "D03-C01"
+        ],
+        "recall_at_k": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "E03",
+        "question": "剩余预算怎样进入模型上下文？",
+        "relevant_doc_ids": [
+          "D03"
+        ],
+        "returned_ids": [
+          "D03-C01",
+          "D05-C01",
+          "D01-C01"
+        ],
+        "recall_at_k": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "E04",
+        "question": "截断历史后怎么保留较早证据？",
+        "relevant_doc_ids": [
+          "D04"
+        ],
+        "returned_ids": [
+          "D04-C01",
+          "D05-C01",
+          "D08-C01"
+        ],
+        "recall_at_k": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "E05",
+        "question": "RAG 包含哪些检索增强生成步骤？",
+        "relevant_doc_ids": [
+          "D05"
+        ],
+        "returned_ids": [
+          "D05-C01",
+          "D13-C01",
+          "D08-C01"
+        ],
+        "recall_at_k": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "E06",
+        "question": "BM25 和 Embedding 向量检索有什么区别？",
+        "relevant_doc_ids": [
+          "D06",
+          "D07"
+        ],
+        "returned_ids": [
+          "D07-C01",
+          "D10-C01",
+          "D11-C01"
+        ],
+        "recall_at_k": 0.5,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "E07",
+        "question": "RAG 为什么要保留来源与引用？",
+        "relevant_doc_ids": [
+          "D08"
+        ],
+        "returned_ids": [
+          "D08-C01",
+          "D05-C01",
+          "D04-C01"
+        ],
+        "recall_at_k": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "E08",
+        "question": "分块大小和重叠有什么权衡？",
+        "relevant_doc_ids": [
+          "D09"
+        ],
+        "returned_ids": [
+          "D09-C01",
+          "D11-C01"
+        ],
+        "recall_at_k": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "E09",
+        "question": "检索评估能替代答案评估吗？",
+        "relevant_doc_ids": [
+          "D11"
+        ],
+        "returned_ids": [
+          "D11-C01",
+          "D07-C01",
+          "D10-C01"
+        ],
+        "recall_at_k": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "E10",
+        "question": "Recall MRR 与引用合法率能说明什么？",
+        "relevant_doc_ids": [
+          "D12"
+        ],
+        "returned_ids": [
+          "D12-C01",
+          "D08-C01",
+          "D11-C01"
+        ],
+        "recall_at_k": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "E11",
+        "question": "Plan-and-Solve 的执行阶段需要哪些信息？",
+        "relevant_doc_ids": [
+          "D13"
+        ],
+        "returned_ids": [
+          "D13-C01",
+          "D02-C01",
+          "D04-C01"
+        ],
+        "recall_at_k": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "E12",
+        "question": "Reflection 为什么需要限制修订次数？",
+        "relevant_doc_ids": [
+          "D14"
+        ],
+        "returned_ids": [
+          "D14-C01",
+          "D01-C01",
+          "D11-C01"
+        ],
+        "recall_at_k": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "E13",
+        "question": "火星明天的日出时间是多少？",
+        "relevant_doc_ids": [],
+        "returned_ids": [],
+        "empty_result": true
+      },
+      {
+        "id": "E14",
+        "question": "RAG 服务每月收费多少钱？",
+        "relevant_doc_ids": [],
+        "returned_ids": [
+          "D05-C01",
+          "D08-C01"
+        ],
+        "empty_result": false
+      }
+    ]
+  },
+  "groups": {
+    "current": {
+      "attempted_cases": 2,
+      "api_attempts": 2,
+      "api_responses": 2,
+      "total_tokens": 1739,
+      "program_status_counts": {
+        "answered": 1,
+        "insufficient_evidence": 1
+      },
+      "raw_claim_count": 3,
+      "accepted_claim_count": 3,
+      "accepted_claim_citations": {
+        "kind": "provided_answer_citation_structure",
+        "provided_cases": 2,
+        "total_claims": 3,
+        "citation_references": 3,
+        "citation_validity": 1.0,
+        "claim_citation_coverage": 1.0,
+        "semantic_support": "not_evaluated",
+        "note": "编号合法和每条结论带引用都不证明资料支持结论；证据日志真实性及语义需人工核对。",
+        "cases": [
+          {
+            "case_id": "E07",
+            "claims": 3,
+            "fully_cited_claims": 3,
+            "citation_references": 3,
+            "valid_references": 3
+          },
+          {
+            "case_id": "E14",
+            "claims": 0,
+            "fully_cited_claims": 0,
+            "citation_references": 0,
+            "valid_references": 0
+          }
+        ]
+      },
+      "raw_claim_citations_before_format_validation": {
+        "kind": "provided_answer_citation_structure",
+        "provided_cases": 2,
+        "total_claims": 3,
+        "citation_references": 3,
+        "citation_validity": 1.0,
+        "claim_citation_coverage": 1.0,
+        "semantic_support": "not_evaluated",
+        "note": "编号合法和每条结论带引用都不证明资料支持结论；证据日志真实性及语义需人工核对。",
+        "cases": [
+          {
+            "case_id": "E07",
+            "claims": 3,
+            "fully_cited_claims": 3,
+            "citation_references": 3,
+            "valid_references": 3
+          },
+          {
+            "case_id": "E14",
+            "claims": 0,
+            "fully_cited_claims": 0,
+            "citation_references": 0,
+            "valid_references": 0
+          }
+        ]
+      },
+      "cases": [
+        {
+          "case_id": "E07",
+          "record": "rag-answer.json",
+          "question": "RAG 为什么要保留来源与引用？",
+          "started_at_utc": "2026-11-19T10:47:49.091918+00:00",
+          "source_commit": "c369aae66043d059d7b53fb902e58c8ec7c6bfc9",
+          "source_dirty": true,
+          "rag_source_sha256": "af4aa5d2ca61713e2edf5f0197fbb7f5ce869ec307b260208d6e4f721432e986",
+          "model": "qwen-plus",
+          "request_parameters": {
+            "model": "qwen-plus",
+            "max_tokens": 512,
+            "extra_body": {
+              "enable_thinking": false
+            }
+          },
+          "api_attempts": 1,
+          "api_responses": 1,
+          "usage": {
+            "completion_tokens": 139,
+            "prompt_tokens": 856,
+            "total_tokens": 995,
+            "completion_tokens_details": null,
+            "prompt_tokens_details": {
+              "audio_tokens": null,
+              "cache_write_tokens": null,
+              "cached_tokens": 0
+            }
+          },
+          "model_elapsed_seconds": 3.692,
+          "run_elapsed_seconds": 6.578,
+          "exit_code": 0,
+          "evidence_ids": [
+            "D08-C01",
+            "D05-C01",
+            "D04-C01"
+          ],
+          "evidence": [
+            {
+              "id": "D08-C01",
+              "title": "RAG 的来源与引用",
+              "text": "RAG 的每个资料块应保留文档编号、标题、出处与正文。生成时仅能引用实际纳入上下文的证据，最终链接由程序从资料记录读取。引用编号合法只表示它来自这次证据，不保证资料真的支持每一句结论。报告应同时展示依据与仍缺少的信息，便于读者核查。",
+              "source_section": "Hello-Agents 第八章 §8.3",
+              "source_url": "https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter8/第八章%20记忆与检索.md",
+              "content_type": "教学摘要与本项目说明，非教材原文"
+            },
+            {
+              "id": "D05-C01",
+              "title": "RAG 的检索增强生成流程",
+              "text": "RAG 在回答之前检索外部知识，将证据放入模型输入，再生成有依据的回答。数据准备包括文档收集、切分、保留来源和建立索引；应用阶段包括问题检索、选择证据、组装上下文与回答。只做搜索还没有生成答案，只让模型凭记忆作答也没有检索增强。",
+              "source_section": "Hello-Agents 第八章 §8.3",
+              "source_url": "https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter8/第八章%20记忆与检索.md",
+              "content_type": "教学摘要与本项目说明，非教材原文"
+            },
+            {
+              "id": "D04-C01",
+              "title": "摘要保留较早证据",
+              "text": "整理上下文时可保留最近消息，并用摘要承接较早的重要记录。摘要应保留任务还需要的事实、来源与资料缺失说明。天气例子中，较早的城市和温度不能在截断历史时一起丢弃。消息条数减少不等于 token 一定减少，摘要仍需检查信息损失。",
+              "source_section": "Hello-Agents 第九章 §9.1–9.2",
+              "source_url": "https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter9/第九章%20上下文工程.md",
+              "content_type": "教学摘要与本项目说明，非教材原文"
+            }
+          ],
+          "raw_status": "answered",
+          "raw_missing": "",
+          "raw_claims": [
+            {
+              "text": "RAG 保留来源与引用是为了确保生成的回答仅基于实际纳入上下文的证据，并支持读者核查依据是否真实支持结论。",
+              "citations": [
+                "D08-C01"
+              ]
+            },
+            {
+              "text": "保留来源是 RAG 数据准备阶段的关键步骤，与文档收集、切分和索引构建共同构成检索增强的基础流程。",
+              "citations": [
+                "D05-C01"
+              ]
+            },
+            {
+              "text": "摘要或上下文整理过程中仍需保留来源信息，以防止关键事实（如城市、温度）及其出处在信息压缩时丢失。",
+              "citations": [
+                "D04-C01"
+              ]
+            }
+          ],
+          "program_status": "answered",
+          "validation_error": null,
+          "accepted_claims": [
+            {
+              "text": "RAG 保留来源与引用是为了确保生成的回答仅基于实际纳入上下文的证据，并支持读者核查依据是否真实支持结论。",
+              "citations": [
+                "D08-C01"
+              ]
+            },
+            {
+              "text": "保留来源是 RAG 数据准备阶段的关键步骤，与文档收集、切分和索引构建共同构成检索增强的基础流程。",
+              "citations": [
+                "D05-C01"
+              ]
+            },
+            {
+              "text": "摘要或上下文整理过程中仍需保留来源信息，以防止关键事实（如城市、温度）及其出处在信息压缩时丢失。",
+              "citations": [
+                "D04-C01"
+              ]
+            }
+          ],
+          "evidence_review": {
+            "kind": "ai_assisted_evidence_review",
+            "reviewer": "Codex 助教",
+            "independent_human_labels": false,
+            "automatically_scored": false,
+            "claims": [
+              {
+                "claim_index": 1,
+                "judgment": "needs_qualification",
+                "citation": "D08-C01",
+                "reason": "资料支持只引用本次证据、让读者核查；‘确保’应理解为设计目标，来源元数据本身不能保证回答只依赖证据或保证正确。",
+                "suggested_revision": "保留来源与引用便于追踪本次证据并核查结论是否有依据；编号合法仍不保证语义正确。",
+                "text": "RAG 保留来源与引用是为了确保生成的回答仅基于实际纳入上下文的证据，并支持读者核查依据是否真实支持结论。"
+              },
+              {
+                "claim_index": 2,
+                "judgment": "supported",
+                "citation": "D05-C01",
+                "reason": "D05 明确列出文档收集、切分、保留来源、建立索引，支持对数据准备流程的概括。",
+                "text": "保留来源是 RAG 数据准备阶段的关键步骤，与文档收集、切分和索引构建共同构成检索增强的基础流程。"
+              },
+              {
+                "claim_index": 3,
+                "judgment": "supported_with_stated_scope",
+                "citation": "D04-C01",
+                "reason": "D04 要求摘要保留事实、来源与缺失说明，并以城市温度为例；此句作为整理目标得到支持，不是永不丢失信息的保证。",
+                "text": "摘要或上下文整理过程中仍需保留来源信息，以防止关键事实（如城市、温度）及其出处在信息压缩时丢失。"
+              }
+            ],
+            "question_coverage": "回应了保留来源与引用的用途；第一条需保留目的与保证的区别。"
+          }
+        },
+        {
+          "case_id": "E14",
+          "record": "rag-missing.json",
+          "question": "RAG 服务每月收费多少钱？",
+          "started_at_utc": "2026-11-19T10:48:07.878903+00:00",
+          "source_commit": "c369aae66043d059d7b53fb902e58c8ec7c6bfc9",
+          "source_dirty": true,
+          "rag_source_sha256": "af4aa5d2ca61713e2edf5f0197fbb7f5ce869ec307b260208d6e4f721432e986",
+          "model": "qwen-plus",
+          "request_parameters": {
+            "model": "qwen-plus",
+            "max_tokens": 512,
+            "extra_body": {
+              "enable_thinking": false
+            }
+          },
+          "api_attempts": 1,
+          "api_responses": 1,
+          "usage": {
+            "completion_tokens": 53,
+            "prompt_tokens": 691,
+            "total_tokens": 744,
+            "completion_tokens_details": null,
+            "prompt_tokens_details": {
+              "audio_tokens": null,
+              "cache_write_tokens": null,
+              "cached_tokens": 0
+            }
+          },
+          "model_elapsed_seconds": 1.751,
+          "run_elapsed_seconds": 4.137,
+          "exit_code": 0,
+          "evidence_ids": [
+            "D05-C01",
+            "D08-C01"
+          ],
+          "evidence": [
+            {
+              "id": "D05-C01",
+              "title": "RAG 的检索增强生成流程",
+              "text": "RAG 在回答之前检索外部知识，将证据放入模型输入，再生成有依据的回答。数据准备包括文档收集、切分、保留来源和建立索引；应用阶段包括问题检索、选择证据、组装上下文与回答。只做搜索还没有生成答案，只让模型凭记忆作答也没有检索增强。",
+              "source_section": "Hello-Agents 第八章 §8.3",
+              "source_url": "https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter8/第八章%20记忆与检索.md",
+              "content_type": "教学摘要与本项目说明，非教材原文"
+            },
+            {
+              "id": "D08-C01",
+              "title": "RAG 的来源与引用",
+              "text": "RAG 的每个资料块应保留文档编号、标题、出处与正文。生成时仅能引用实际纳入上下文的证据，最终链接由程序从资料记录读取。引用编号合法只表示它来自这次证据，不保证资料真的支持每一句结论。报告应同时展示依据与仍缺少的信息，便于读者核查。",
+              "source_section": "Hello-Agents 第八章 §8.3",
+              "source_url": "https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter8/第八章%20记忆与检索.md",
+              "content_type": "教学摘要与本项目说明，非教材原文"
+            }
+          ],
+          "raw_status": "insufficient_evidence",
+          "raw_missing": "本次资料未提及RAG服务的收费标准、定价模式或任何与费用相关的信息，既无每月固定费用、按用量计费规则，也无免费/付费版本说明。",
+          "raw_claims": [],
+          "program_status": "insufficient_evidence",
+          "validation_error": null,
+          "accepted_claims": [],
+          "evidence_review": {
+            "kind": "ai_assisted_evidence_review",
+            "reviewer": "Codex 助教",
+            "independent_human_labels": false,
+            "automatically_scored": false,
+            "missing_information": "D05、D08 只有流程和引用规范，没有具体服务、价格或计费规则；原始缺失说明符合证据范围。",
+            "boundary_handling": "appropriate_insufficiency"
+          }
+        }
+      ]
+    },
+    "initial": {
+      "attempted_cases": 2,
+      "api_attempts": 2,
+      "api_responses": 2,
+      "total_tokens": 1493,
+      "program_status_counts": {
+        "invalid_answer": 2
+      },
+      "raw_claim_count": 4,
+      "accepted_claim_count": 0,
+      "accepted_claim_citations": {
+        "kind": "provided_answer_citation_structure",
+        "provided_cases": 2,
+        "total_claims": 0,
+        "citation_references": 0,
+        "citation_validity": null,
+        "claim_citation_coverage": null,
+        "semantic_support": "not_evaluated",
+        "note": "编号合法和每条结论带引用都不证明资料支持结论；证据日志真实性及语义需人工核对。",
+        "cases": [
+          {
+            "case_id": "E07",
+            "claims": 0,
+            "fully_cited_claims": 0,
+            "citation_references": 0,
+            "valid_references": 0
+          },
+          {
+            "case_id": "E14",
+            "claims": 0,
+            "fully_cited_claims": 0,
+            "citation_references": 0,
+            "valid_references": 0
+          }
+        ]
+      },
+      "raw_claim_citations_before_format_validation": {
+        "kind": "provided_answer_citation_structure",
+        "provided_cases": 2,
+        "total_claims": 4,
+        "citation_references": 4,
+        "citation_validity": 1.0,
+        "claim_citation_coverage": 1.0,
+        "semantic_support": "not_evaluated",
+        "note": "编号合法和每条结论带引用都不证明资料支持结论；证据日志真实性及语义需人工核对。",
+        "cases": [
+          {
+            "case_id": "E07",
+            "claims": 4,
+            "fully_cited_claims": 4,
+            "citation_references": 4,
+            "valid_references": 4
+          },
+          {
+            "case_id": "E14",
+            "claims": 0,
+            "fully_cited_claims": 0,
+            "citation_references": 0,
+            "valid_references": 0
+          }
+        ]
+      },
+      "cases": [
+        {
+          "case_id": "E07",
+          "record": "initial/rag-answer.json",
+          "question": "RAG 为什么要保留来源与引用？",
+          "started_at_utc": "2026-11-19T10:45:52.893442+00:00",
+          "source_commit": "c369aae66043d059d7b53fb902e58c8ec7c6bfc9",
+          "source_dirty": true,
+          "rag_source_sha256": "b54047298b7c12d5d9fb15e8e432debbfac54f5c61596d60cb89fe4601af839e",
+          "model": "qwen-plus",
+          "request_parameters": {
+            "model": "qwen-plus",
+            "max_tokens": 512,
+            "extra_body": {
+              "enable_thinking": false
+            }
+          },
+          "api_attempts": 1,
+          "api_responses": 1,
+          "usage": {
+            "completion_tokens": 217,
+            "prompt_tokens": 698,
+            "total_tokens": 915,
+            "completion_tokens_details": null,
+            "prompt_tokens_details": {
+              "audio_tokens": null,
+              "cache_write_tokens": null,
+              "cached_tokens": 0
+            }
+          },
+          "model_elapsed_seconds": 5.504,
+          "run_elapsed_seconds": 8.491,
+          "exit_code": 1,
+          "evidence_ids": [
+            "D08-C01",
+            "D05-C01",
+            "D04-C01"
+          ],
+          "evidence": [
+            {
+              "id": "D08-C01",
+              "title": "RAG 的来源与引用",
+              "text": "RAG 的每个资料块应保留文档编号、标题、出处与正文。生成时仅能引用实际纳入上下文的证据，最终链接由程序从资料记录读取。引用编号合法只表示它来自这次证据，不保证资料真的支持每一句结论。报告应同时展示依据与仍缺少的信息，便于读者核查。",
+              "source_section": "Hello-Agents 第八章 §8.3",
+              "source_url": "https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter8/第八章%20记忆与检索.md",
+              "content_type": "教学摘要与本项目说明，非教材原文"
+            },
+            {
+              "id": "D05-C01",
+              "title": "RAG 的检索增强生成流程",
+              "text": "RAG 在回答之前检索外部知识，将证据放入模型输入，再生成有依据的回答。数据准备包括文档收集、切分、保留来源和建立索引；应用阶段包括问题检索、选择证据、组装上下文与回答。只做搜索还没有生成答案，只让模型凭记忆作答也没有检索增强。",
+              "source_section": "Hello-Agents 第八章 §8.3",
+              "source_url": "https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter8/第八章%20记忆与检索.md",
+              "content_type": "教学摘要与本项目说明，非教材原文"
+            },
+            {
+              "id": "D04-C01",
+              "title": "摘要保留较早证据",
+              "text": "整理上下文时可保留最近消息，并用摘要承接较早的重要记录。摘要应保留任务还需要的事实、来源与资料缺失说明。天气例子中，较早的城市和温度不能在截断历史时一起丢弃。消息条数减少不等于 token 一定减少，摘要仍需检查信息损失。",
+              "source_section": "Hello-Agents 第九章 §9.1–9.2",
+              "source_url": "https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter9/第九章%20上下文工程.md",
+              "content_type": "教学摘要与本项目说明，非教材原文"
+            }
+          ],
+          "raw_status": "answered",
+          "raw_missing": [],
+          "raw_claims": [
+            {
+              "text": "RAG 保留来源与引用是为了确保生成的回答仅基于实际纳入上下文的证据，避免虚构或误引。",
+              "citations": [
+                "D08-C01"
+              ]
+            },
+            {
+              "text": "保留来源与引用支持读者核查依据，并明确展示哪些信息已有支撑、哪些仍缺失。",
+              "citations": [
+                "D08-C01"
+              ]
+            },
+            {
+              "text": "在 RAG 流程中，数据准备阶段就要求保留文档编号、标题、出处等元信息，为后续检索和引用提供基础。",
+              "citations": [
+                "D05-C01"
+              ]
+            },
+            {
+              "text": "摘要或上下文整理时仍需保留来源与资料缺失说明，防止关键事实（如城市、温度）连同出处一同丢失。",
+              "citations": [
+                "D04-C01"
+              ]
+            }
+          ],
+          "program_status": "invalid_answer",
+          "validation_error": "claims 必须是列表，missing 必须是字符串。",
+          "accepted_claims": [],
+          "evidence_review": {
+            "kind": "ai_assisted_evidence_review",
+            "reviewer": "Codex 助教",
+            "independent_human_labels": false,
+            "automatically_scored": false,
+            "claims": [
+              {
+                "claim_index": 1,
+                "judgment": "needs_qualification",
+                "citation": "D08-C01",
+                "reason": "‘确保’与‘避免虚构或误引’只能作为设计目的，资料并未证明保留来源就可以保证生成可靠。",
+                "text": "RAG 保留来源与引用是为了确保生成的回答仅基于实际纳入上下文的证据，避免虚构或误引。"
+              },
+              {
+                "claim_index": 2,
+                "judgment": "supported",
+                "citation": "D08-C01",
+                "reason": "D08 要求同时展示依据和缺少的信息，便于读者核查。",
+                "text": "保留来源与引用支持读者核查依据，并明确展示哪些信息已有支撑、哪些仍缺失。"
+              },
+              {
+                "claim_index": 3,
+                "judgment": "partially_supported",
+                "citation": "D05-C01",
+                "reason": "D05 支持数据准备时保留来源，但没有列出文档编号和标题；这些具体字段在 D08。不能把另一份证据的细节算作 D05 的支持。",
+                "text": "在 RAG 流程中，数据准备阶段就要求保留文档编号、标题、出处等元信息，为后续检索和引用提供基础。"
+              },
+              {
+                "claim_index": 4,
+                "judgment": "supported_with_stated_scope",
+                "citation": "D04-C01",
+                "reason": "D04 支持摘要应保留事实、来源和缺失说明；‘防止丢失’为整理目的而非效果保证。",
+                "text": "摘要或上下文整理时仍需保留来源与资料缺失说明，防止关键事实（如城市、温度）连同出处一同丢失。"
+              }
+            ],
+            "question_coverage": "回应了保留来源与引用的用途；第一条需保留目的与保证的区别。"
+          }
+        },
+        {
+          "case_id": "E14",
+          "record": "initial/rag-missing.json",
+          "question": "RAG 服务每月收费多少钱？",
+          "started_at_utc": "2026-11-19T10:45:52.089666+00:00",
+          "source_commit": "c369aae66043d059d7b53fb902e58c8ec7c6bfc9",
+          "source_dirty": true,
+          "rag_source_sha256": "b54047298b7c12d5d9fb15e8e432debbfac54f5c61596d60cb89fe4601af839e",
+          "model": "qwen-plus",
+          "request_parameters": {
+            "model": "qwen-plus",
+            "max_tokens": 512,
+            "extra_body": {
+              "enable_thinking": false
+            }
+          },
+          "api_attempts": 1,
+          "api_responses": 1,
+          "usage": {
+            "completion_tokens": 45,
+            "prompt_tokens": 533,
+            "total_tokens": 578,
+            "completion_tokens_details": null,
+            "prompt_tokens_details": {
+              "audio_tokens": null,
+              "cache_write_tokens": null,
+              "cached_tokens": 0
+            }
+          },
+          "model_elapsed_seconds": 1.539,
+          "run_elapsed_seconds": 4.963,
+          "exit_code": 1,
+          "evidence_ids": [
+            "D05-C01",
+            "D08-C01"
+          ],
+          "evidence": [
+            {
+              "id": "D05-C01",
+              "title": "RAG 的检索增强生成流程",
+              "text": "RAG 在回答之前检索外部知识，将证据放入模型输入，再生成有依据的回答。数据准备包括文档收集、切分、保留来源和建立索引；应用阶段包括问题检索、选择证据、组装上下文与回答。只做搜索还没有生成答案，只让模型凭记忆作答也没有检索增强。",
+              "source_section": "Hello-Agents 第八章 §8.3",
+              "source_url": "https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter8/第八章%20记忆与检索.md",
+              "content_type": "教学摘要与本项目说明，非教材原文"
+            },
+            {
+              "id": "D08-C01",
+              "title": "RAG 的来源与引用",
+              "text": "RAG 的每个资料块应保留文档编号、标题、出处与正文。生成时仅能引用实际纳入上下文的证据，最终链接由程序从资料记录读取。引用编号合法只表示它来自这次证据，不保证资料真的支持每一句结论。报告应同时展示依据与仍缺少的信息，便于读者核查。",
+              "source_section": "Hello-Agents 第八章 §8.3",
+              "source_url": "https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter8/第八章%20记忆与检索.md",
+              "content_type": "教学摘要与本项目说明，非教材原文"
+            }
+          ],
+          "raw_status": "insufficient_evidence",
+          "raw_missing": [
+            "RAG 服务的定价信息，包括是否收费、收费标准（如按月计费）、具体金额或计费模式等"
+          ],
+          "raw_claims": [],
+          "program_status": "invalid_answer",
+          "validation_error": "claims 必须是列表，missing 必须是字符串。",
+          "accepted_claims": [],
+          "evidence_review": {
+            "kind": "ai_assisted_evidence_review",
+            "reviewer": "Codex 助教",
+            "independent_human_labels": false,
+            "automatically_scored": false,
+            "missing_information": "D05、D08 只有流程和引用规范，没有具体服务、价格或计费规则；原始缺失说明符合证据范围。",
+            "boundary_handling": "reason_substantively_appropriate_but_format_rejected"
+          }
+        }
+      ]
+    }
+  },
+  "all_attempts_inventory": {
+    "attempted_cases": 4,
+    "api_attempts": 4,
+    "total_tokens": 3232,
+    "program_status_counts": {
+      "answered": 1,
+      "insufficient_evidence": 1,
+      "invalid_answer": 2
+    }
+  },
+  "semantic_answer_accuracy": null
+}

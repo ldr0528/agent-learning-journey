@@ -49,9 +49,46 @@
 | --- | --- | --- |
 | 原生天气循环 | weather.run_weather → loop.run_agent → execute_action | 两地工具结果必须回传；预算统计模型请求 |
 | LangGraph 天气图 | build_weather_graph → model/tool 节点 → execute_action | 状态和条件边表达同样的停止条件 |
-| MCP 工具 | run_mcp_demo → ClientSession → 子进程服务 → get_weather/search_notes | 工具结果仍是模拟天气或本地摘要 |
+| MCP 协议基线 | run_mcp_demo → ClientSession → 子进程服务 → get_weather/search_notes | 工具结果仍是模拟天气或本地摘要 |
+| MCP 模型桥接 | run_mcp_agent → run_model_tool_loop → 模型 tool_calls → ClientSession.call_tool | 模型只提出请求，宿主执行并回传 role=tool |
 
 框架或协议只改变了部分组织方式。阅读时先找业务函数被保留下来的位置，再看新增状态、路由、传输和异常处理。
+
+## 对照阅读：同样的工具结果经过哪两条边界
+
+打开 [MCP 模型桥接代码](../../src/agent_learning/integrations/mcp_agent.py)，沿 `run_mcp_agent` 进入 `run_model_tool_loop`。这次不要按文件从头读到尾，而是追踪一个北京天气结果：
+
+```text
+MCP list_tools → 工具定义 → 模型请求的 tools 参数
+                                 ↓ tool_calls（名字、参数、调用编号）
+                宿主检查名字、解析 JSON
+                                 ↓
+               MCP call_tool → 服务端 → get_weather
+                                 ↓ 实际工具结果
+                messages 追加 assistant 与 tool
+                                 ↓
+                    下一次模型 API 请求 → 最终文本
+```
+
+第一条边界是宿主与模型 API；第二条是 MCP 客户端与服务端。模型返回 `tool_calls[].id`，宿主将同一个值写进 tool 消息的 `tool_call_id`，由此关联请求与反馈；MCP 的请求编号则由 SDK 管理。原生 tool calling 并不意味着模型绕过了宿主直接执行函数。
+
+这条路径已经有 [真实千问运行](../runs/2026-11-19/mcp.md) 和 [完整请求 JSON](../runs/2026-11-19/mcp.json)。阅读 JSON 的 `calls[2].request.messages`：最后一条 tool 消息保存上海 22℃，较早的 tool 消息保存北京 12℃。然后对照第三次响应，检查比较结论是否使用了这些值。模型原话漏掉“模拟”提示，也应该保留为待检查项，不能在整理教材时擅自修饰成完全合格的回答。
+
+阅读时给以下五处各写一句注释：
+
+| 位置 | 应说明的原因 |
+| --- | --- |
+| `discovered.tools` → `model_tool_schema(tools)` | 工具说明来自本次发现，参数定义不另写一份 |
+| `request_model(messages, tools)` | 这是 API 边界；日志与 token 用量应从这里的实际请求获取 |
+| `name not in known` | 模型可能请求不存在的工具，未知名字不能直接派发 |
+| `role="tool"` 与 `tool_call_id` | 结果需要进入下一轮输入，并关联原来的请求 |
+| `range(1, max_calls + 1)` | 限制模型调用次数，最后查到工具也不能暗中增加一次总结 |
+
+`asyncio.to_thread` 在这里承接同步模型 HTTP 调用，让事件循环能继续处理 MCP 子进程的数据流。它没有让模型和工具凭空同时完成；程序仍等待模型回复后才知道调用参数。
+
+再回到 [LangGraph 图实现](../../src/agent_learning/integrations/langgraph_workflow.py)，找到 `answer` 构造消息的位置。图状态中的 notes 与 MCP 客户端内存中的结果一样，必须被明确放进请求，才成为模型可见的依据。checkpoint 保存状态不能替代这一步。
+
+对应的 [三步图真实记录](../runs/2026-11-19/langgraph-checkpoint.md) 还有另一种偏差：understand 返回一句回答而不是关键词，标签检索仍命中 N02。沿代码会发现 query 没有格式质量检查；沿第二次请求则能确认 answer 收到了真正检索出的 N02。这样就能分别定位“查询阶段不理想”和“证据确实回传”，不把整次运行只归成成功或失败。
 
 ## 用测试验证阅读结论
 
@@ -69,6 +106,7 @@ python -m unittest discover -s tests -p test_research_agent.py -v
 ```bash
 python -m unittest discover -s tests -p test_langgraph_integration.py -v
 python -m unittest discover -s tests -p test_mcp_integration.py -v
+python -m unittest discover -s tests -p test_mcp_agent.py -v
 ```
 
 ## 练习与参考答案
@@ -77,7 +115,9 @@ python -m unittest discover -s tests -p test_mcp_integration.py -v
 2. **保留打印，但删掉消息追加，会怎样？** 工具结果留在终端，后续模型请求缺少它；这才改变数据流。
 3. **为什么来源链接由程序读取记录输出？** 当前代码不依赖模型自行写出 URL，能维持编号和本地来源记录的对应关系。但内容是否真正支持答案仍需检查。
 4. **换成 LangGraph 后能删掉业务预算吗？** 不能；图运行限制和模型请求预算的单位不同。
-5. **MCP 发现工具时是否已经调用模型？** 本项目没有；客户端发现是协议操作，模型参与是宿主后续可加入的一层。
+5. **MCP 发现工具时是否已经调用模型？** 没有；客户端发现是协议操作。默认例子就此验证工具；`--live` 才在发现之后发起模型请求。
+6. **工具参数格式正确，就能认定名字存在吗？** 不能；宿主先对照本次发现的名称列表，再解析参数并调用服务端。
+7. **看到 trace 有三个节点，就能说 API 调用了三次吗？** 不能；节点也可能只做本地检索或资料不足处理，应定位实际模型请求。
 
 验收时，任选一条路径，用自己的话标出“模型调用、程序控制、工具执行、结果回传、停止检查”五个位置，并给出实际文件或函数名。能够定位到源码，比背诵框架术语更能说明已经理解。
 

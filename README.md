@@ -6,7 +6,7 @@
 
 **用一套可阅读、可运行、可核验的中文材料，学会构建单体智能体。**
 
-[开始阅读](docs/learning/model-calls.md) · [课程地图](docs/course-map.md) · [贯穿项目](docs/practice/research-agent.md) · [架构](docs/architecture.md) · [环境配置](docs/getting-started.md)
+[开始阅读](docs/learning/model-calls.md) · [课程地图](docs/course-map.md) · [真实实验](docs/runs/README.md) · [贯穿项目](docs/practice/research-agent.md) · [环境配置](docs/getting-started.md)
 
 </div>
 
@@ -46,12 +46,22 @@
 | 使用千问或 OpenAI 运行真实模型 | [配置说明](docs/getting-started.md) |
 | 读已有代码如何协作 | [分层架构](docs/architecture.md) · [调用链阅读](docs/practice/source-reading.md) |
 | 区分真实结果和教学演示 | [结果证据与学习进度](docs/evidence.md) |
+| 对照每次模型实际收到的内容 | [真实 API 实验集](docs/runs/README.md) |
+| 查术语与容易混淆的概念 | [概念对照](docs/concepts.md) · [参考资料与阅读设计](docs/references.md) |
 
 LangGraph 与 MCP 作为可选安装项，基础章节无需这些库。所有离线演示都会明确说明数据或模型回复是否预设；真实工具、框架和协议运行也会注明边界。
 
+## 从真实输出读懂一个机制
+
+在 MCP 章节，千问实际提出查询北京、上海的工具请求；Python通过MCP执行工具，把12℃与22℃回传；第三次模型请求得出上海更暖和。模型并没有直接连接工具服务端，中间的应用完成了发现、映射与结果回传。
+
+![千问模型通过Python应用调用MCP工具的实际时序](docs/assets/mcp-model-roundtrip-zh.svg)
+
+完整 [输入与输出](docs/runs/2026-11-19/mcp.md) 保留模型原话：结尾漏写了提示要求的“模拟数据”。正文会同时解释正确的比较和遗漏的约束。这样的分析也用于规划、Reflection、RAG和LangGraph，让读者看到程序实际完成了什么，以及还需要检查什么。
+
 ## 材料完成与个人学习进度
 
-这是一套预先整理的课程材料，不是对个人掌握程度的证明。第 01–05 章保留了学习者使用千问的真实运行；后续章节提供实现、离线验证和后续练习。**固定回复可以检查程序流程，不能证明真实模型的回答质量。** 具体证据登记在 [结果说明](docs/evidence.md)，个人学习继续从规划与执行阶段推进。
+第 01–05 章保留学习者提供的千问结果；第 06–11 章以新采集的真实API输出为主例，附请求记录、用量与结果判读。固定回复保留用于无需密钥的分支练习和自动测试。教材准备与个人掌握程度分别记录，个人学习继续从规划与执行阶段推进。具体样本与边界见 [结果说明](docs/evidence.md)。
 
 本轮范围聚焦单体 Agent：跳过低代码平台，第六章框架只选 LangGraph；MCP 只做本地工具通信。多 Agent、A2A、ANP、训练与长期记忆不进入本课程验收。教材映射和边界见 [学习计划](docs/roadmap.md)。
 

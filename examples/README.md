@@ -4,6 +4,8 @@
 
 正文已直接展示代码、结果与分析；这里集中列出可运行入口。所有命令从仓库根目录执行，先激活虚拟环境。默认是否请求模型因教学目的而异，下表明确标注。
 
+新增章节已有 [真实千问实验集](../docs/runs/README.md)，可先看每次输入、响应和结果分析，再复现对应命令。
+
 ## 无需模型 API 的核心示例
 
 | 对应章节 | 命令 | 实际执行什么 |
@@ -33,6 +35,8 @@
 | 计划后执行 | `python -m examples.plan_solve` | 前序结果成为后续输入 |
 | 评审并修订 | `python -m examples.reflection` | 评审结构、修订预算、停止状态 |
 | RAG 报告 | `python -m examples.rag_research --live` | 证据支持、逐条引用、资料不足 |
+| LangGraph + 模型 | `python -m examples.langgraph_workflow --live --checkpoint` | 节点如何组织两次实际请求 |
+| MCP + 模型 | `python -m examples.mcp_demo --live` | 工具发现、原生tool_calls与结果回传 |
 
 `python -m examples.model_call --check` 或 `python -m agent_learning --check` 只检查配置字段，不验证权限或额度，也不请求模型。`agent-research` 与基础研究助手入口等价。
 
@@ -93,7 +97,9 @@ python -m examples.langgraph_workflow --loop
 python -m examples.mcp_demo
 ```
 
-图示例为理解、检索、回答三步；`--loop` 演示天气条件循环，`--checkpoint` 演示进程内状态快照。LangGraph 示例添加 `--live` 才使用真实模型。MCP 示例实际初始化会话、发现工具并执行本地函数，不访问公网天气服务。
+图示例为理解、检索、回答三步；`--loop` 演示天气条件循环，`--checkpoint` 演示进程内状态快照。LangGraph和MCP示例添加 `--live` 才使用真实模型。MCP默认只验证协议；`--live` 会让模型依据发现的工具定义选择调用，程序执行并回传。天气仍来自本地模拟数据。
+
+若需要保存完整请求与响应，可显式运行 `python scripts/record_live.py mcp --output-dir outputs/my-live-run`。该记录命令使用真实API，目标已存在时拒绝覆盖；公开结果前需检查输入是否适合公开。
 
 ## 统一检查
 

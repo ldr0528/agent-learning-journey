@@ -1,0 +1,257 @@
+{
+  "case": "planning",
+  "started_at_utc": "2026-11-19T10:45:22.598918+00:00",
+  "command": "python -m examples.plan_solve --provider qwen",
+  "source_commit": "c369aae66043d059d7b53fb902e58c8ec7c6bfc9",
+  "source_dirty": true,
+  "source_files_sha256": {
+    "examples/__init__.py": "bffea0bb88e33b97d1eb63d76316cbd346cddfc2fc93b98e07e9a7ec33f6785c",
+    "examples/context_preview.py": "2fde495129e6f7389aa59173e81ce685b2c0d94293615a44bbe6b412e5cf0b1f",
+    "examples/evaluate.py": "ab6ab22646224f1c9491b9fdb202aa4aa4e5f8c71699527cf0d3ea15e015321b",
+    "examples/langgraph_workflow.py": "5615970972f5fd72a2780d37e353e6fb65bc6799c543bbd86b4835494ae17c6d",
+    "examples/mcp_demo.py": "13bcf28957874130a339a62037dbca1f6c7bc77d318c3bfdf5e9c0cde46087df",
+    "examples/model_call.py": "1b617dd831214f2f05ec7a662cd2b5897e0c108e82351c399fe3713a89c9e0b0",
+    "examples/plan_first.py": "b5f2c17802bc09e4133d912ece39c91949d7dfb844d6c3a3e4379b7d337729e0",
+    "examples/plan_solve.py": "213092c8f48b6994a21ffadc0d75bbf1dca0e5df9e9f0d8e65d4bd76fbae371b",
+    "examples/rag_research.py": "c486deb7e4a3953450209e411907de3ff98ef21c8791b24bc4682fdd7f8b12c6",
+    "examples/reflection.py": "a51d7226d9e29a18e0166a0ec4c695cf814b6de668531617c442098c6a837a83",
+    "examples/tool_execution.py": "80e197f9c0a70787326fd99b28c7cf69ce42fee41355c09cfd4f170d49c5df43",
+    "examples/tool_roundtrip.py": "69fcf33bacaf43f0aeed756613d837f71c219fca744a7133534e2b7b80560729",
+    "examples/weather_loop.py": "bba8b0bb683d6332a4e0f5a82c3bf0827578cacc0f0ff748d2d4211fde7725fa",
+    "pyproject.toml": "7f2fc33f4ce3959e6ca1aad714f52d3ff89941586af5f9c9eeb7c0168ca93a64",
+    "scripts/build_diagrams.py": "b20676524d16f070c99ee2042e4ba0132d49043169e7a92d892c901e29f3cf9d",
+    "scripts/check_docs.py": "15aab306067f98cd23b763b1fef77297fd80b0047cf22446c4bac254d757f028",
+    "scripts/check_examples.py": "47c25f938bcd90a0c0417cedc3c0e8a184b6299b1238067ae278c03371d5e90a",
+    "scripts/record_live.py": "35a17fdfd7251a19e391f4af3632e436666198554fcdc99f1e7704652c8b6a8a",
+    "src/agent_learning/__init__.py": "9c0b1dc9b880fb798f174a9fb4320cb0c104155ab4dcd8e22b8a75367dc20022",
+    "src/agent_learning/__main__.py": "935a1c1166b0c1ea35a82256345000bf2c73ded718d77773bc27a71ecce28f7d",
+    "src/agent_learning/agents/__init__.py": "3efab36d2f1df3104b83c9744334da3868e9e6586a669db89c3f33f14ed1b822",
+    "src/agent_learning/agents/plan_solve.py": "d8cc0f4a2f11fed97e5877f26dc2a2c0771d1e53679eaee4bef3099de2c97427",
+    "src/agent_learning/agents/planning.py": "3dad69a2d666595937ce2365612b0e214f6f9524e76874f8f1cbbc8aa9a107a9",
+    "src/agent_learning/agents/rag.py": "b54047298b7c12d5d9fb15e8e432debbfac54f5c61596d60cb89fe4601af839e",
+    "src/agent_learning/agents/reflection.py": "b0826083cb0f7c28a7989cadd205522ff9ae6feb6700a09b5674acae9d9b0e7d",
+    "src/agent_learning/agents/research.py": "11952271581eadc5ea9fd75ea3bf81bb93860979641af7d1903035dc9582a69b",
+    "src/agent_learning/agents/weather.py": "0bfd9403ded4e4f4846a25708cda1f2cd7657841c1cab4f064c7f7a321998f96",
+    "src/agent_learning/cli.py": "07b305e32e347a1ddb927e4ad85d49b64a1b6e651e2f4518ca2e40b14cc9bae2",
+    "src/agent_learning/config.py": "bee19b49440325e55b47f9868c13979a1968ed8b6ff5fe76e03196751f9374b0",
+    "src/agent_learning/context.py": "c19dfcd972747940ca58f7ee4c1f7b540ad8055ef3e8fbae248cd3df0f0ce64e",
+    "src/agent_learning/evaluation.py": "d83350c1a8717376be9bedfaa8a9691c2812e0db6d0931ccd9971e3e9571f4be",
+    "src/agent_learning/integrations/__init__.py": "c3a1035e20ee9114b6f1304213c4c8ff6834a4e00a14d90cb156971165ea57b0",
+    "src/agent_learning/integrations/langgraph_workflow.py": "c7f9755871b10828dea55b685c564819606672d2118fb176dda25188c1820f8c",
+    "src/agent_learning/integrations/mcp_agent.py": "e12cdd7f62034f1a5ee17ac7abce07888665dff68c4b0ea1aac4c110e30401ea",
+    "src/agent_learning/integrations/mcp_client.py": "cf9315e1bb40d9409f1aa184c00114b2469eea2d353db8e46cde602289537201",
+    "src/agent_learning/integrations/mcp_server.py": "6ae6f364cd551f949566906174e69f6d19a2b0835cdccfed8c617421d98f5b05",
+    "src/agent_learning/llm.py": "147ab2a50d35ac5fea3f92953a9b5e5a9ef2377731c946c3c6fa8c8baeb4368c",
+    "src/agent_learning/loop.py": "9dda3b2b8566045e56dcbb8c0eb32bb65c4a42ea8e1062cc76b322e7ec2e5795",
+    "src/agent_learning/tools/__init__.py": "b00b26f8349a1c8eae30c34ad49ece4a9ab06bb4747e4e79210ded53aaadc78c",
+    "src/agent_learning/tools/notes.py": "35a5e450e851a2cdffd46a576f520255f913449edaa17e9ab6fa617ab21bd102",
+    "src/agent_learning/tools/retrieval.py": "a70b8745827e445bf0229e9cd2e4bb03590f3f21753532eeb531653d205e0ca7",
+    "src/agent_learning/tools/weather.py": "625f6f73fcc7b17989f538d48fcf31ebbedf48d80558b8c4131a9385ae977b15"
+  },
+  "python": "3.12.7",
+  "platform": "Windows",
+  "packages": {
+    "openai": "2.54.0",
+    "python-dotenv": "1.2.4",
+    "agent-learning-journey": "0.2.0",
+    "langgraph": "1.2.23",
+    "mcp": "1.30.0"
+  },
+  "elapsed_seconds": 7.408,
+  "exit_code": 0,
+  "provider": "qwen",
+  "calls": [
+    {
+      "index": 1,
+      "started_at_utc": "2026-11-19T10:45:25.238558+00:00",
+      "request": {
+        "model": "qwen-plus",
+        "messages": [
+          {
+            "role": "system",
+            "content": "请将用户的问题拆成一组按依赖顺序排列、可以逐步完成的任务。\n这里只规划要做什么，暂不计算中间数值或最终答案，也不调用工具。\n每个步骤写清要处理的对象；需要先前步骤的结果时明确指出。\n最后一步应当完成用户的目标。不要把一个步骤拆成大量琐碎动作。\n只输出一个非空 JSON 数组，每个元素是非空的步骤说明字符串。\n不要输出 Markdown 代码块、标题或数组外的说明。\n\n计划最多包含 5 个步骤。"
+          },
+          {
+            "role": "user",
+            "content": "水果店三天卖苹果：周一15个；周二销量为周一的2倍；周三比周二少5个。求三天总销量。"
+          }
+        ],
+        "max_tokens": 512,
+        "extra_body": {
+          "enable_thinking": false
+        }
+      },
+      "response": {
+        "model": "qwen-plus",
+        "choices": [
+          {
+            "index": 0,
+            "finish_reason": "stop",
+            "message": {
+              "content": "[\n  \"计算周二的苹果销量，即周一销量15个的2倍\",\n  \"计算周三的苹果销量，即周二销量减去5个\",\n  \"将周一、周二、周三的销量相加，得到三天总销量\"\n]",
+              "role": "assistant"
+            }
+          }
+        ],
+        "usage": {
+          "completion_tokens": 54,
+          "prompt_tokens": 156,
+          "total_tokens": 210,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": {
+            "audio_tokens": null,
+            "cache_write_tokens": null,
+            "cached_tokens": 0
+          }
+        }
+      },
+      "elapsed_seconds": 1.724
+    },
+    {
+      "index": 2,
+      "started_at_utc": "2026-11-19T10:45:26.962439+00:00",
+      "request": {
+        "model": "qwen-plus",
+        "messages": [
+          {
+            "role": "system",
+            "content": "请依据原问题、完整计划、已完成步骤及其结果，完成当前步骤。\n只返回当前步骤的结果和必要算式；若当前步骤是最终汇总，直接回答原问题。\n已有结果与题目冲突时指出冲突，不把未经验证的中间结果当作正确事实。\n不要声称调用了工具，不要提前执行后面的步骤。\n"
+          },
+          {
+            "role": "user",
+            "content": "{\n  \"question\": \"水果店三天卖苹果：周一15个；周二销量为周一的2倍；周三比周二少5个。求三天总销量。\",\n  \"plan\": [\n    \"计算周二的苹果销量，即周一销量15个的2倍\",\n    \"计算周三的苹果销量，即周二销量减去5个\",\n    \"将周一、周二、周三的销量相加，得到三天总销量\"\n  ],\n  \"history\": [],\n  \"current_step\": {\n    \"number\": 1,\n    \"task\": \"计算周二的苹果销量，即周一销量15个的2倍\"\n  }\n}"
+          }
+        ],
+        "max_tokens": 512,
+        "extra_body": {
+          "enable_thinking": false
+        }
+      },
+      "response": {
+        "model": "qwen-plus",
+        "choices": [
+          {
+            "index": 0,
+            "finish_reason": "stop",
+            "message": {
+              "content": "周二销量 = 15 × 2 = 30（个）",
+              "role": "assistant"
+            }
+          }
+        ],
+        "usage": {
+          "completion_tokens": 16,
+          "prompt_tokens": 222,
+          "total_tokens": 238,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": {
+            "audio_tokens": null,
+            "cache_write_tokens": null,
+            "cached_tokens": 0
+          }
+        }
+      },
+      "elapsed_seconds": 0.878
+    },
+    {
+      "index": 3,
+      "started_at_utc": "2026-11-19T10:45:27.841462+00:00",
+      "request": {
+        "model": "qwen-plus",
+        "messages": [
+          {
+            "role": "system",
+            "content": "请依据原问题、完整计划、已完成步骤及其结果，完成当前步骤。\n只返回当前步骤的结果和必要算式；若当前步骤是最终汇总，直接回答原问题。\n已有结果与题目冲突时指出冲突，不把未经验证的中间结果当作正确事实。\n不要声称调用了工具，不要提前执行后面的步骤。\n"
+          },
+          {
+            "role": "user",
+            "content": "{\n  \"question\": \"水果店三天卖苹果：周一15个；周二销量为周一的2倍；周三比周二少5个。求三天总销量。\",\n  \"plan\": [\n    \"计算周二的苹果销量，即周一销量15个的2倍\",\n    \"计算周三的苹果销量，即周二销量减去5个\",\n    \"将周一、周二、周三的销量相加，得到三天总销量\"\n  ],\n  \"history\": [\n    {\n      \"step\": 1,\n      \"task\": \"计算周二的苹果销量，即周一销量15个的2倍\",\n      \"result\": \"周二销量 = 15 × 2 = 30（个）\"\n    }\n  ],\n  \"current_step\": {\n    \"number\": 2,\n    \"task\": \"计算周三的苹果销量，即周二销量减去5个\"\n  }\n}"
+          }
+        ],
+        "max_tokens": 512,
+        "extra_body": {
+          "enable_thinking": false
+        }
+      },
+      "response": {
+        "model": "qwen-plus",
+        "choices": [
+          {
+            "index": 0,
+            "finish_reason": "stop",
+            "message": {
+              "content": "周三销量 = 周二销量 − 5 = 30 − 5 = 25（个）",
+              "role": "assistant"
+            }
+          }
+        ],
+        "usage": {
+          "completion_tokens": 25,
+          "prompt_tokens": 276,
+          "total_tokens": 301,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": {
+            "audio_tokens": null,
+            "cache_write_tokens": null,
+            "cached_tokens": 0
+          }
+        }
+      },
+      "elapsed_seconds": 0.926
+    },
+    {
+      "index": 4,
+      "started_at_utc": "2026-11-19T10:45:28.767724+00:00",
+      "request": {
+        "model": "qwen-plus",
+        "messages": [
+          {
+            "role": "system",
+            "content": "请依据原问题、完整计划、已完成步骤及其结果，完成当前步骤。\n只返回当前步骤的结果和必要算式；若当前步骤是最终汇总，直接回答原问题。\n已有结果与题目冲突时指出冲突，不把未经验证的中间结果当作正确事实。\n不要声称调用了工具，不要提前执行后面的步骤。\n"
+          },
+          {
+            "role": "user",
+            "content": "{\n  \"question\": \"水果店三天卖苹果：周一15个；周二销量为周一的2倍；周三比周二少5个。求三天总销量。\",\n  \"plan\": [\n    \"计算周二的苹果销量，即周一销量15个的2倍\",\n    \"计算周三的苹果销量，即周二销量减去5个\",\n    \"将周一、周二、周三的销量相加，得到三天总销量\"\n  ],\n  \"history\": [\n    {\n      \"step\": 1,\n      \"task\": \"计算周二的苹果销量，即周一销量15个的2倍\",\n      \"result\": \"周二销量 = 15 × 2 = 30（个）\"\n    },\n    {\n      \"step\": 2,\n      \"task\": \"计算周三的苹果销量，即周二销量减去5个\",\n      \"result\": \"周三销量 = 周二销量 − 5 = 30 − 5 = 25（个）\"\n    }\n  ],\n  \"current_step\": {\n    \"number\": 3,\n    \"task\": \"将周一、周二、周三的销量相加，得到三天总销量\"\n  }\n}"
+          }
+        ],
+        "max_tokens": 512,
+        "extra_body": {
+          "enable_thinking": false
+        }
+      },
+      "response": {
+        "model": "qwen-plus",
+        "choices": [
+          {
+            "index": 0,
+            "finish_reason": "stop",
+            "message": {
+              "content": "周一销量 = 15（个）  \n周二销量 = 30（个）  \n周三销量 = 25（个）  \n\n三天总销量 = 15 + 30 + 25 = 70（个）",
+              "role": "assistant"
+            }
+          }
+        ],
+        "usage": {
+          "completion_tokens": 52,
+          "prompt_tokens": 339,
+          "total_tokens": 391,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": {
+            "audio_tokens": null,
+            "cache_write_tokens": null,
+            "cached_tokens": 0
+          }
+        }
+      },
+      "elapsed_seconds": 1.464
+    }
+  ],
+  "stdout": "问题：水果店三天卖苹果：周一15个；周二销量为周一的2倍；周三比周二少5个。求三天总销量。\n服务：qwen / qwen-plus；总模型调用上限：6。\n[规划器原始输出]\n[\n  \"计算周二的苹果销量，即周一销量15个的2倍\",\n  \"计算周三的苹果销量，即周二销量减去5个\",\n  \"将周一、周二、周三的销量相加，得到三天总销量\"\n]\n\n[执行 1/3] 计算周二的苹果销量，即周一销量15个的2倍\n结果：周二销量 = 15 × 2 = 30（个）\n\n[执行 2/3] 计算周三的苹果销量，即周二销量减去5个\n结果：周三销量 = 周二销量 − 5 = 30 − 5 = 25（个）\n\n[执行 3/3] 将周一、周二、周三的销量相加，得到三天总销量\n结果：周一销量 = 15（个）  \n周二销量 = 30（个）  \n周三销量 = 25（个）  \n\n三天总销量 = 15 + 30 + 25 = 70（个）\n\n状态：finished；完成步骤：3/3。\n模型适配器调用 4 次；工具执行 0 次。\n最终结果：周一销量 = 15（个）  \n周二销量 = 30（个）  \n周三销量 = 25（个）  \n\n三天总销量 = 15 + 30 + 25 = 70（个）\n",
+  "api_attempts": 4,
+  "api_responses": 4,
+  "requested_models": [
+    "qwen-plus"
+  ],
+  "total_tokens": 1140,
+  "calls_without_usage": 0
+}
