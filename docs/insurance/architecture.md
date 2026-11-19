@@ -77,7 +77,7 @@ flowchart TD
 | 比较表 | 选择何时提交取得的证据 | 用目录事实与条件组装各格，保留未知与冲突 |
 | 报告追问 | 从当前有效报告中筛选相关证据 ID，并判断资料是否足够 | 编号必须属于报告 `sources`；回复正文由原事实与条件组成，模型自由文字不进入回复 |
 
-报告追问例如“这份报告为什么说保费未知”。`answer_report()` 先检查当前 `result` 是否存在、是否过期、需求版本是否一致，再从其 `sources` 构造输入。模型模式最多选择八条证据，资料模式按明确维度关键词匹配。程序不重新搜索其他产品、不自动换用最新目录，也不将另一份报告的证据混入回答；回复关联本次 `report_revision`。若用户新增产品或修改需求，必须重新查证后才能追问。
+报告追问例如“这份报告为什么说保费未知”。`answer_report()` 先检查当前 `result` 是否已完成、是否过期、需求版本是否一致且来源非空，再从其 `sources` 构造输入。`completed` 和 `completed_with_gaps` 可以追问；中断或预算耗尽的部分结果仍可查看，但不能当作已完成报告进入问答，也不为此创建模型客户端。模型模式最多选择八条证据，资料模式按明确维度关键词匹配，优先并排保留各产品；超过证据额度时标为部分回答。程序不重新搜索其他产品、不自动换用最新目录，也不将另一份报告的证据混入回答；回复关联本次 `report_revision`。若用户新增产品或修改需求，必须重新查证后才能追问。
 
 引用编号应逐个检查是否属于所绑定的报告。合法编号只能证明来源范围正确，不能单独证明解释受到条款支持；教学评估仍需检查条件、否定词和结论强度。报价未知不能写成价格过高，健康告知待确认也不能写成拒保。
 
@@ -120,7 +120,7 @@ AWS 的 [SourceCollector](https://github.com/aws-samples/sample-frictionless-ins
 
 ## 6. SQLite 事务与旧 JSON 会话迁移
 
-应用状态保存在本机 `outputs/insurance-sessions/state.sqlite3`，由 Python 标准库 `sqlite3` 读写，不增加独立数据库服务。单表 `records(key, payload)` 中的 `payload` 仍是 JSON，`schema_version` 为 2；`session:`、`run:`、`request:` 三类 key 分别保存会话、运行和幂等记录。每条记录上限 8 MB，每个会话最多 200 条消息。模型客户端沿用已有配置，可选 LangGraph/MCP 依赖用于课程对照。
+应用状态保存在本机 `outputs/insurance-sessions/state.sqlite3`，由 Python 标准库 `sqlite3` 读写，不增加独立数据库服务。单表 `records(key, payload)` 中的 `payload` 仍是 JSON，`schema_version` 为 2；`session:`、`run:`、`request:` 三类 key 分别保存会话、运行和幂等记录。每条记录上限 8 MB，每个会话最多 200 条消息。执行前为整轮消息检查剩余位置，避免已经调用模型却无法保存回复；空间不足时提示新建咨询。模型客户端沿用已有配置，可选 LangGraph/MCP 依赖用于课程对照。
 
 [store.py](../../src/agent_learning/insurance/store.py) 使用 WAL，更新操作在 `BEGIN IMMEDIATE` 事务中读取、校验并写入；异常时回滚。事务内有两种业务检查：
 
@@ -152,6 +152,8 @@ AWS 的 [SourceCollector](https://github.com/aws-samples/sample-frictionless-ins
 在宽屏中，让聊天与报告同时可见；窄屏按区域切换，保留选中的会话与报告。点击证据时打开同一报告的来源，不能暗中切到新的目录记录。修改需求后，旧报告继续可读，但需要标明其使用的旧需求；只有新的比较结束才产生新结果。
 
 “确认需求并开始查证”是一个明确的复合动作：界面先保存并确认需求，成功后再提交后台任务。两步使用不同接口；任务提交失败时，已确认需求仍然保留。聊天发送只产生提案或追问，取消按钮只请求停止后续操作。
+
+若提交后没有收到可解析响应，页面保留该次操作标识，通过“重新连接这次提交”找回原任务。同一页面内切换咨询时，未发送文字和未确认的表单修改按会话分别保存；刷新前会提示未保存内容。手动编辑需求卡后，需要先确认或撤销，避免随后收到的聊天提案覆盖修改。历史报告的追问按钮会明确切回当前有效报告。
 
 布局参考 AWS 的 [ComparatorPage](https://github.com/aws-samples/sample-frictionless-insurance-advisor/blob/main/react-frontend/src/components/ComparatorPage.tsx)、Agent Chat UI 的 [会话列表](https://github.com/langchain-ai/agent-chat-ui/blob/main/src/components/thread/history/index.tsx) 与 [报告侧栏机制](https://github.com/langchain-ai/agent-chat-ui/blob/main/src/components/thread/artifact.tsx)。Agent Chat UI 已于 2026 年 11 月 3 日归档；这里只借鉴交互分工，不将其作为本项目的维护中运行依赖，归档状态见 [上游仓库](https://github.com/langchain-ai/agent-chat-ui)。
 

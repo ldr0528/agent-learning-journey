@@ -125,6 +125,7 @@ class InsuranceWorkflowTests(unittest.TestCase):
         self.assertEqual(len(requests), 1)
         self.assertEqual(len(report["sources"]), 9)
         self.assertTrue(any(not c["evidence_ids"] for row in report["rows"] for c in row["cells"]))
+        self.assertIn(report["error"], render_markdown(report))
 
     def test_tool_budget_limits_execution(self):
         model, requests = scripted_model(self.catalog)
@@ -195,10 +196,23 @@ class InsuranceGraphTests(unittest.TestCase):
         empty = run_graph_comparison({})
         self.assertEqual(empty["graph_nodes"], ["intake", "clarify", "deliver"])
         self.assertEqual(empty["model_calls"], 0)
+        self.assertEqual(run_graph_comparison({}, mode="live")["mode"], "live")
+        with self.assertRaises(ValueError):
+            run_graph_comparison({}, mode="invalid")
 
 
 @unittest.skipUnless(importlib.util.find_spec("mcp"), "需要可选 mcp 依赖")
 class InsuranceMCPTests(unittest.IsolatedAsyncioTestCase):
+    async def test_clarification_preserves_mode_without_starting_tool_server(self):
+        from agent_learning.insurance.integrations import run_mcp_comparison
+        from unittest.mock import patch
+        with patch("mcp.client.stdio.stdio_client", side_effect=AssertionError("不应启动取证服务")):
+            report = await run_mcp_comparison({}, mode="live")
+        self.assertEqual(report["mode"], "live")
+        self.assertEqual(report["status"], "needs_input")
+        with self.assertRaises(ValueError):
+            await run_mcp_comparison({}, mode="invalid")
+
     async def test_real_protocol_same_case_and_citations(self):
         from agent_learning.insurance.integrations import run_mcp_comparison
         protocol = await run_mcp_comparison(REQUEST)

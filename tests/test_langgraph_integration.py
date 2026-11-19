@@ -55,6 +55,23 @@ class LangGraphIntegrationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             build_question_graph(lambda messages: next(replies)).invoke({"question": "分工", "trace": []})
 
+    def test_matching_topic_can_still_have_insufficient_evidence(self):
+        replies = iter(["Action Observation", "资料不足：摘要没有提供工具运行的收费标准。"])
+        requests = []
+        def generate(messages):
+            requests.append(messages)
+            return next(replies)
+        state = build_question_graph(generate).invoke({"question": "Action 工具运行收费多少？", "trace": []})
+        self.assertEqual([note["id"] for note in state["notes"]], ["N02"])
+        self.assertEqual(len(requests), 2)
+        self.assertIn("[N02]", requests[1][1]["content"])
+        self.assertTrue(state["answer"].startswith("资料不足："))
+
+    def test_insufficiency_does_not_bypass_unknown_citation_check(self):
+        replies = iter(["Action Observation", "资料不足：费用未说明 [N99]"])
+        with self.assertRaises(ValueError):
+            build_question_graph(lambda messages: next(replies)).invoke({"question": "收费", "trace": []})
+
 
 if __name__ == "__main__":
     unittest.main()

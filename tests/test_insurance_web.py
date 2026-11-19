@@ -7,6 +7,7 @@ import json
 import threading
 from tempfile import TemporaryDirectory
 import unittest
+from unittest.mock import patch
 
 from agent_learning.insurance.web import MAX_BODY_BYTES, create_server
 
@@ -352,6 +353,23 @@ class InsuranceAsyncWebTests(unittest.TestCase):
         self.gate.set()
         self.assertEqual(self.server.run_manager.wait(run["id"])["status"], "cancelled")
 
+    def test_session_reads_recover_an_exited_owner_without_server_restart(self):
+        for endpoint in ("detail", "list"):
+            with self.subTest(endpoint=endpoint):
+                session_id, _ = self.create(confirm=True)
+                run, _ = self.store.create_run(session_id, kind="comparison", payload={"mode": "live"},
+                    client_request_id="dead-owner", expected_version=1, owner_id="old-cli", owner_pid=-1)
+                self.store.change_run(run["id"], status="running")
+                route = f"/api/sessions/{session_id}" if endpoint == "detail" else "/api/sessions"
+                status, _, body = self.get(route)
+                self.assertEqual(status, 200)
+                record = body if endpoint == "detail" else next(item for item in body["sessions"] if item["id"] == session_id)
+                self.assertIsNone(record["active_run"])
+                self.assertEqual(self.get(f'/api/runs/{run["id"]}')[2]["status"], "interrupted")
+                saved = self.store.load(session_id)
+                self.assertIsNone(saved["result"])
+                self.assertEqual(saved["revision"], 0)
+
     def test_preview_fields_and_invalid_async_input(self):
         products = self.get("/api/products?catalog=demo")[2]
         self.assertEqual(products["metadata"]["data_kind"], "synthetic")
@@ -372,6 +390,49 @@ class InsuranceAsyncWebTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(report["status"], "completed_with_gaps")
         self.assertEqual(report["model_calls"], 0)
+
+    def test_legacy_waiting_request_reports_queue_cancellation_as_conflict(self):
+        from agent_learning.insurance.runs import RunManager
+        self.server.run_manager.close()
+        manager = RunManager(self.store, self.server.runner, catalogs=self.server.catalogs, max_workers=1)
+        self.server.run_manager = manager
+        first, _ = self.create("等待取消测试", confirm=True)
+        status, _, active = self.post(f"/api/sessions/{first}/runs", {
+            "expected_version": 1, "client_request_id": "occupy-worker"})
+        self.assertEqual(status, 202)
+        self.assertTrue(self.started.wait(2))
+        second, _ = self.create()
+        waiting, queued = threading.Event(), []
+        original_wait = manager.wait
+        def observed_wait(run_id):
+            queued.append(run_id)
+            waiting.set()
+            return original_wait(run_id)
+        with patch.object(manager, "wait", side_effect=observed_wait), ThreadPoolExecutor(max_workers=1) as client:
+            response = client.submit(self.post, f"/api/sessions/{second}/run", {"mode": "offline"})
+            self.assertTrue(waiting.wait(2))
+            manager.cancel(queued[0])
+            status, _, body = response.result(timeout=2)
+            self.assertEqual(status, 409)
+            self.assertIn("取消", body["error"])
+        self.gate.set()
+        manager.wait(active["id"])
+        self.assertIsNone(self.store.load(second)["result"])
+
+    def test_message_capacity_rejects_live_submission_before_model_or_user_write(self):
+        session_id, _ = self.create()
+        for _ in range(199):
+            self.store.append_message(session_id, "user", "旧消息。")
+        with patch("agent_learning.insurance.service.load_settings", side_effect=AssertionError("no model")) as configure:
+            status, _, body = self.post(f"/api/sessions/{session_id}/messages", {
+                "message": "关注续保。", "intent": "intake", "mode": "live",
+                "expected_version": 1, "client_request_id": "capacity"})
+            self.assertEqual(status, 409)
+            self.assertIn("新建会话", body["error"])
+            configure.assert_not_called()
+        record = self.store.load(session_id)
+        self.assertEqual(len(record["messages"]), 199)
+        self.assertIsNone(record["active_run"])
 
 
 if __name__ == "__main__":

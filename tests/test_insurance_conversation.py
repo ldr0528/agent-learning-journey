@@ -5,6 +5,7 @@ import json
 from tempfile import TemporaryDirectory
 from types import SimpleNamespace as NS
 import unittest
+from unittest.mock import patch
 
 from agent_learning.insurance.catalog import Catalog, DIMENSIONS
 from agent_learning.insurance.conversation import propose_needs, answer_report
@@ -47,6 +48,31 @@ class ConversationTests(unittest.TestCase):
         second = propose_needs(record, "关注普通门诊和续保", self.catalog)
         self.assertEqual(second["proposal"]["request"]["profile"]["age"], 30)
         self.assertEqual(second["proposal"]["request"]["profile"]["focus"], ["coverage", "renewal"])
+
+    def test_budget_edit_does_not_replace_existing_focus(self):
+        message = "年度预算改为3000元，另外关注医院范围"
+        for mode in ("offline", "live"):
+            with self.subTest(mode=mode):
+                result = propose_needs(self.record, message, self.catalog, mode=mode,
+                    request_model=model_reply("propose_needs", {
+                        "profile": {"annual_budget": 3000, "focus": ["hospital"]},
+                        "evidence": {"annual_budget": "年度预算改为3000元", "focus": message}}))
+                profile = result["proposal"]["request"]["profile"]
+                self.assertEqual(profile["annual_budget"], 3000)
+                self.assertTrue({"coverage", "renewal", "hospital"} <= set(profile["focus"]))
+
+    def test_explicit_focus_removal_and_replacement_preserve_other_fields(self):
+        for message, expected in (("不再关注门诊", ["renewal"]),
+                                  ("只关注医院范围", ["hospital"]),
+                                  ("不只是关注门诊，还想了解医院", ["coverage", "renewal", "hospital"])):
+            with self.subTest(message=message):
+                result = propose_needs(self.record, message, self.catalog)
+                profile = result["proposal"]["request"]["profile"]
+                self.assertEqual(profile["focus"], expected)
+                self.assertEqual(profile["annual_budget"], 2000)
+        result = propose_needs(self.record, "不再关注门诊", self.catalog, mode="live",
+            request_model=model_reply("propose_needs", {"profile": {"focus": []}, "evidence": {"focus": "不再关注门诊"}}))
+        self.assertEqual(result["proposal"]["request"]["profile"]["focus"], ["renewal"])
 
     def test_live_extraction_requires_current_message_quotes(self):
         result = propose_needs(self.record, "年度预算改为2千元", self.catalog, mode="live",
@@ -95,6 +121,29 @@ class ConversationTests(unittest.TestCase):
         self.assertEqual(result["status"], "needs_report")
         self.assertEqual(result["model_calls"], 0)
 
+    def test_incomplete_report_followup_never_initializes_model(self):
+        for status in ("needs_input", "cancelled", "model_error", "call_limit", "tool_limit"):
+            with self.subTest(status=status), TemporaryDirectory() as directory:
+                store = SessionStore(directory)
+                session = store.create(REQUEST)
+                report = deepcopy(self.record["result"])
+                report["status"] = status
+                store.save(session, report)
+                with patch("agent_learning.insurance.service.load_settings") as settings:
+                    result = run_message(store, session, "医院范围怎样", intent="followup", mode="live")
+                self.assertEqual(result["status"], "needs_report")
+                self.assertEqual(result["model_calls"], 0)
+                settings.assert_not_called()
+
+    def test_large_offline_followup_is_partial_and_keeps_each_product(self):
+        request = deepcopy(REQUEST)
+        request["selections"].append({"product_id": "demo_renewal", "version": "demo-v1"})
+        record = {**self.record, "result": run_comparison(request)}
+        result = answer_report(record, "比较保障、免赔额、赔付比例、医院和等待期")
+        self.assertEqual(result["status"], "partial_answer")
+        self.assertEqual(len(result["sources"]), 8)
+        self.assertEqual({f["product_id"] for f in result["sources"]}, {s["product_id"] for s in request["selections"]})
+
     def test_service_saves_conversation_without_applying_proposal(self):
         with TemporaryDirectory() as directory:
             store = SessionStore(directory)
@@ -116,6 +165,26 @@ class ConversationTests(unittest.TestCase):
             self.assertEqual(result["status"], "model_error")
             self.assertEqual(result["model_calls"], 1)
             self.assertNotIn("DO_NOT_EXPOSE_SECRET", json.dumps(store.load(session)))
+
+    def test_message_capacity_is_checked_before_model_and_preserves_last_report(self):
+        with TemporaryDirectory() as directory:
+            store = SessionStore(directory)
+            session = store.create(REQUEST)
+            for _ in range(199):
+                store.append_message(session, "user", "历史消息")
+            with patch("agent_learning.insurance.service.load_settings") as settings:
+                with self.assertRaises(ValueError):
+                    run_message(store, session, "关注医院", mode="live")
+                settings.assert_not_called()
+            self.assertEqual(len(store.load(session)["messages"]), 199)
+            # 比较只需要一条结果消息，仍可使用最后一个位置。
+            report = run_session(store, session)
+            self.assertEqual(len(store.load(session)["messages"]), 200)
+            with patch("agent_learning.insurance.service.load_settings") as settings:
+                with self.assertRaises(ValueError):
+                    run_session(store, session, mode="live")
+                settings.assert_not_called()
+            self.assertEqual(store.load(session)["result"], report)
 
     def test_cancel_after_model_response_prevents_tool_execution(self):
         cancelled = []

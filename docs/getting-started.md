@@ -64,7 +64,7 @@ python -m agent_learning --check
 
 默认模型为 `qwen4-max`，已验证工具请求、MCP调用与结果回传。该模型于2026-11-16上线，支持北京地域；版本与能力见 [官方说明](https://help.aliyun.com/zh/model-studio/qwen4-max)。示例设置 `reasoning_effort="none"`、`max_tokens=512`，便于观察简短的消息与控制流程。更换模型时请核对其参数支持情况。
 
-早期实验使用 `qwen-plus`，各条 [运行记录](runs/README.md) 保留当时的模型和参数。若使用OpenAI，填写 `LLM_API_KEY`、`LLM_MODEL_ID`、`LLM_BASE_URL`，运行时加 `--provider openai`。
+早期实验使用 `qwen-plus`，各条 [运行记录](runs/README.md) 保留当时的模型和参数。若使用 OpenAI，填写 `LLM_API_KEY`、`LLM_MODEL_ID`、`LLM_BASE_URL`，并将 `LLM_PROVIDER` 设置为 `openai`。支持 `--provider` 的章节脚本还可在单次运行时传入 `--provider openai`；医疗险网页和 CLI 统一读取 `LLM_PROVIDER`，不接受该命令行参数。
 
 ## 先运行一个不调用模型的实验
 
@@ -143,5 +143,7 @@ python scripts/check_examples.py
 ```
 
 测试使用固定的模拟模型回复，不读取真实密钥、不请求 API。它检查程序是否正确回传结果、执行预算、校验引用和隔离任务。真实模型表现另按 [评估标准](evaluation.md) 人工核对。
+
+前端状态回归使用 Node.js 内置模块，不需要安装 npm 包。机器上有 Node.js 时，上述单元测试会一并检查提交重试、草稿隔离和报告切换；没有时仅跳过这组前端检查，应用本身仍只需 Python。也可单独运行 `node tests/ui/insurance-state-checks.cjs`。
 
 模型请求失败时，检查当前服务的配置、模型权限和额度。报告问题只提供命令、版本、服务与模型名以及脱敏错误，无需提供密钥或 `.env` 文件。

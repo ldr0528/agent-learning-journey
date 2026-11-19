@@ -64,6 +64,8 @@ def run_session(store, session_id, request=None, mode="offline", catalog=None, m
         version = record.get("brief_version", 1)
         if expected_version is not None and version != expected_version:
             raise ValueError("需求已经更新，请刷新后再运行。")
+        if hasattr(store, "require_message_capacity"):
+            store.require_message_capacity(session_id, 1)
         catalog = catalog or load_catalog(record["catalog_kind"])
         current = request if request is not None else record["request"]
         # 缺需求时不创建模型客户端；补充后从保存的需求重新取证，避免混用旧资料。
@@ -89,6 +91,8 @@ def run_session(store, session_id, request=None, mode="offline", catalog=None, m
                        "资料比较已整理。你可以查看关注项差异、完整对照和出处，也可以继续追问。" if report["status"] in ("completed", "completed_with_gaps") else
                        "本次查证尚未完成，请查看报告中的停止原因与已取得的资料。")
             store.append_message(session_id, "assistant", content, kind="report", report_revision=report["revision"])
+        if hasattr(store, "finish_claim"):
+            store.finish_claim(run_id, report)
         return report
 
 
@@ -99,7 +103,7 @@ def run_message(store, session_id, message, *, intent="intake", mode="offline", 
         raise ValueError("消息需为 1–1500 字符。")
     if intent not in ("intake", "followup") or mode not in ("offline", "live"):
         raise ValueError("消息类型或运行模式不符合要求。")
-    from .conversation import propose_needs, answer_report
+    from .conversation import propose_needs, answer_report, followup_ready
     claim = store.claim_session(session_id, kind=intent, mode=mode) if hasattr(store, "claim_session") else nullcontext()
     with _session_lock(store, session_id), claim as run_id:
         should_cancel = _cancellation(store, run_id, should_cancel)
@@ -107,6 +111,8 @@ def run_message(store, session_id, message, *, intent="intake", mode="offline", 
         version = record.get("brief_version", 1)
         if expected_version is not None and version != expected_version:
             raise ValueError("需求已经更新，请刷新后重试。")
+        if hasattr(store, "require_message_capacity"):
+            store.require_message_capacity(session_id, 2)
         catalog = catalog or load_catalog(record["catalog_kind"])
         check_cancelled(should_cancel)
         store.append_message(session_id, "user", message.strip(), kind=intent)
@@ -123,7 +129,7 @@ def run_message(store, session_id, message, *, intent="intake", mode="offline", 
                     answer_report(record, message.strip(), **options))
 
         try:
-            needs_report = intent == "followup" and (not record.get("result") or record.get("result_stale"))
+            needs_report = intent == "followup" and not followup_ready(record)
             if mode == "offline" or needs_report:
                 result = invoke(None)
             elif request_model is not None:
@@ -149,4 +155,6 @@ def run_message(store, session_id, message, *, intent="intake", mode="offline", 
                              status=result["status"], evidence_ids=result.get("evidence_ids", []),
                              sources=result.get("sources", []), report_revision=result.get("report_revision"),
                              mode=mode, model_calls=result.get("model_calls", 0))
+        if hasattr(store, "finish_claim"):
+            store.finish_claim(run_id, result)
         return result

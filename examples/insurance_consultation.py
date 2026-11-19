@@ -1,6 +1,7 @@
 """同一个公开场景：整理需求、显式确认范围、查证、追问。"""
 
 import argparse
+from copy import deepcopy
 import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -25,7 +26,7 @@ def main():
         if not intake.get("proposal"):
             return 1
         # 本例明确给出用户的确认动作；真实页面由用户选择产品并核对需求。
-        request = intake["proposal"]["request"]
+        request = deepcopy(intake["proposal"]["request"])
         request["selections"] = [{"product_id": "demo_hospital", "version": "demo-v1"},
                                  {"product_id": "demo_outpatient", "version": "demo-v1"}]
         confirmed = store.update_brief(session_id, request, expected_version=1, confirm=True)

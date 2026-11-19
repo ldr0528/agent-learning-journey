@@ -1,6 +1,6 @@
 """有界后台任务、事件轮询与协作取消；不会自动重放中断的模型请求。"""
 
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import CancelledError, ThreadPoolExecutor
 from copy import deepcopy
 import json
 import os
@@ -84,9 +84,10 @@ class RunManager:
                 raise StoreConflict("服务正在停止，请稍后再试。")
             existing = self.store.existing_run(session_id, client_request_id, canonical)
             if existing:
-                return public_run(existing)
-            record = self.store.load(session_id)
+                return self.get(existing["id"])
+            record = self.refresh_session(session_id)
             self.store._version(record, expected_version)
+            self.store.require_message_capacity(session_id, 1 if kind == "comparison" else 2)
             if kind == "comparison":
                 calls = canonical.get("max_calls", 6)
                 if type(calls) is not int or not 1 <= calls <= 12:
@@ -176,10 +177,19 @@ class RunManager:
                                   event={"type": status, "message": message})
 
     def get(self, run_id, after_seq=0):
-        return public_run(self.store.load_run(run_id), after_seq)
+        return public_run(self.store.recover_run(run_id, process_alive), after_seq)
+
+    def refresh_session(self, session_id):
+        record = self.store.load(session_id)
+        if record["active_run"]:
+            run = self.get(record["active_run"]["id"])
+            if run["status"] in TERMINAL_STATUSES:
+                record = self.store.load(session_id)
+        return record
 
     def cancel(self, run_id):
         with self._lock:
+            self.store.recover_run(run_id, process_alive)
             run = self.store.change_run(run_id, cancel=True,
                 event={"type": "cancel_requested", "message": "已请求停止，将在当前操作结束后取消。"})
             future = self._futures.get(run_id)
@@ -191,7 +201,10 @@ class RunManager:
         with self._lock:
             future = self._futures.get(run_id)
         if future:
-            future.result()
+            try:
+                future.result()
+            except CancelledError:
+                pass  # 排队任务被取消时，持久任务记录才是对外结果。
         return self.get(run_id)
 
     def close(self, *, wait=True):

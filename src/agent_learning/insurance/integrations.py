@@ -11,6 +11,8 @@ from .workflow import EvidenceWorkspace, prepare_request, run_comparison
 
 
 def run_graph_comparison(request, *, catalog=None, mode="offline", request_model=None, max_calls=6):
+    if mode not in ("offline", "live"):
+        raise ValueError("运行模式需为 offline 或 live。")
     from langgraph.graph import END, START, StateGraph
     catalog = catalog or load_catalog()
 
@@ -30,7 +32,7 @@ def run_graph_comparison(request, *, catalog=None, mode="offline", request_model
                 "nodes": state["nodes"] + ["research"]}
 
     def clarify(state):
-        return {"report": run_comparison(state["request"], catalog=catalog, mode="offline"),
+        return {"report": run_comparison(state["request"], catalog=catalog, mode=mode),
                 "nodes": state["nodes"] + ["clarify"]}
 
     def verify(state):
@@ -57,12 +59,14 @@ def run_graph_comparison(request, *, catalog=None, mode="offline", request_model
 
 
 async def run_mcp_comparison(request, *, catalog_kind="demo", mode="offline", request_model=None, max_calls=6):
+    if mode not in ("offline", "live"):
+        raise ValueError("运行模式需为 offline 或 live。")
     from mcp import ClientSession, StdioServerParameters
     from mcp.client.stdio import stdio_client
     workspace = EvidenceWorkspace(request, load_catalog(catalog_kind))
     if workspace.state["status"] != "ready":
-        return workspace.report()
-    if mode not in ("offline", "live") or (mode == "live" and request_model is None):
+        return {**workspace.report(), "mode": mode}
+    if mode == "live" and request_model is None:
         raise ValueError("模型模式需要提供请求接口。")
 
     async def exchange():

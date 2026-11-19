@@ -204,6 +204,8 @@ def render_markdown(report):
         return str(value).replace("|", "\\|").replace("\n", " ")
     lines = ["# 医疗险保障比较", "", "问题：" + cell(report["request"]["question"]),
              "", "状态：" + report["status"], ""]
+    if report.get("error"):
+        lines.extend(["停止说明：" + cell(report["error"]), ""])
     profile = report["request"]["profile"]
     lines.extend(["## 需求摘要", "", "关注点：" + "、".join(DIMENSIONS[x] for x in profile["focus"]),
                   "", "年度预算：" + (str(profile["annual_budget"]) + " 元" if profile["annual_budget"] is not None else "未提供"), ""])

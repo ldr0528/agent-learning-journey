@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agent-learning-journey"
-version = "0.4.0"
+version = "0.4.1"
 description = "A Chinese agent learning handbook with inspectable workflows, retrieval, evaluation, LangGraph and MCP examples."
 readme = "README.md"
 requires-python = ">=3.10"

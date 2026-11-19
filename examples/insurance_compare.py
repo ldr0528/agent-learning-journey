@@ -7,10 +7,10 @@ from pathlib import Path
 
 from agent_learning.config import load_settings
 from agent_learning.insurance.service import load_catalog, model_adapter
-from agent_learning.insurance.workflow import render_markdown, run_comparison
+from agent_learning.insurance.workflow import prepare_request, render_markdown, run_comparison
 
 
-def main():
+def main(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--request", type=Path, default=Path(__file__).with_name("insurance_request.json"))
     parser.add_argument("--catalog", choices=["demo", "official"], default="demo")
@@ -18,11 +18,15 @@ def main():
     parser.add_argument("--live", action="store_true")
     parser.add_argument("--max-calls", type=int, default=6)
     parser.add_argument("--output", type=Path)
-    args = parser.parse_args()
-    request = json.loads(args.request.read_text(encoding="utf-8"))
-    catalog, client, model = load_catalog(args.catalog), None, None
+    args = parser.parse_args(argv)
+    client, model = None, None
     try:
-        if args.live:
+        if args.request.stat().st_size > 30000:
+            raise ValueError("需求文件过大。")
+        request = json.loads(args.request.read_text(encoding="utf-8-sig"))
+        catalog = load_catalog(args.catalog)
+        ready = prepare_request(request, catalog)
+        if args.live and ready["status"] == "ready":
             settings = load_settings()
             client = settings.create_client()
             model = model_adapter(client, settings)
@@ -41,6 +45,9 @@ def main():
             args.output.parent.mkdir(parents=True, exist_ok=True)
             args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
         return 0 if report["status"] in ("completed", "completed_with_gaps", "needs_input") else 1
+    except (ValueError, OSError) as error:
+        print(f"无法完成比较：{error}")
+        return 1
     finally:
         if client:
             client.close()

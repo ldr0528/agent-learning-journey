@@ -7,7 +7,8 @@ const state = {
   csrf: '', dimensions: [], products: [], sessions: [], catalog: 'demo', current: null,
   run: null, events: [], lastSeq: 0, pollTimer: null, epoch: 0, pending: false,
   localMessage: null, report: null, reportVersions: [], nextIntent: 'intake',
-  pendingCatalog: null, retryAction: null, evidenceTrigger: null, formDirty: false,
+  pendingCatalog: null, evidenceTrigger: null, panelTrigger: null, formDirty: false,
+  drafts: new Map(), pendingJobs: new Map(), historyFetch: 0,
 };
 const terminalStates = new Set(['succeeded', 'failed', 'cancelled', 'interrupted']);
 const statusLabels = {
@@ -38,13 +39,29 @@ function button(text, className, action) {
   return element;
 }
 function showNotice(message, error = false) {
-  $('notice').textContent = message;
-  $('notice').className = 'notice' + (error ? ' error' : '');
-  $('notice').hidden = !message;
+  const unresolved = pendingSubmission();
+  const text = message || (unresolved ? '上次提交的结果尚未确认，请重新连接同一任务。' : '');
+  for (const target of [$('notice'), $('panelNotice')]) {
+    target.replaceChildren(node('span', text));
+    target.className = 'notice' + (error ? ' error' : '');
+    target.hidden = !text;
+    if (unresolved) {
+      const retry = button('重新连接这次提交', 'button subtle', recoverSubmission);
+      retry.disabled = state.pending; target.append(retry);
+    }
+  }
 }
 function announce(message) { $('liveAnnouncement').textContent = message; }
+function pendingSubmission() { return state.current ? state.pendingJobs.get(state.current.id) : null; }
+function followupReady(record = state.current) {
+  return Boolean(record?.result && !record.result_stale
+    && record.result_brief_version === record.brief_version
+    && ['completed', 'completed_with_gaps'].includes(record.result.status)
+    && Array.isArray(record.result.sources) && record.result.sources.length);
+}
+function canAskReport() { return followupReady() && !state.current?.proposal && !state.formDirty; }
 function isRunning() { return state.run && !terminalStates.has(state.run.status); }
-function isBusy() { return state.pending || Boolean(isRunning()); }
+function isBusy() { return state.pending || Boolean(isRunning()) || Boolean(pendingSubmission()); }
 function updateControls() {
   const busy = isBusy();
   $('sendMessage').disabled = busy || !$('messageInput').value.trim();
@@ -52,8 +69,12 @@ function updateControls() {
   $('confirmBrief').disabled = busy;
   $('catalogSelect').disabled = busy;
   $('modeSelect').disabled = busy;
-  $('messageInput').disabled = state.pending;
+  $('messageInput').disabled = busy;
   for (const element of document.querySelectorAll('#newSession, #mobileNewSession, .session-item')) element.disabled = state.pending;
+  for (const element of document.querySelectorAll('#quickFollowups button, [data-scenario]')) element.disabled = busy;
+  for (const element of document.querySelectorAll('#notice button, #panelNotice button')) element.disabled = state.pending;
+  $('discardBriefChanges').disabled = busy;
+  updateReportAction();
   $('sendLabel').textContent = busy ? '处理中' : '发送';
   $('cancelRun').disabled = !isRunning() || state.run.status === 'cancelling';
   $('cancelRun').hidden = !isRunning();
@@ -83,12 +104,36 @@ async function api(path, options = {}) {
 }
 const post = (path, payload) => api(path, {method: 'POST', body: JSON.stringify(payload)});
 async function submitJob(path, payload) {
-  // Retrying the same job key is safe when the response was lost after acceptance.
-  try { return await post(path, payload); }
-  catch (error) {
-    if (error.status) throw error;
-    return post(path, payload);
+  const sessionId = state.current.id;
+  const attempt = state.pendingJobs.get(sessionId) || {path, payload};
+  state.pendingJobs.set(sessionId, attempt);
+  // Keep this exact request even after both responses are lost. A manual retry
+  // must recover the accepted job, not allocate another model invocation.
+  for (let index = 0; index < 2; index += 1) {
+    try {
+      const run = await post(attempt.path, attempt.payload);
+      state.pendingJobs.delete(sessionId); return run;
+    } catch (error) {
+      if (error.status && error.status < 500) { state.pendingJobs.delete(sessionId); throw error; }
+      if (index === 1) throw new Error('暂时无法确认提交结果。请重新连接这次提交，原任务不会重复新建。');
+    }
   }
+}
+async function recoverSubmission() {
+  const attempt = pendingSubmission();
+  if (!attempt || state.pending) return;
+  const epoch = state.epoch; state.pending = true; updateControls();
+  try {
+    const run = await submitJob(attempt.path, attempt.payload);
+    if (epoch !== state.epoch) return;
+    if (attempt.payload.message === $('messageInput').value.trim()) $('messageInput').value = '';
+    rememberDraft();
+    showNotice(''); acceptRun(run);
+  } catch (error) {
+    if (epoch !== state.epoch) return;
+    showNotice(error.message, true);
+    if (error.status === 409 && state.current) { await openSession(state.current.id).catch(() => {}); showNotice(error.message, true); }
+  } finally { if (epoch === state.epoch) { state.pending = false; updateControls(); } }
 }
 function requestId() { return crypto.randomUUID(); }
 function setLocation(id) {
@@ -143,7 +188,9 @@ function renderSessions() {
   }
 }
 async function refreshSessions() {
+  const request = ++state.historyFetch;
   const result = await api('/api/sessions');
+  if (request !== state.historyFetch) return;
   state.sessions = result.sessions || [];
   renderSessions();
 }
@@ -166,8 +213,8 @@ function renderProducts(selected) {
   const selectedKeys = new Set(selected.map(item => item.product_id + '@' + item.version));
   $('productList').replaceChildren();
   for (const product of state.products) {
-    const card = node('label', null, 'product-card');
-    const top = node('div', null, 'product-top');
+    const card = node('div', null, 'product-card');
+    const top = node('label', null, 'product-top');
     const input = document.createElement('input');
     input.type = 'checkbox'; input.name = 'product';
     input.dataset.productId = product.product_id; input.dataset.version = product.version;
@@ -179,7 +226,7 @@ function renderProducts(selected) {
       }
       updateSelectionCount();
     });
-    const text = node('div');
+    const text = node('span');
     text.append(node('span', product.name, 'product-title'), node('span', '资料版本：' + product.version, 'product-version'),
       node('span', product.data_kind === 'official_excerpt' ? '官方资料节选' : '教学资料', 'product-kind'));
     top.append(input, text); card.append(top);
@@ -187,17 +234,20 @@ function renderProducts(selected) {
     if (preview?.text) {
       const details = node('details', null, 'product-description');
       details.append(node('summary', '查看已收录的保障说明'), node('p', preview.text));
-      // Details are outside the checkbox's activation path when clicked.
-      details.addEventListener('click', event => event.stopPropagation());
+      if (preview.conditions?.length) {
+        const conditions = node('ul', null, 'preview-conditions');
+        conditions.append(...preview.conditions.map(condition => node('li', condition)));
+        details.append(conditions);
+      }
       card.append(details);
     }
     $('productList').append(card);
   }
   updateSelectionCount();
 }
-function renderBrief() {
+function renderBrief(draft = null) {
   const proposal = state.current?.proposal;
-  const request = proposal?.request || state.current?.request || emptyRequest();
+  const request = draft || proposal?.request || state.current?.request || emptyRequest();
   const profile = request.profile || {};
   $('briefQuestion').value = request.question || '';
   $('ageInput').value = profile.age ?? '';
@@ -216,6 +266,7 @@ function renderBrief() {
       ? '当前需求已确认。修改产品或关注点后，将按新需求重新查证。'
       : '确认后，按所选产品版本查证全部九个维度。';
   state.formDirty = false;
+  $('discardBriefChanges').hidden = true;
 }
 function readBrief() {
   return {
@@ -229,8 +280,47 @@ function readBrief() {
     selections: [...$('productList').querySelectorAll('input:checked')].map(input => ({product_id: input.dataset.productId, version: input.dataset.version})),
   };
 }
+function markBriefDirty() {
+  state.formDirty = true; state.nextIntent = 'intake';
+  $('briefState').textContent = '有尚未确认的修改。确认后，按这些需求重新查证。';
+  $('discardBriefChanges').hidden = false;
+  renderIntentControls(); updateControls();
+}
+function rememberDraft() {
+  if (!state.current) return;
+  state.drafts.set(state.current.id, {
+    message: $('messageInput').value, intent: state.nextIntent,
+    brief: state.formDirty ? readBrief() : null,
+    briefVersion: state.current.brief_version,
+  });
+}
+function restoreDraft() {
+  const draft = state.drafts.get(state.current?.id);
+  $('messageInput').value = draft?.message || '';
+  resizeComposer();
+  if (draft?.brief) {
+    renderBrief(draft.brief); markBriefDirty();
+    if (draft.briefVersion !== state.current.brief_version) showNotice('已恢复未确认的修改。这次咨询已有更新，请重新核对后确认。');
+  }
+  state.nextIntent = draft?.intent === 'followup' && canAskReport() ? 'followup' : draft?.intent || (canAskReport() ? 'followup' : 'intake');
+  if (!canAskReport()) state.nextIntent = 'intake';
+  renderIntentControls(); updateControls();
+}
+function resizeComposer() {
+  $('messageInput').style.height = 'auto';
+  $('messageInput').style.height = Math.min($('messageInput').scrollHeight, 180) + 'px';
+}
+function syncPanelAccessibility() {
+  const panel = $('resultPanel');
+  const modal = !panel.hidden && window.matchMedia('(max-width: 760px)').matches;
+  if (modal) { panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-modal', 'true'); }
+  else { panel.setAttribute('role', 'region'); panel.removeAttribute('aria-modal'); }
+  for (const element of document.querySelectorAll('.conversation-panel, .topbar, #modeNote, #notice, #desktopSidebar, .skip-link')) element.inert = modal;
+  if (modal && !panel.contains(document.activeElement) && !document.querySelector('dialog[open]')) panel.querySelector('[role=tab][aria-selected=true]')?.focus();
+}
 function showPanel(name = 'brief') {
   if (name === 'report' && !state.report) return;
+  if ($('resultPanel').hidden) state.panelTrigger = document.activeElement;
   $('resultPanel').hidden = false;
   $('workArea').classList.add('has-panel');
   for (const tab of document.querySelectorAll('[data-panel]')) {
@@ -239,10 +329,14 @@ function showPanel(name = 'brief') {
   }
   $('briefPanel').hidden = name !== 'brief'; $('reportPanel').hidden = name !== 'report';
   $('panelScroll').scrollTop = 0;
+  syncPanelAccessibility();
 }
 function closePanel() {
+  const restoreFocus = $('resultPanel').contains(document.activeElement);
   $('resultPanel').hidden = true;
   $('workArea').classList.remove('has-panel');
+  syncPanelAccessibility();
+  if (restoreFocus) (state.panelTrigger?.isConnected ? state.panelTrigger : $('openBrief')).focus();
 }
 function safeUrl(value) {
   try { const url = new URL(value); return ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password ? url.href : null; }
@@ -293,6 +387,7 @@ function messageContent(content, sources) {
 }
 function renderMessages() {
   const messages = [...(state.current?.messages || [])];
+  const latestIntake = messages.findLast(message => message.role === 'assistant' && message.kind === 'intake');
   const last = messages[messages.length - 1];
   if (state.localMessage && !(last?.role === 'user' && last.content === state.localMessage)) messages.push({role: 'user', content: state.localMessage});
   $('welcome').hidden = messages.length > 0 || Boolean(state.current?.result);
@@ -310,7 +405,7 @@ function renderMessages() {
       const citations = node('div', null, 'citations');
       sources.forEach((fact, index) => citations.append(sourceButton(fact, '依据 ' + (index + 1)))); content.append(citations);
     }
-    if (!human && message.kind === 'intake' && state.current?.proposal) {
+    if (message === latestIntake && state.current?.proposal) {
       const actions = node('div', null, 'message-actions'); actions.append(button('查看并确认比较需求 →', 'message-action', () => showPanel('brief'))); content.append(actions);
     }
     if (!human && message.kind === 'report') {
@@ -338,14 +433,20 @@ function renderMessages() {
 }
 function scrollToLatest() { requestAnimationFrame(() => { $('conversationScroll').scrollTop = $('conversationScroll').scrollHeight; }); }
 function renderIntentControls() {
-  const validReport = state.current?.result && !state.current.result_stale;
+  const validReport = canAskReport();
   $('quickFollowups').replaceChildren();
   $('quickFollowups').hidden = !validReport;
-  if (!validReport) { state.nextIntent = 'intake'; return; }
+  if (!validReport) {
+    state.nextIntent = 'intake';
+    $('messageInput').placeholder = state.formDirty ? '需求卡有未确认的修改，请先确认或撤销修改。' : '补充你的关注点；新需求需确认后重新查证。';
+    return;
+  }
+  $('messageInput').placeholder = state.nextIntent === 'intake'
+    ? '补充或修改你的关注点；新需求需确认后重新查证。'
+    : '针对当前报告继续问，例如：两份资料的续保条件有何不同？';
   const setIntent = (intent, text = '') => {
     state.nextIntent = intent;
     if (text) $('messageInput').value = text;
-    $('messageInput').placeholder = intent === 'intake' ? '补充或修改你的关注点；新需求需确认后重新查证。' : '针对当前报告继续问，例如：两份资料的续保条件有何不同？';
     renderIntentControls(); updateControls(); $('messageInput').focus();
   };
   const ask = button('追问报告', '', () => setIntent('followup'));
@@ -354,6 +455,14 @@ function renderIntentControls() {
   edit.setAttribute('aria-pressed', String(state.nextIntent === 'intake'));
   $('quickFollowups').append(ask, edit,
     button('为什么报价仍待确认？', '', () => setIntent('followup', '为什么预算已经填写，仍然不能判断哪份方案符合预算？')));
+}
+function updateReportAction() {
+  const action = $('askReport');
+  action.disabled = isBusy() || !canAskReport();
+  const historical = state.report && state.report !== state.current?.result;
+  action.textContent = !canAskReport()
+    ? (state.current?.result_stale || state.current?.proposal || state.formDirty ? '确认需求并查证后可追问' : '完整查证后可追问')
+    : historical ? '切回当前报告后追问 ↗' : '继续追问 ↗';
 }
 function appendCellContent(target, cell, sourceMap, showProduct = false) {
   if (showProduct) target.append(node('span', cell.product_name || cell.product_id, 'fact-product'));
@@ -367,13 +476,14 @@ function appendCellContent(target, cell, sourceMap, showProduct = false) {
 function renderReport(report) {
   state.report = report;
   $('reportTab').disabled = !report;
+  updateReportAction();
   if (!report) return;
   const sourceMap = new Map((report.sources || []).map(fact => [fact.evidence_id, fact]));
   $('reportStatus').textContent = statusLabels[report.status] || '查看比较结果';
   $('reportStatus').className = 'status-tag' + (report.status !== 'completed' ? ' gaps' : '');
   $('reportQuestion').textContent = report.request?.question || '';
   const isCurrent = report === state.current?.result;
-  $('reportDataNote').textContent = (isCurrent && state.current.result_stale ? '这是较早需求的结果，请确认新需求后重新查证。 ' : !isCurrent ? '正在查看历史结果；追问使用当前有效报告。 ' : '') + catalogDescription();
+  $('reportDataNote').textContent = (isCurrent && state.current.result_stale ? '这是较早需求的结果，请确认新需求后重新查证。 ' : !isCurrent ? '正在查看历史结果；继续追问前会明确切回当前报告。 ' : '') + catalogDescription();
   const rows = report.rows || [];
   const focus = report.request?.profile?.focus || [];
   const ordered = [...rows].sort((a, b) => {
@@ -428,7 +538,13 @@ function renderCurrent() {
   renderBrief(); renderVersions(); renderMessages(); renderIntentControls(); renderSessions(); updateControls();
 }
 function stopPolling() { if (state.pollTimer) clearTimeout(state.pollTimer); state.pollTimer = null; }
+function resumeAfterNavigationFailure(epoch) {
+  if (epoch !== state.epoch) return;
+  $('catalogSelect').value = state.catalog;
+  if (isRunning()) pollRun(state.run.id, epoch);
+}
 async function openSession(id) {
+  rememberDraft();
   const epoch = ++state.epoch;
   stopPolling(); state.pending = true; updateControls(); showNotice('');
   try {
@@ -437,29 +553,42 @@ async function openSession(id) {
     if (epoch !== state.epoch) return;
     state.current = saved; state.catalog = saved.catalog_kind || 'demo'; state.products = products;
     state.localMessage = null; state.report = null; state.run = null; state.events = []; state.lastSeq = 0;
-    state.nextIntent = saved.result && !saved.result_stale && !saved.proposal ? 'followup' : 'intake';
+    state.nextIntent = followupReady(saved) && !saved.proposal ? 'followup' : 'intake';
     $('modeSelect').value = 'offline'; updateMode(); setLocation(saved.id || id); renderCurrent();
+    restoreDraft();
     if (saved.proposal || !saved.result) showPanel('brief'); else showPanel('report');
     $('jobCard').hidden = true;
     if (saved.active_run && !terminalStates.has(saved.active_run.status)) {
       state.run = {...saved.active_run, session_id: id}; renderJob(); pollRun(saved.active_run.id, epoch);
     }
+    if (pendingSubmission()) showNotice('');
     scrollToLatest();
+  } catch (error) {
+    resumeAfterNavigationFailure(epoch);
+    throw error;
   } finally { if (epoch === state.epoch) { state.pending = false; updateControls(); } }
 }
 async function newSession(kind = state.catalog) {
+  rememberDraft();
   const epoch = ++state.epoch;
   stopPolling(); state.pending = true; updateControls();
   try {
     const products = await loadProducts(kind);
     if (epoch !== state.epoch) return;
     state.current = null; state.catalog = kind; state.products = products; state.run = null;
-    state.events = []; state.lastSeq = 0; state.localMessage = null; state.nextIntent = 'intake'; state.retryAction = null;
+    state.events = []; state.lastSeq = 0; state.localMessage = null; state.nextIntent = 'intake';
     $('messageInput').value = ''; $('modeSelect').value = 'offline'; $('jobCard').hidden = true;
     $('messageInput').placeholder = '例如：我想了解普通门诊和续保，先帮我理清需要比较什么。';
     updateMode(); setLocation(null); renderCurrent(); closePanel(); showNotice(''); $('navDialog').close();
-    $('messageInput').focus();
-  } finally { if (epoch === state.epoch) { state.pending = false; updateControls(); } }
+  } catch (error) {
+    resumeAfterNavigationFailure(epoch);
+    throw error;
+  } finally {
+    if (epoch === state.epoch) {
+      state.pending = false; updateControls();
+      if (!state.current) $('messageInput').focus();
+    }
+  }
 }
 async function ensureSession() {
   if (state.current) return state.current;
@@ -477,10 +606,10 @@ function renderJob() {
   const finished = terminalStates.has(state.run.status);
   $('jobCard').className = 'job-card' + (finished ? ' finished' : '');
   const noun = state.run.kind === 'comparison' ? '查证资料' : state.run.kind === 'followup' ? '核对你的追问' : '整理比较需求';
-  $('jobTitle').textContent = finished
+  $('jobTitle').textContent = state.run.connection_lost ? '任务状态暂不可用' : finished
     ? ({succeeded: '本次处理已结束', cancelled: '本次任务已停止', interrupted: '任务已中断', failed: '本次任务未完成'})[state.run.status]
     : state.run.status === 'cancelling' ? '正在停止当前任务' : state.run.status === 'queued' ? '任务已收到' : '正在' + noun;
-  $('jobDescription').textContent = state.run.error || (state.run.status === 'cancelling' ? '当前请求结束后停止；已取得的资料会保留。' : finished ? '结果与后续说明已保留在这次咨询中。' : '下面显示已发生的步骤；你可以离开页面，稍后恢复。');
+  $('jobDescription').textContent = state.run.connection_lost ? '下面保留最后取得的步骤；请重新打开咨询记录核对结果。' : state.run.error || (state.run.status === 'cancelling' ? '当前请求结束后停止；已取得的资料会保留。' : finished ? '结果与后续说明已保留在这次咨询中。' : '下面显示已发生的步骤；你可以离开页面，稍后恢复。');
   $('jobIndicator').className = 'job-indicator' + (finished ? (state.run.status === 'succeeded' ? ' finished' : ' stopped') : '');
   const events = state.events.filter(event => readableEvent(event));
   $('eventList').hidden = finished;
@@ -495,12 +624,15 @@ async function pollRun(id, epoch) {
     if (epoch !== state.epoch || state.run?.id !== id) return;
     for (const event of run.events || []) if (event.seq > state.lastSeq) state.events.push(event);
     state.lastSeq = Math.max(state.lastSeq, run.last_seq || 0, ...state.events.map(event => event.seq || 0));
-    state.run = run; renderJob();
+    state.run = run;
+    // Keep submissions locked until the terminal job and its saved session agree.
+    if (terminalStates.has(run.status)) state.pending = true;
+    renderJob();
     if (terminalStates.has(run.status)) {
       const saved = await api('/api/sessions/' + encodeURIComponent(run.session_id));
-      if (epoch !== state.epoch) return;
+      if (epoch !== state.epoch || state.run?.id !== id) return;
       state.current = saved; state.localMessage = null; state.pending = false;
-      state.nextIntent = saved.result && !saved.result_stale && !saved.proposal ? 'followup' : 'intake';
+      if (!$('messageInput').value.trim()) state.nextIntent = followupReady(saved) && !saved.proposal ? 'followup' : 'intake';
       renderCurrent(); renderJob();
       if (run.kind === 'comparison' && saved.result) showPanel('report');
       else if (saved.proposal) {
@@ -509,19 +641,23 @@ async function pollRun(id, epoch) {
       }
       if (run.status === 'failed' || run.status === 'interrupted') showNotice(run.error || '本次任务未完成，已有需求与结果已保留。', true);
       else showNotice('');
-      await refreshSessions(); scrollToLatest(); announce('本次处理结束，请查看消息与结果。');
+      refreshSessions().catch(() => {}); scrollToLatest(); announce('本次处理结束，请查看消息与结果。');
       return;
     }
     state.pollTimer = setTimeout(() => pollRun(id, epoch), 850);
   } catch (error) {
-    if (epoch !== state.epoch) return;
+    if (epoch !== state.epoch || state.run?.id !== id) return;
+    if (error.status && error.status < 500) {
+      state.run = {...state.run, connection_lost: true}; state.pending = false;
+      renderJob(); showNotice('暂时无法恢复这次任务，请重新打开咨询记录核对保存结果。', true); return;
+    }
     showNotice('暂时无法取得任务状态，正在重新连接。不会重复提交任务。', true);
     state.pollTimer = setTimeout(() => pollRun(id, epoch), 2500);
   }
 }
 function acceptRun(run) {
   stopPolling(); state.run = run; state.events = run.events || [];
-  state.lastSeq = run.last_seq || 0; state.pending = false; state.retryAction = null;
+  state.lastSeq = run.last_seq || 0; state.pending = false;
   renderMessages(); renderJob(); scrollToLatest();
   pollRun(run.id, state.epoch);
   refreshSessions().catch(() => {});
@@ -530,17 +666,20 @@ async function sendMessage(event) {
   event.preventDefault();
   const message = $('messageInput').value.trim();
   if (!message || isBusy()) return;
+  if (state.formDirty) { showNotice('需求卡中有未确认的修改。请先确认需求并查证，或撤销这些修改后再发送消息。'); showPanel('brief'); return; }
   if (message.length > 1500) { showNotice('每条消息最多 1500 字，请拆成几条发送。', true); return; }
   const epoch = state.epoch;
+  const intent = state.nextIntent;
+  if (intent === 'followup' && !canAskReport()) { showNotice('当前报告还不能用于追问。请先确认需求并完成查证。'); return; }
   state.pending = true; state.localMessage = message; showNotice(''); updateControls(); renderMessages(); scrollToLatest();
   try {
     const saved = await ensureSession();
     if (epoch !== state.epoch) return;
-    const intent = state.nextIntent;
     const payload = {message, intent, mode: $('modeSelect').value, expected_version: saved.brief_version, client_request_id: requestId()};
     const run = await submitJob('/api/sessions/' + encodeURIComponent(saved.id) + '/messages', payload);
     if (epoch !== state.epoch) return;
     $('messageInput').value = ''; $('messageInput').style.height = '';
+    rememberDraft();
     acceptRun(run);
   } catch (error) {
     if (epoch !== state.epoch) return;
@@ -561,9 +700,11 @@ async function confirmBrief(event) {
     const confirmed = await post('/api/sessions/' + encodeURIComponent(saved.id) + '/brief', {request, expected_version: saved.brief_version, confirm: true});
     if (epoch !== state.epoch) return;
     state.current = confirmed; state.formDirty = false;
+    state.drafts.delete(saved.id);
+    renderCurrent();
     const run = await submitJob('/api/sessions/' + encodeURIComponent(saved.id) + '/runs', {mode: $('modeSelect').value, max_calls: 6, expected_version: confirmed.brief_version, client_request_id: requestId()});
     if (epoch !== state.epoch) return;
-    renderCurrent(); acceptRun(run);
+    acceptRun(run);
     if (window.matchMedia('(max-width: 760px)').matches) closePanel();
   } catch (error) {
     if (epoch !== state.epoch) return;
@@ -578,8 +719,14 @@ function selectView(view) {
 function initializeEvents() {
   $('messageForm').addEventListener('submit', sendMessage);
   $('briefForm').addEventListener('submit', confirmBrief);
-  $('briefForm').addEventListener('input', () => { state.formDirty = true; $('briefState').textContent = '有尚未确认的修改。确认后，按这些需求重新查证。'; });
-  $('messageInput').addEventListener('input', () => { $('messageInput').style.height = 'auto'; $('messageInput').style.height = Math.min($('messageInput').scrollHeight, 180) + 'px'; updateControls(); });
+  $('briefForm').addEventListener('input', markBriefDirty);
+  $('discardBriefChanges').addEventListener('click', () => {
+    renderBrief(); state.nextIntent = canAskReport() ? 'followup' : 'intake';
+    rememberDraft();
+    renderIntentControls(); updateControls(); showNotice('已恢复服务器保存的需求。');
+    $('briefQuestion').focus();
+  });
+  $('messageInput').addEventListener('input', () => { resizeComposer(); updateControls(); });
   $('messageInput').addEventListener('paste', event => {
     const input = event.currentTarget;
     const pasted = event.clipboardData?.getData('text') || '';
@@ -594,6 +741,18 @@ function initializeEvents() {
   $('openNav').addEventListener('click', () => $('navDialog').showModal());
   $('openBrief').addEventListener('click', () => showPanel('brief'));
   $('closePanel').addEventListener('click', () => { closePanel(); $('openBrief').focus(); });
+  window.matchMedia('(max-width: 760px)').addEventListener('change', syncPanelAccessibility);
+  $('resultPanel').addEventListener('keydown', event => {
+    if ($('resultPanel').getAttribute('aria-modal') !== 'true') return;
+    if (event.key === 'Escape') { event.preventDefault(); closePanel(); return; }
+    if (event.key !== 'Tab') return;
+    const items = [...$('resultPanel').querySelectorAll('button, a[href], input, select, textarea, summary, [tabindex]')]
+      .filter(element => !element.matches(':disabled') && element.tabIndex >= 0 && element.getClientRects().length);
+    if (!items.length) return;
+    const first = items[0], last = items[items.length - 1];
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  });
   for (const tab of document.querySelectorAll('[data-panel]')) tab.addEventListener('click', () => showPanel(tab.dataset.panel));
   for (const tab of document.querySelectorAll('[data-view]')) tab.addEventListener('click', () => selectView(tab.dataset.view));
   for (const group of document.querySelectorAll('[role=tablist]')) group.addEventListener('keydown', event => {
@@ -605,7 +764,11 @@ function initializeEvents() {
   });
   for (const closer of document.querySelectorAll('[data-close]')) closer.addEventListener('click', () => $(closer.dataset.close).close());
   for (const dialog of document.querySelectorAll('dialog')) dialog.addEventListener('click', event => { if (event.target === dialog) { const rect = dialog.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close(); } });
-  $('evidenceDialog').addEventListener('close', () => state.evidenceTrigger?.focus());
+  $('evidenceDialog').addEventListener('close', () => {
+    if (state.evidenceTrigger?.isConnected) state.evidenceTrigger.focus();
+    else if (!$('resultPanel').hidden) $('resultPanel').querySelector('[role=tab][aria-selected=true]')?.focus();
+    else $('messageInput').focus();
+  });
   $('modeSelect').addEventListener('change', updateMode);
   $('catalogSelect').addEventListener('change', () => {
     const kind = $('catalogSelect').value;
@@ -615,9 +778,15 @@ function initializeEvents() {
   $('confirmCatalogChange').addEventListener('click', () => { $('changeCatalogDialog').close(); newSession(state.pendingCatalog || state.catalog).catch(error => showNotice(error.message, true)); });
   $('cancelRun').addEventListener('click', async () => {
     if (!isRunning()) return;
+    const epoch = state.epoch, id = state.run.id;
     $('cancelRun').disabled = true;
-    try { const run = await post('/api/runs/' + encodeURIComponent(state.run.id) + '/cancel', {}); if (state.run?.id === run.id) { state.run = run; renderJob(); } }
-    catch (error) { showNotice(error.message, true); updateControls(); }
+    try {
+      const run = await post('/api/runs/' + encodeURIComponent(id) + '/cancel', {});
+      if (epoch === state.epoch && state.run?.id === id) {
+        state.run = run; if (terminalStates.has(run.status)) state.pending = true; renderJob();
+      }
+    }
+    catch (error) { if (epoch === state.epoch && state.run?.id === id) { showNotice(error.message, true); updateControls(); } }
   });
   $('reportVersion').addEventListener('change', () => { const selected = state.reportVersions[Number($('reportVersion').value)]; if (selected) renderReport(selected.result); });
   $('downloadReport').addEventListener('click', () => {
@@ -627,7 +796,20 @@ function initializeEvents() {
   });
   $('downloadReport').title = '下载当前展示的 JSON 报告';
   $('editNeeds').addEventListener('click', () => { state.nextIntent = 'intake'; showPanel('brief'); renderIntentControls(); updateControls(); $('briefQuestion').focus(); });
-  $('askReport').addEventListener('click', () => { state.nextIntent = state.current?.result_stale ? 'intake' : 'followup'; renderIntentControls(); updateControls(); if (window.matchMedia('(max-width: 760px)').matches) closePanel(); $('messageInput').focus(); });
+  $('askReport').addEventListener('click', () => {
+    if (!canAskReport() || isBusy()) return;
+    if (state.report !== state.current.result) {
+      $('reportVersion').value = '0'; renderReport(state.current.result);
+      showNotice('已切回当前第 ' + state.current.revision + ' 版报告，后续追问以这一版为依据。');
+    }
+    state.nextIntent = 'followup'; renderIntentControls(); updateControls();
+    if (window.matchMedia('(max-width: 760px)').matches) closePanel(); $('messageInput').focus();
+  });
+  window.addEventListener('beforeunload', event => {
+    const savedDraft = [...state.drafts.values()].some(draft => draft.message.trim() || draft.brief);
+    if (!state.formDirty && !$('messageInput').value.trim() && !state.pendingJobs.size && !savedDraft) return;
+    event.preventDefault(); event.returnValue = '';
+  });
 }
 async function initialize() {
   initializeEvents(); state.pending = true; updateControls();

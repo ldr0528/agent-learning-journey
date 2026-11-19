@@ -186,7 +186,8 @@ def create_server(*, store, catalogs, runner, port=8765, message_runner=None, ru
 
         def _load(self, session_id):
             try:
-                saved = self.server.store.load(session_id)
+                saved = (self._manager().refresh_session(session_id) if hasattr(self.server.store, "create_run")
+                         else self.server.store.load(session_id))
             except (FileNotFoundError, KeyError, ValueError):
                 raise HTTPProblem(404, "没有找到这个会话，请检查会话编号。") from None
             if not isinstance(saved, dict):
@@ -223,7 +224,11 @@ def create_server(*, store, catalogs, runner, port=8765, message_runner=None, ru
                 catalog = self._catalog(kinds[0])
                 return self._send(200, self._products(kinds[0], catalog))
             if not mutation and path == "/api/sessions":
-                self._manager()
+                manager = self._manager()
+                sessions = self.server.store.list_sessions()
+                for session in sessions:
+                    if session.get("active_run"):
+                        manager.refresh_session(session["id"])
                 return self._send(200, {"sessions": self.server.store.list_sessions()})
             run_match = re.fullmatch(r"/api/runs/([a-f0-9]{32})(?:/(cancel))?", path)
             if run_match:
@@ -321,6 +326,9 @@ def create_server(*, store, catalogs, runner, port=8765, message_runner=None, ru
                         client_request_id=secrets.token_hex(16))
                     completed = manager.wait(run["id"])
                     if completed["result"] is None:
+                        if completed["status"] in ("cancelled", "interrupted"):
+                            message = "本次比较已取消，未生成新报告。" if completed["status"] == "cancelled" else "本次比较已中断，请查看会话后重试。"
+                            raise HTTPProblem(409, message)
                         raise HTTPProblem(500, completed["error"] or "本次比较未完成。")
                     return self._send(200, completed["result"])
                 if not self.server.run_lock.acquire(blocking=False):

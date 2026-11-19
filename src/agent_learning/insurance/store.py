@@ -162,6 +162,20 @@ class SessionStore:
         else:
             self.change_run(run["id"], status="succeeded")
 
+    def finish_claim(self, run_id, result):
+        """同步入口保存业务结果后结束认领；后台任务仍由 RunManager 收尾。"""
+        run = self.load_run(run_id)
+        if not run["payload"].get("synchronous"):
+            return run
+        if not isinstance(result, dict):
+            raise ValueError("任务结果需为对象。")
+        status = ("cancelled" if result.get("status") == "cancelled" else
+                  "failed" if result.get("status") == "model_error" else "succeeded")
+        message = ("任务已取消，已取得的内容保留在会话中。" if status == "cancelled" else
+                   "本次处理未完成，已有资料保留在会话中。" if status == "failed" else "本次处理已完成。")
+        return self.change_run(run_id, status=status, result=result,
+            error=message if status == "failed" else None, event={"type": status, "message": message})
+
     def create(self, request, catalog_kind="demo"):
         if catalog_kind not in ("demo", "official") or not isinstance(request, dict):
             raise ValueError("会话资料目录或需求不合法。")
@@ -207,6 +221,16 @@ class SessionStore:
             summaries[-1].update(title=" ".join(title.split())[:60],
                                   status=active["status"] if active else result.get("status", "draft"))
         return summaries
+
+    def require_message_capacity(self, session_id, count):
+        """在会话认领内预检，确保模型调用前已预留完整一轮消息的空间。"""
+        if type(count) is not int or count < 1:
+            raise ValueError("消息数量需为正整数。")
+        with self._transaction() as connection:
+            record = self._session(connection, session_id)
+            self._guard_write(record)
+            if len(record["messages"]) + count > 200:
+                raise StoreConflict("本会话剩余消息空间不足，请新建会话继续。")
 
     def append_message(self, session_id, role, content, **metadata):
         if role not in ("user", "assistant", "system") or not isinstance(content, str) or len(content) > 12000:
@@ -339,6 +363,8 @@ class SessionStore:
                     raise ValueError("任务状态不合法。")
                 if run["cancel_requested"] and status == "succeeded":
                     status = "cancelled"
+                    if event:
+                        event = {**event, "type": "cancelled", "message": "任务已取消，已取得的内容保留在会话中。"}
                 run["status"] = status
             if result is not None:
                 run["result"] = deepcopy(result)
@@ -359,10 +385,16 @@ class SessionStore:
             self._put(connection, "run:" + run_id, run)
             return run
 
+    def recover_run(self, run_id, process_alive):
+        run = self.load_run(run_id)
+        if run["status"] in ACTIVE_STATUSES and not process_alive(run.get("owner_pid")):
+            return self.change_run(run_id, status="interrupted", error="执行进程已退出，本次任务中断；不会自动重新请求模型。",
+                event={"type": "interrupted", "message": "任务中断，已保留保存的记录。"})
+        return run
+
     def recover_runs(self, process_alive):
         with closing(self._connect()) as connection:
             runs = [json.loads(row[0]) for row in connection.execute("SELECT payload FROM records WHERE key LIKE 'run:%'")]
         for run in runs:
-            if run["status"] in ACTIVE_STATUSES and not process_alive(run.get("owner_pid")):
-                self.change_run(run["id"], status="interrupted", error="服务已重启，本次任务中断；不会自动重新请求模型。",
-                                event={"type": "interrupted", "message": "任务中断，已保留保存的记录。"})
+            if run["status"] in ACTIVE_STATUSES:
+                self.recover_run(run["id"], process_alive)

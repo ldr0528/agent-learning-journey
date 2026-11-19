@@ -139,6 +139,51 @@ class InsuranceRunTests(unittest.TestCase):
         manager.wait(first["id"])
         self.assertEqual(manager.get(second["id"])["events"][-1]["type"], "cancel_requested")
 
+    def test_waiting_on_queued_run_returns_cancelled_instead_of_future_error(self):
+        started, gate, waiting = threading.Event(), threading.Event(), threading.Event()
+        self.gates.append(gate)
+        def blocked(*args, **kwargs):
+            started.set()
+            gate.wait(3)
+            return {"status": "ok"}
+        manager = self.manager(blocked, max_workers=1, max_queue=1)
+        first = self.submit(manager, self.session())
+        self.assertTrue(started.wait(2))
+        second = self.submit(manager, self.session())
+        queued = manager._futures[second["id"]]
+        original_result = queued.result
+        def waiting_result(*args, **kwargs):
+            waiting.set()
+            return original_result(timeout=3)
+        with patch.object(queued, "result", side_effect=waiting_result), ThreadPoolExecutor(max_workers=1) as waiter:
+            result = waiter.submit(manager.wait, second["id"])
+            self.assertTrue(waiting.wait(2))
+            manager.cancel(second["id"])
+            self.assertEqual(result.result(timeout=2)["status"], "cancelled")
+        gate.set()
+        manager.wait(first["id"])
+
+    def test_owner_exit_after_manager_started_releases_session_without_replay(self):
+        session_id, manager = self.session(), self.manager()
+        code = """import os, sys
+from agent_learning.insurance.store import SessionStore
+store = SessionStore(sys.argv[1])
+with store.claim_session(sys.argv[2], mode='live'):
+    os._exit(0)  # 模拟 CLI 异常退出：只认领，无模型配置和调用。
+"""
+        child = subprocess.run([sys.executable, "-c", code, self.temp.name, session_id],
+                               capture_output=True, text=True, timeout=10)
+        self.assertEqual(child.returncode, 0, child.stderr)
+        run = self.store.load_run(self.store.load(session_id)["active_run"]["id"])
+        recovered = manager.get(run["id"])
+        self.assertEqual(recovered["status"], "interrupted")
+        self.assertEqual(recovered["events"][-1]["type"], "interrupted")
+        self.assertIsNone(self.store.load(session_id)["active_run"])
+        self.assertEqual(self.calls, [])
+        self.assertEqual(manager.cancel(run["id"])["status"], "interrupted")
+        retry = self.submit(manager, session_id, token="explicit-retry")
+        self.assertEqual(manager.wait(retry["id"])["status"], "succeeded")
+
     def test_active_run_blocks_new_run_brief_and_external_writer(self):
         started, gate = threading.Event(), threading.Event()
         self.gates.append(gate)
@@ -219,6 +264,52 @@ class InsuranceStoreTests(unittest.TestCase):
 
     def tearDown(self):
         self.temp.cleanup()
+
+    def test_cancellation_and_terminal_event_are_committed_consistently(self):
+        session_id = self.store.create(REQUEST)
+        run, _ = self.store.create_run(session_id, kind="comparison", payload={},
+            client_request_id="cancel-race", expected_version=1, owner_id="test", owner_pid=os.getpid())
+        self.store.change_run(run["id"], status="running")
+        self.store.change_run(run["id"], cancel=True)
+        finished = self.store.change_run(run["id"], status="succeeded", result={"status": "completed"},
+            event={"type": "succeeded", "message": "本次处理已完成。"})
+        self.assertEqual(finished["status"], "cancelled")
+        self.assertEqual(finished["events"][-1]["type"], "cancelled")
+        self.assertIn("取消", finished["events"][-1]["message"])
+        self.assertEqual(finished["result"]["status"], "completed")  # 完成的资料保留，不伪造业务结果。
+
+    def test_message_capacity_is_checked_for_the_whole_turn_without_mutation(self):
+        session_id = self.store.create(REQUEST)
+        for _ in range(199):
+            self.store.append_message(session_id, "user", "已有消息。")
+        with self.store.claim_session(session_id):
+            self.store.require_message_capacity(session_id, 1)
+            with self.assertRaisesRegex(ValueError, "消息空间不足"):
+                self.store.require_message_capacity(session_id, 2)
+            for invalid in (0, -1, True, 1.5, "2"):
+                with self.subTest(count=invalid), self.assertRaises(ValueError):
+                    self.store.require_message_capacity(session_id, invalid)
+        self.assertEqual(len(self.store.load(session_id)["messages"]), 199)
+
+    def test_sync_completion_preserves_business_result_and_terminal_state(self):
+        for business_status, run_status in (("completed", "succeeded"), ("model_error", "failed"), ("cancelled", "cancelled")):
+            with self.subTest(status=business_status):
+                session_id = self.store.create(REQUEST)
+                result = {"status": business_status, "model_calls": 1}
+                with self.store.claim_session(session_id) as run_id:
+                    self.store.finish_claim(run_id, result)
+                run = self.store.load_run(run_id)
+                self.assertEqual(run["status"], run_status)
+                self.assertEqual(run["result"], result)
+                self.assertEqual(run["events"][-1]["type"], run_status)
+                self.assertIsNone(self.store.load(session_id)["active_run"])
+        session_id = self.store.create(REQUEST)
+        run, _ = self.store.create_run(session_id, kind="comparison", payload={},
+            client_request_id="async", expected_version=1, owner_id="manager", owner_pid=os.getpid())
+        self.store.change_run(run["id"], status="running")
+        self.store.finish_claim(run["id"], {"status": "completed"})
+        self.assertEqual(self.store.load_run(run["id"])["status"], "running")
+        self.assertIsNotNone(self.store.load(session_id)["active_run"])
 
     def test_legacy_json_is_migrated_without_deleting_original(self):
         session_id = "a" * 32

@@ -57,12 +57,13 @@ def build_question_graph(generate=None, *, checkpointer=None):
             text = "资料不足：当前本地摘要没有匹配结果，不能据此判断教材没有相关内容。"
         elif generate:
             text = generate([
-                {"role": "system", "content": "仅依据给定教学摘要回答，引用对应的 [Nxx] 编号。资料不足时明确说明。"},
+                {"role": "system", "content": "仅依据给定教学摘要回答，引用对应的 [Nxx] 编号。命中不等于能回答；资料不足时以“资料不足：”开头，只说明缺少什么，不补写答案。"},
                 {"role": "user", "content": f'问题：{state["question"]}\n资料：\n{format_results(notes)}'},
             ])
             ids = set(re.findall(r"\[\s*(N\d+)\s*\]", text))
             allowed = {note["id"] for note in notes}
-            if not ids or not ids <= allowed:
+            insufficient = text.strip().startswith("资料不足：")
+            if not ids <= allowed or (not ids and not insufficient):
                 raise ValueError("回答未引用本次资料或引用了未知编号；本示例停止，不自动修补引用。")
         else:
             text = "\n".join(f'{note["content"]} [{note["id"]}]' for note in notes)
