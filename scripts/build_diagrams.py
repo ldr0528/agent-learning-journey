@@ -59,24 +59,24 @@ def write(name, title, subtitle, body, height=760):
 def course_map():
     body = []
     columns = [
-        (64, "01—04", "模型、工具与循环", ["01  模型调用与消息", "02  工具执行与回传", "03  Agent Loop", "04  检索、引用与边界"]),
-        (370, "05—07", "上下文与任务组织", ["05  状态与上下文", "06  Plan-and-Solve", "07  Reflection"]),
-        (676, "08—09", "检索与质量", ["08  RAG 与检索改进", "09  评估与失败分析"]),
-        (982, "10—11", "框架与协议", ["10  LangGraph", "       实际调用链", "11  MCP 工具通信"]),
+        (64, "01—04", "模型、工具与循环", ["请求 · 工具回传", "有限循环 · 来源引用"], "消息轨迹表"),
+        (370, "05—07", "上下文与任务组织", ["状态 · 历史与预算", "规划 · 评审与修订"], "计划与修订对照"),
+        (676, "08—09", "检索与质量", ["切分 · 检索 · 证据", "引用 · 评估与失败分析"], "带来源的回答"),
+        (982, "10—11", "框架与协议", ["LangGraph · 状态流转", "MCP · 跨进程工具"], "节点与通信表"),
     ]
-    for index, (x, number, title, items) in enumerate(columns):
-        body.extend([text(x, 204, number, 17, BLUE, 600), text(x, 244, title, 22, INK, 600)])
+    for index, (x, number, title, items, outcome) in enumerate(columns):
+        body.extend([text(x, 194, number, 17, BLUE, 600), text(x, 234, title, 22, INK, 600)])
         for row, item in enumerate(items):
-            body.extend([text(x, 306 + row * 47, item, 19), line(x, 320 + row * 47, x + 234, 320 + row * 47)])
+            body.append(text(x, 283 + row * 34, item, 19, MUTED))
+        body.extend([line(x, 341, x + 234, 341), text(x, 377, outcome, 21, GREEN, 600)])
         if index < 3:
-            body.append(line(x + 244, 237, x + 291, 237, BLUE, True))
+            body.append(line(x + 244, 227, x + 291, 227, BLUE, True))
     body.extend([
-        line(64, 520, 1216, 520),
-        text(64, 565, "贯穿案例", 18, GREEN, 600),
-        text(210, 565, "模拟天气：看清机制     →     Research Agent：检索、证据、回答与评估", 22),
-        text(64, 619, "围绕同一个问题，追踪模型输入、程序状态、工具结果与停止条件。", 18, MUTED),
+        line(64, 413, 1216, 413),
+        text(64, 457, "实践主线", 18, GREEN, 600),
+        text(210, 457, "模拟天气看清机制；本地资料问答练习证据；研究任务连接迁移练习。", 21),
     ])
-    write("learning-path-zh.svg", "课程路线 · 从一次调用到可核验的研究助手", "11 章正文、两条贯穿案例，按信息流与依赖循序展开。", body, 680)
+    write("learning-path-zh.svg", "课程路线 · 从理解机制到完成实践", "11 章，四个阶段。先解释，再修改，最后用证据检查结果。", body, 500)
 
 
 def architecture():

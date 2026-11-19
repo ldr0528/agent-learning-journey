@@ -274,6 +274,8 @@ python -m examples.reflection --demo --max-revisions 0
 
 检查代码见 [离线测试](../../tests/test_reflection.py)，覆盖最新稿与反馈的传递、调用及修订上限、评审格式和任务间状态隔离。下一章把可引用的资料作为回答依据，补上仅靠模型内部评审无法保证的证据来源。
 
+读完检索与评估章节后，可完成 [带证据的报告修订练习](../practice/transfer-exercises.md)：逐条定位过度结论，提出具体反馈，并检查修订后的内容与长度约束。
+
 ---
 
 本章根据 Hello-Agents 的 Reflection 机制重新编排，文字修订任务、协议、代码与离线轨迹为本项目的教学改编；正文采用 [CC BY-NC-SA 4.0](../../LICENSES/CC-BY-NC-SA-4.0.txt)。

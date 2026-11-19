@@ -267,6 +267,8 @@ python -m examples.plan_solve --demo --max-calls 2
 
 读完本章应能找到规划请求、执行请求和历史更新的代码，解释 1+n 次调用，并区分结构校验、流程完成与答案正确。离线检查位于 [规划器测试](../../tests/test_planning.py) 和 [执行测试](../../tests/test_plan_solve.py)。下一章在已有答案之后增加评审与修订。
 
+销量题用于看清调用次序。读完检索与评估章节后，可完成 [资料选型的计划练习](../practice/transfer-exercises.md)：为每一步指定需要的证据，再判断哪些结论当前还不能得出。
+
 ---
 
 本章结合 Hello-Agents 的两阶段思路与应用题数据重新讲解，代码与示意输出为本项目实现；正文采用 [CC BY-NC-SA 4.0](../../LICENSES/CC-BY-NC-SA-4.0.txt)。
